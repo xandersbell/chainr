@@ -2,7 +2,7 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 1 & 2 Complete — 135 tests passing (2026-04-23)
+**Status**: 🟢 Phase 1 & 2 Complete — **184 tests passing** (2026-04-23 23:30)
 
 ---
 
@@ -147,7 +147,7 @@ Uses a single provider without fallback.
 - Retryable status codes: [429, 500, 502, 503, 504]
 - Non-retryable: 400, 401, 404 (fail immediately)
 
-### 2.2 Provider Support
+### 2.2 Provider Support (10 Providers ✅)
 
 | Provider | Status | Transform |
 |----------|--------|-----------|
@@ -155,6 +155,12 @@ Uses a single provider without fallback.
 | Anthropic | ✅ | OpenAI → Anthropic Messages API |
 | Google Vertex AI | ✅ | OpenAI → Vertex REST API |
 | OpenRouter | ✅ | OpenAI-compatible passthrough |
+| Together AI | ✅ | OpenAI-compatible passthrough |
+| Perplexity AI | ✅ | OpenAI-compatible passthrough |
+| Groq | ✅ | OpenAI-compatible passthrough |
+| DeepSeek | ✅ | OpenAI-compatible passthrough + thinking mode |
+| Mistral AI | ✅ | OpenAI-compatible passthrough |
+| Cohere | ✅ | OpenAI-compatible passthrough + reasoning_effort |
 
 ### 2.3 Error Handling
 
@@ -269,19 +275,20 @@ const result = await strategy.execute(targets, params, retryConfig);
 
 ## 5. Testing Strategy
 
-### Test Coverage (135 tests ✅)
+### Test Coverage (184 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 40 | 4 providers + filterParams |
+| transformRequest.test.ts | 77 | 10 providers + filterParams + system extraction |
 | transformResponse.test.ts | 26 | success/error paths, all providers |
 | RetryHandler.test.ts | 23 | retry logic, exponential backoff |
 | FallbackStrategy.test.ts | 12 | fallback behavior |
 | LoadBalanceStrategy.test.ts | 9 | weight-based selection |
 | SingleStrategy.test.ts | 13 | single target usage |
 | Router.test.ts | 12 | full pipeline integration |
+| real-http.test.ts | 12 | real HTTP integration tests |
 
-**Total: 135 tests passing**
+**Total: 184 tests passing**
 
 ### Test Tools
 - **vitest**: Test runner
@@ -313,14 +320,15 @@ const result = await strategy.execute(targets, params, retryConfig);
 - [x] Build success (ESM + CJS)
 - [x] Git push to main
 
-### Phase 2 Complete ✅ (2026-04-23)
-- [x] All 135 tests passing
-- [x] transformRequest coverage complete
+### Phase 2 Complete ✅ (2026-04-23 23:30)
+- [x] All 184 tests passing
+- [x] transformRequest coverage complete (10 providers)
 - [x] transformResponse coverage complete
 - [x] RetryHandler coverage complete
 - [x] Strategy coverage complete
 - [x] Router integration tests complete
 - [x] 2 bugs fixed during testing
+- [x] Added 6 new providers (Together AI, Perplexity, Groq, DeepSeek, Mistral AI, Cohere)
 - [x] Git push to main
 
 ### Remaining

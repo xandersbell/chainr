@@ -1,8 +1,28 @@
 # Chainr Provider Support Evaluation
 
 **Date**: 2026-04-23
-**Status**: Phase 1 & 2 Complete (135 tests passing)
-**Purpose**: Document current provider support, gaps, and recommendations
+**Status**: ❌ **已弃用** - 请查看 [PROVIDER_EVALUATION_COMPREHENSIVE.md](./PROVIDER_EVALUATION_COMPREHENSIVE.md)
+**Purpose**: 已合并到 PROVIDER_EVALUATION_COMPREHENSIVE.md
+
+---
+
+## ⚠️ 弃用说明
+
+本文档已弃用。所有 Provider 支持评估已迁移到 [PROVIDER_EVALUATION_COMPREHENSIVE.md](./PROVIDER_EVALUATION_COMPREHENSIVE.md)。
+
+**当前状态**（2026-04-23 23:30 更新）：
+- **10 个 Provider 已实现**（OpenAI, Anthropic, Vertex AI, OpenRouter, Together AI, Perplexity, Groq, DeepSeek, Mistral AI, Cohere）
+- **184 tests 通过**
+- 所有高严重度 bug 已修复
+
+---
+
+## 迁移记录
+
+| 日期 | 更新内容 |
+|------|----------|
+| 2026-04-23 23:30 | 弃用本文档，所有内容合并到 PROVIDER_EVALUATION_COMPREHENSIVE.md |
+| 2026-04-23 22:30 | 初版完成，评估 4 个已实现 Provider + 6 个待添加 Provider |
 
 ---
 

@@ -1,8 +1,8 @@
 # Chainr Phase 1 代码评估报告
 
-> 评估时间：2026-04-23
-> 评估范围：Phase 1 已完成代码（Strategy 实现、Transform 实现、RetryHandler）
-> 测试状态：146 tests，100% 通过（2026-04-23 22:31 更新）
+> 评估时间：2026-04-23 23:30 ICT（EEST）
+> 评估范围：Phase 1 & 2 已完成代码（Strategy 实现、Transform 实现、RetryHandler）
+> 测试状态：184 tests，100% 通过（2026-04-23 23:30 更新）
 
 ---
 
@@ -261,9 +261,9 @@ if (Object.keys(generationConfig).length > 0) {
 | 维度 | 状态 |
 |------|------|
 | 测试总数 | **184 tests，100% 通过** |
-| Provider 数量 | **4 → 10 个** |
-| transformRequest.ts | 340 行（+140 行新增 provider） |
-| transformResponse.ts | 170 行（+20 行） |
+| Provider 数量 | **10 个（新增 6 个）** |
+| transformRequest.ts | 341 行（+140 行新增 provider） |
+| transformResponse.ts | 175 行（+20 行） |
 
 ### Provider 扩展清单
 
@@ -273,11 +273,11 @@ if (Object.keys(generationConfig).length > 0) {
 | Anthropic | `api.anthropic.com/v1/messages` | X-API-Key | system 消息、streaming |
 | Google Vertex AI | `aiplatform.googleapis.com/.../generateContent` | Bearer | systemInstruction、generationConfig |
 | OpenRouter | `openrouter.ai/api/v1/chat/completions` | Bearer | — |
-| Together AI | `api.together.ai/v1/chat/completions` | Bearer | — |
-| Perplexity AI | `api.perplexity.ai/chat/completions` | Bearer | — |
-| Groq | `api.groq.com/openai/v1/chat/completions` | Bearer | — |
-| DeepSeek | `api.deepseek.com/chat/completions` | Bearer | thinking mode |
-| Mistral AI | `api.mistral.ai/v1/chat/completions` | Bearer | — |
+| Together AI | `api.together.ai/v1/chat/completions` | Bearer | OpenAI-compatible |
+| Perplexity AI | `api.perplexity.ai/chat/completions` | Bearer | OpenAI-compatible |
+| Groq | `api.groq.com/openai/v1/chat/completions` | Bearer | OpenAI-compatible |
+| DeepSeek | `api.deepseek.com/chat/completions` | Bearer | thinking mode（COT 推理）|
+| Mistral AI | `api.mistral.ai/v1/chat/completions` | Bearer | OpenAI-compatible |
 | Cohere | `api.cohere.ai/compatibility/v2/chat` | Bearer | reasoning_effort |
 
 ### 问题状态最终确认
@@ -314,6 +314,7 @@ if (Object.keys(generationConfig).length > 0) {
 
 | 日期 | 时间 | 更新内容 |
 |------|------|----------|
+| 2026-04-23 | 23:30 | 四次评估（最终）：184 tests，10 providers，Cohere URL 修正为 v2/chat，Phase 1/2 完成 |
 | 2026-04-23 | 23:21 | 三次评估：确认所有高严重度问题已修复，158 tests，Vertex OAuth 仍待 Phase 3 |
 | 2026-04-23 | 22:55 | 二次评估：确认 #1 #2 已完全修复，额外发现 Vertex AI systemInstruction + generationConfig 已一并修复，Streaming 问题待处理 |
 | 2026-04-23 | 22:31 | 修复问题 #1（Provider 别名映射）和 #2（Anthropic system 消息提取），测试从 135 增加到 146 |

@@ -1,7 +1,8 @@
 # Integration Test Guide - Real HTTP Testing
 
 > 创建时间：2026-04-23
-> 状态：草稿（待实现 msw 模拟测试后补充）
+> 更新时间：2026-04-23 23:30
+> 状态：✅ 真实 HTTP 测试已实现（tests/integration/real-http.test.ts）
 
 ---
 
@@ -13,8 +14,9 @@
 
 | 模式 | 描述 | 需要 API Keys | 适用场景 |
 |------|------|---------------|----------|
-| **Mock Mode**（当前） | 使用 msw 模拟 HTTP 响应 | ❌ 不需要 | 快速开发、CI/CD |
+| **Unit Tests**（当前） | 使用 vi.mock() 模拟 HTTP 响应 | ❌ 不需要 | 快速开发、CI/CD |
 | **Real Mode**（本文档） | 使用真实 Provider API | ✅ 需要 | 端到端验证、生产环境检查 |
+| **MSW Mock**（待实现） | 使用 Mock Service Worker 模拟 | ❌ 不需要 | 更真实的 HTTP mock 测试 |
 
 ---
 
@@ -319,6 +321,7 @@ Error: OpenAI API returned 429
 
 ## 9. 下一步
 
-1. ✅ 当前使用 msw Mock 模式测试
-2. 🔲 当需要时，添加真实 API keys 到 `.env.test.local`
-3. 🔲 运行真实 HTTP 测试验证端到端流程
+1. ✅ Unit tests 已完成（vi.mock() 模式，184 tests）
+2. ✅ real-http.test.ts 已实现（12 tests，自动 skip 无 key）
+3. 🔲 当需要时，添加真实 API keys 到 `.env.test.local`
+4. 🔲 运行真实 HTTP 测试验证端到端流程
