@@ -175,6 +175,7 @@ export const OPENAI_COMPATIBLE_PROVIDERS = [
   'mistral-ai',
   'cohere',
   'dashscope',
+  'cerebras',
   'huggingface',
   'anyscale',
   'ollama',

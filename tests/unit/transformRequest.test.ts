@@ -838,4 +838,128 @@ describe('transformRequest', () => {
       expect(result.body).toHaveProperty('reasoning_effort', 'high');
     });
   });
+
+  describe('Azure OpenAI Provider', () => {
+    it('body contains model and messages', () => {
+      const params: Params = {
+        model: 'gpt-4o',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'azure-openai' as any, {
+        apiKey: 'azure-key',
+        azureResourceName: 'my-resource',
+        azureDeploymentId: 'gpt-4o',
+        azureApiVersion: '2024-06-01',
+      });
+
+      expect(result.body).toHaveProperty('model', 'gpt-4o');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('headers contain api-key instead of Authorization', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'azure-openai' as any, {
+        apiKey: 'azure-secret-key',
+        azureResourceName: 'my-resource',
+        azureDeploymentId: 'gpt-4o',
+      });
+
+      expect(result.headers).toHaveProperty('api-key', 'azure-secret-key');
+      expect(result.headers).not.toHaveProperty('Authorization');
+    });
+
+    it('uses correct Azure URL format', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'azure-openai' as any, {
+        apiKey: 'azure-key',
+        azureResourceName: 'my-resource',
+        azureDeploymentId: 'gpt-4o',
+        azureApiVersion: '2024-06-01',
+      });
+
+      expect(result.url).toBe('https://my-resource.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-06-01');
+    });
+
+    it('uses default api-version when not provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'azure-openai' as any, {
+        apiKey: 'azure-key',
+        azureResourceName: 'my-resource',
+        azureDeploymentId: 'gpt-4o',
+      });
+
+      expect(result.url).toContain('api-version=2024-06-01');
+    });
+  });
+
+  describe('GitHub Models Provider', () => {
+    it('body contains model and messages', () => {
+      const params: Params = {
+        model: 'openai/gpt-4o-mini',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'github' as any, { apiKey: 'github-pat' });
+
+      expect(result.body).toHaveProperty('model', 'openai/gpt-4o-mini');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'github' as any, { apiKey: 'github-token' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer github-token');
+    });
+
+    it('headers contain GitHub-specific headers', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'github' as any, { apiKey: 'github-pat' });
+
+      expect(result.headers).toHaveProperty('Accept', 'application/vnd.github+json');
+      expect(result.headers).toHaveProperty('X-GitHub-Api-Version', '2026-03-10');
+    });
+
+    it('uses correct GitHub Models URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'github' as any, { apiKey: 'github-pat' });
+
+      expect(result.url).toBe('https://models.github.ai/inference/chat/completions');
+    });
+  });
+
+  describe('Azure AI Inference Provider', () => {
+    it('body contains model and messages', () => {
+      const params: Params = {
+        model: 'meta-llama-3-1-70b-instruct',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'azure-ai' as any, {
+        apiKey: 'azure-ai-key',
+        azureFoundryUrl: 'https://example.ml.azure.com/deployments/llama',
+      });
+
+      expect(result.body).toHaveProperty('model', 'meta-llama-3-1-70b-instruct');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'azure-ai' as any, {
+        apiKey: 'azure-ai-key',
+        azureFoundryUrl: 'https://example.ml.azure.com/deployments/llama',
+      });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer azure-ai-key');
+    });
+
+    it('uses azureFoundryUrl as base URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'azure-ai' as any, {
+        apiKey: 'azure-ai-key',
+        azureFoundryUrl: 'https://example.ml.azure.com/deployments/llama',
+      });
+
+      expect(result.url).toBe('https://example.ml.azure.com/deployments/llama');
+    });
+  });
 });

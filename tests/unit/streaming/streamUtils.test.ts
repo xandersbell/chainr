@@ -31,6 +31,26 @@ describe('streamUtils', () => {
       expect(getSplitPattern('anthropic', '/v1/messages')).toBe('\n\n');
     });
 
+    it('returns double newline for Azure OpenAI', () => {
+      expect(getSplitPattern('azure-openai')).toBe('\n\n');
+    });
+
+    it('returns double newline for x-ai', () => {
+      expect(getSplitPattern('x-ai')).toBe('\n\n');
+    });
+
+    it('returns double newline for GitHub Models', () => {
+      expect(getSplitPattern('github')).toBe('\n\n');
+    });
+
+    it('returns double newline for Azure AI Inference', () => {
+      expect(getSplitPattern('azure-ai')).toBe('\n\n');
+    });
+
+    it('returns double newline for Bedrock', () => {
+      expect(getSplitPattern('bedrock')).toBe('\n\n');
+    });
+
     it('returns default double newline for unknown provider', () => {
       expect(getSplitPattern('unknown')).toBe('\n\n');
     });

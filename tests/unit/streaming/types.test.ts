@@ -167,7 +167,7 @@ describe('Streaming Constants', () => {
   });
 
   describe('OPENAI_COMPATIBLE_PROVIDERS', () => {
-    it('contains expected providers', () => {
+    it('contains core providers', () => {
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('openai');
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('openrouter');
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('together-ai');
@@ -177,13 +177,55 @@ describe('Streaming Constants', () => {
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('mistral-ai');
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('cohere');
     });
+
+    it('contains Azure providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('azure-openai');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('azure-ai');
+    });
+
+    it('contains Chinese/Asian providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('dashscope');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('zhipu');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('lingyi');
+    });
+
+    it('contains x-ai and Groq alternative', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('x-ai');
+    });
+
+    it('contains infrastructure providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('lambda');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('sagemaker');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('bedrock');
+    });
+
+    it('contains emerging providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('nebius');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('hyperbolic');
+      expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('cerebras');
+    });
+
+    it('contains 51 total providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS.length).toBe(51);
+    });
   });
 
   describe('isOpenAICompatibleProvider', () => {
-    it('returns true for openai-compatible providers', () => {
+    it('returns true for core openai-compatible providers', () => {
       expect(isOpenAICompatibleProvider('openai')).toBe(true);
       expect(isOpenAICompatibleProvider('openrouter')).toBe(true);
       expect(isOpenAICompatibleProvider('together-ai')).toBe(true);
+      expect(isOpenAICompatibleProvider('groq')).toBe(true);
+      expect(isOpenAICompatibleProvider('deepseek')).toBe(true);
+    });
+
+    it('returns true for Azure providers', () => {
+      expect(isOpenAICompatibleProvider('azure-openai')).toBe(true);
+      expect(isOpenAICompatibleProvider('azure-ai')).toBe(true);
+    });
+
+    it('returns true for x-ai', () => {
+      expect(isOpenAICompatibleProvider('x-ai')).toBe(true);
     });
 
     it('returns false for non-openai providers', () => {
@@ -194,6 +236,7 @@ describe('Streaming Constants', () => {
 
     it('returns false for unknown providers', () => {
       expect(isOpenAICompatibleProvider('unknown')).toBe(false);
+      expect(isOpenAICompatibleProvider('nonexistent')).toBe(false);
     });
   });
 });
