@@ -2,13 +2,13 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🔴 In Planning
+**Status**: 🟡 Phase 1 In Progress — Core Foundation
 
 ---
 
-## 1. Project Overview
+## 0. Project Origin & Source Material
 
-### Problem Statement
+### Why This Project Exists
 
 When building LLM-powered applications, developers face:
 - **Provider reliability**: Single provider outages cause application failures
@@ -23,6 +23,7 @@ Chainr is an embeddable TypeScript SDK that provides:
 - **Load balancing**: Distribute traffic across multiple keys/accounts
 - **Request/Response transformation**: Unified OpenAI-compatible interface
 - **Zero external dependencies**: No required external services
+- **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 
 ### Target Users
 
@@ -30,58 +31,117 @@ Chainr is an embeddable TypeScript SDK that provides:
 - Node.js backend services needing multi-provider LLM routing
 - Developers who want fallback without running a separate gateway service
 
+### Source Code Source
+
+> ⚠️ **Portkey AI Gateway (MIT License)** — Portkey's gateway is the primary source of truth for provider configs, transforms, and routing logic. Chainr adapts and extracts components from Portkey for use as an embeddable SDK.
+
+**Portkey Repository**: `~/codebase/repos/portkey-ai-gateway`
+- URL: https://github.com/Portkey-AI/gateway
+- License: MIT (see [LICENSE_NOTICE](#license-notice))
+- All copied/modified files retain their original MIT license
+
 ---
 
-## 2. Core Architecture
+## 1. Architecture Overview
 
 ### Directory Structure
 
 ```
 chainr/
 ├── src/
-│   ├── providers/
-│   │   ├── types.ts                    # Shared provider type definitions
-│   │   ├── openai/
-│   │   │   ├── api.ts                  # OpenAI API config (URL/headers/endpoint)
-│   │   │   └── chatComplete.ts         # OpenAI → OpenAI request transform
-│   │   ├── anthropic/
-│   │   │   ├── api.ts                  # Anthropic API config
-│   │   │   └── chatComplete.ts         # OpenAI → Anthropic request transform
-│   │   ├── google-vertex-ai/
-│   │   │   ├── api.ts                  # Vertex AI API config
-│   │   │   └── chatComplete.ts         # OpenAI → Vertex request transform
-│   │   └── openrouter/
-│   │       ├── api.ts                  # OpenRouter API config
-│   │       └── chatComplete.ts         # OpenAI → OpenRouter request transform
-│   ├── core/
-│   │   ├── Router.ts                   # Main router class
+│   ├── providers/                          # Provider API configs & transforms (copied from Portkey)
+│   │   ├── types.ts                       # Shared provider type definitions
+│   │   ├── index.ts                       # Provider registry
+│   │   ├── utils.ts                       # Shared provider utilities
+│   │   ├── finishReasonMap.ts             # Finish reason mapping
+│   │   ├── utils/
+│   │   │   └── finishReasonMap.ts        # (duplicate, consolidate later)
+│   │   ├── openai/                        # OpenAI-compatible providers
+│   │   │   ├── api.ts                    # BaseURL, headers, endpoints
+│   │   │   ├── chatComplete.ts           # OpenAI → OpenAI passthrough
+│   │   │   └── utils.ts
+│   │   ├── anthropic/                     # Anthropic Messages API
+│   │   │   ├── api.ts
+│   │   │   └── chatComplete.ts           # OpenAI → Anthropic transform
+│   │   ├── anthropic-base/               # Anthropic shared base utilities
+│   │   │   ├── constants.ts
+│   │   │   ├── messages.ts
+│   │   │   ├── types.ts
+│   │   │   └── utils/
+│   │   │       └── streamGenerator.ts    # Anthropic SSE → OpenAI SSE transform
+│   │   ├── google-vertex-ai/             # Google Vertex AI
+│   │   │   ├── api.ts
+│   │   │   ├── chatComplete.ts           # OpenAI → Vertex transform
+│   │   │   └── utils.ts                  # JWT auth, parameter transforms
+│   │   ├── openrouter/                   # OpenRouter (OpenAI-compatible)
+│   │   │   ├── api.ts
+│   │   │   ├── chatComplete.ts
+│   │   │   └── utils.ts
+│   │   └── open-ai-base/                 # Shared OpenAI-style provider utilities
+│   │       ├── constants.ts
+│   │       ├── createModelResponse.ts
+│   │       ├── helpers.ts
+│   │       └── index.ts
+│   ├── handlers/                          # Request/response handlers (copied from Portkey)
+│   │   ├── handlerUtils.ts               # tryTargetsRecursively, selectProviderByWeight
+│   │   ├── retryHandler.ts               # Retry with exponential backoff
+│   │   ├── streamHandler.ts              # SSE stream reading/handling
+│   │   ├── responseHandlers.ts           # Response routing by content-type
+│   │   └── services/
+│   │       ├── requestContext.ts         # Request context management
+│   │       └── providerContext.ts       # Provider header construction
+│   ├── services/
+│   │   └── conditionalRouter.ts          # Conditional routing logic
+│   ├── types/                             # Type definitions (copied from Portkey)
+│   │   ├── requestBody.ts               # Options, Params, Targets, StrategyModes
+│   │   ├── messagesResponse.ts
+│   │   ├── modelResponses.ts
+│   │   ├── responseBody.ts
+│   │   ├── shared.ts
+│   │   ├── MessagesRequest.ts
+│   │   └── MessagesStreamResponse.ts
+│   ├── utils/                             # Utilities (copied from Portkey)
+│   │   ├── misc.ts
+│   │   ├── CryptoUtils.ts
+│   │   └── env.ts
+│   ├── middlewares/hooks/                 # Hook system types (copied from Portkey)
+│   │   ├── globals.ts
+│   │   └── types.ts
+│   ├── errors/                            # Error classes (copied from Portkey)
+│   │   ├── RouterError.ts
+│   │   └── GatewayError.ts
+│   ├── globals.ts                         # Constants (copied from Portkey)
+│   ├── core/                              # Chainr core — TO BE IMPLEMENTED
+│   │   ├── Router.ts                     # Main router class
 │   │   ├── strategies/
-│   │   │   ├── FallbackStrategy.ts     # Fallback (sequential) strategy
-│   │   │   ├── LoadBalanceStrategy.ts  # Weighted load balance strategy
-│   │   │   └── index.ts               # Strategy exports
-│   │   ├── transformRequest.ts         # Request body transformation
-│   │   ├── transformResponse.ts        # Response body transformation
-│   │   └── RetryHandler.ts            # Retry logic with exponential backoff
-│   ├── utils/
-│   │   └── index.ts
-│   └── index.ts                        # SDK entry point
+│   │   │   ├── FallbackStrategy.ts
+│   │   │   ├── LoadBalanceStrategy.ts
+│   │   │   └── index.ts
+│   │   ├── transformRequest.ts            # OpenAI → provider request transform
+│   │   ├── transformResponse.ts           # Provider → OpenAI response transform
+│   │   └── RetryHandler.ts               # Retry logic wrapper
+│   └── index.ts                          # SDK entry point
 ├── tests/
 │   ├── unit/
 │   └── integration/
+├── examples/
+│   └── firebase-functions/
+│       └── index.ts
 ├── docs/
-│   ├── README.md
 │   └── PLAN/
 │       └── DEVELOPMENT_PLAN.md
-└── examples/
-    └── firebase-functions/
-        └── index.ts
+├── package.json
+├── tsconfig.json
+├── tsup.config.ts
+├── vitest.config.ts
+└── .gitignore
 ```
 
 ---
 
-## 3. Feature Specification
+## 2. Feature Specification
 
-### 3.1 Core Features
+### 2.1 Core Features
 
 #### F1: Priority-based Fallback (Primary)
 
@@ -150,7 +210,6 @@ const chainr = new Chainr({
   strategy: 'fallback',
   targets: [
     {
-      // Primary: Vertex with load balance across multiple keys
       strategy: 'loadbalance',
       targets: [
         { provider: 'google-vertexai', api_key: 'key1', weight: 0.5 },
@@ -158,7 +217,6 @@ const chainr = new Chainr({
       ]
     },
     {
-      // Fallback: OpenRouter with sequential fallback
       strategy: 'fallback',
       targets: [
         { provider: 'openrouter', api_key: 'key3' },
@@ -169,16 +227,17 @@ const chainr = new Chainr({
 }
 ```
 
-### 3.2 Provider Support (Phase 1)
+### 2.2 Provider Support
 
-| Provider | Status | API Style |
-|----------|--------|-----------|
-| OpenAI | ✅ Planned | OpenAI compatible |
-| Anthropic | ✅ Planned | Messages API |
-| Google Vertex AI | ✅ Planned | REST API |
-| OpenRouter | ✅ Planned | OpenAI compatible |
+| Provider | Status | API Style | Files (from Portkey) |
+|----------|--------|-----------|----------------------|
+| OpenAI | ✅ Copied | OpenAI compatible | `openai/api.ts`, `openai/chatComplete.ts` |
+| Anthropic | ✅ Copied | Messages API | `anthropic/api.ts`, `anthropic/chatComplete.ts` |
+| Google Vertex AI | ✅ Copied | REST API | `google-vertex-ai/api.ts`, `google-vertex-ai/chatComplete.ts` |
+| OpenRouter | ✅ Copied | OpenAI compatible | `openrouter/api.ts`, `openrouter/chatComplete.ts` |
+| OpenAI-like base | ✅ Copied | OpenAI compatible | `open-ai-base/*` (shared helpers) |
 
-### 3.3 Error Handling
+### 2.3 Error Handling
 
 | Scenario | Behavior |
 |----------|----------|
@@ -188,7 +247,7 @@ const chainr = new Chainr({
 | 400 Bad Request | Fail immediately (no retry) |
 | Network timeout | Retry up to N times, then next provider |
 
-### 3.4 Retry Logic
+### 2.4 Retry Logic
 
 - Configurable retry attempts per target
 - Exponential backoff: `delay = base * 2^attempt`
@@ -197,118 +256,171 @@ const chainr = new Chainr({
 
 ---
 
-## 4. Source Code Sourcing
+## 3. Source Code Sourcing (Portkey AI Gateway)
 
-### From Portkey AI Gateway (MIT Licensed)
+> All files are from `~/codebase/repos/portkey-ai-gateway` (MIT License)
 
-We will extract and adapt the following components from [Portkey-AI/gateway](https://github.com/Portkey-AI/gateway):
+### A. Provider API Configs ✅ Copied
 
-#### A. Provider API Config (src/providers/*/api.ts)
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/openai/api.ts` | `src/providers/openai/api.ts` | BaseURL, headers, endpoint mapping |
+| `src/providers/anthropic/api.ts` | `src/providers/anthropic/api.ts` | BaseURL, X-API-Key header, /messages endpoint |
+| `src/providers/google-vertex-ai/api.ts` | `src/providers/google-vertex-ai/api.ts` | Project/location/endpoint mapping, JWT auth |
+| `src/providers/openrouter/api.ts` | `src/providers/openrouter/api.ts` | OpenAI-compatible with custom base_url |
+| `src/providers/open-ai-base/constants.ts` | `src/providers/open-ai-base/constants.ts` | OpenAI base constants |
+| `src/providers/open-ai-base/helpers.ts` | `src/providers/open-ai-base/helpers.ts` | OpenAI base helpers |
 
-| File | Purpose | Extraction |
-|------|---------|------------|
-| `src/providers/openai/api.ts` | BaseURL, headers, endpoint mapping | ✅ Copy |
-| `src/providers/anthropic/api.ts` | BaseURL, X-API-Key header, /messages endpoint | ✅ Copy |
-| `src/providers/google-vertex-ai/api.ts` | Complex project/location/endpoint mapping | ✅ Copy |
-| `src/providers/openrouter/api.ts` | OpenAI-compatible with custom base_url | ✅ Copy |
+### B. Provider Request Transforms ✅ Copied
 
-#### B. Provider Config - Request Transform (src/providers/*/chatComplete.ts)
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/openai/chatComplete.ts` | `src/providers/openai/chatComplete.ts` | OpenAI → OpenAI passthrough |
+| `src/providers/anthropic/chatComplete.ts` | `src/providers/anthropic/chatComplete.ts` | OpenAI → Anthropic messages format transform |
+| `src/providers/google-vertex-ai/chatComplete.ts` | `src/providers/google-vertex-ai/chatComplete.ts` | OpenAI → Vertex format transform |
+| `src/providers/openrouter/chatComplete.ts` | `src/providers/openrouter/chatComplete.ts` | OpenAI → OpenRouter format + reasoning params |
+| `src/providers/openrouter/utils.ts` | `src/providers/openrouter/utils.ts` | OpenRouter-specific utilities |
 
-| File | Purpose | Extraction |
-|------|---------|------------|
-| `src/providers/openai/chatComplete.ts` | OpenAI → OpenAI passthrough | ✅ Copy |
-| `src/providers/anthropic/chatComplete.ts` | OpenAI messages → Anthropic messages format | ✅ Copy |
-| `src/providers/anthropic-base/utils/streamGenerator.ts` | Anthropic SSE → OpenAI SSE transform | ✅ Copy |
+### C. Provider Response Transforms ✅ Copied
 
-#### C. Core Routing Logic
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/openai/utils.ts` | `src/providers/openai/utils.ts` | OpenAI error response transform |
+| `src/providers/anthropic-base/utils/streamGenerator.ts` | `src/providers/anthropic-base/utils/streamGenerator.ts` | Anthropic SSE → OpenAI SSE transform |
+| `src/providers/google-vertex-ai/utils.ts` | `src/providers/google-vertex-ai/utils.ts` | Vertex logprobs transform, tool parameter dereferencing |
+| `src/providers/finishReasonMap.ts` | `src/providers/finishReasonMap.ts` | Provider-specific finish reason → OpenAI standard |
+| `src/providers/utils/finishReasonMap.ts` | `src/providers/utils/finishReasonMap.ts` | (duplicate, consolidate later) |
 
-| File | Purpose | Extraction |
-|------|---------|------------|
-| `src/handlers/handlerUtils.ts` lines 476-833 | `tryTargetsRecursively()` fallback/loadbalance | ⚠️ Adapt |
-| `src/handlers/retryHandler.ts` | Retry with exponential backoff | ✅ Copy |
-| `src/services/transformToProviderRequest.ts` | Request body transformation | ⚠️ Adapt |
-| `src/handlers/responseHandlers.ts` | Response routing | ⚠️ Adapt |
+### D. Core Handler Infrastructure ✅ Copied
 
-#### D. Type Definitions
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/handlers/handlerUtils.ts` | `src/handlers/handlerUtils.ts` | `tryTargetsRecursively()` (fallback), `selectProviderByWeight()` (loadbalance), `constructRequest()`, `tryPost()` |
+| `src/handlers/retryHandler.ts` | `src/handlers/retryHandler.ts` | `retryRequest()` — exponential backoff, Retry-After header |
+| `src/handlers/streamHandler.ts` | `src/handlers/streamHandler.ts` | `readStream()` (SSE), `handleStreamingMode()` |
+| `src/handlers/responseHandlers.ts` | `src/handlers/responseHandlers.ts` | `responseHandler()` — routes to transformer by content-type |
+| `src/handlers/services/requestContext.ts` | `src/handlers/services/requestContext.ts` | Request context management |
+| `src/handlers/services/providerContext.ts` | `src/handlers/services/providerContext.ts` | Provider header construction |
 
-| File | Purpose | Extraction |
-|------|---------|------------|
-| `src/providers/types.ts` | ProviderAPIConfig, ProviderConfig interfaces | ✅ Copy |
-| `src/types/requestBody.ts` | Options, Params, Targets, StrategyModes | ✅ Copy |
+### E. Type Definitions ✅ Copied
 
-### Components NOT to Extract
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/types.ts` | `src/providers/types.ts` | `ProviderAPIConfig`, `ProviderConfig`, `endpointStrings` |
+| `src/providers/index.ts` | `src/providers/index.ts` | Provider configs registry |
+| `src/providers/utils.ts` | `src/providers/utils.ts` | `generateErrorResponse`, `generateInvalidProviderResponseError` |
+| `src/types/requestBody.ts` | `src/types/requestBody.ts` | `Options`, `Params`, `Targets`, `StrategyModes`, `RetrySettings`, `Tool`, `ToolCall` |
+| `src/types/messagesResponse.ts` | `src/types/messagesResponse.ts` | Anthropic Messages API response types |
+| `src/types/modelResponses.ts` | `src/types/modelResponses.ts` | Model response types |
+| `src/types/responseBody.ts` | `src/types/responseBody.ts` | Generic response body types |
+| `src/types/shared.ts` | `src/types/shared.ts` | Shared type utilities |
+| `src/types/MessagesRequest.ts` | `src/types/MessagesRequest.ts` | Anthropic Messages API request |
+| `src/types/MessagesStreamResponse.ts` | `src/types/MessagesStreamResponse.ts` | Anthropic stream response |
+| `src/globals.ts` | `src/globals.ts` | `POWERED_BY`, `MAX_RETRY_LIMIT_MS`, `POSSIBLE_RETRY_STATUS_HEADERS`, provider constants |
+| `src/middlewares/hooks/globals.ts` | `src/middlewares/hooks/globals.ts` | Hook-related constants |
+| `src/middlewares/hooks/types.ts` | `src/middlewares/hooks/types.ts` | `HookType`, hook span types |
 
-- Hono middleware pipeline (coupled to Cloudflare Workers)
-- Plugin system (guardrails, observability)
-- Logging integration
-- Virtual key management
+### F. Utilities & Services ✅ Copied
+
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/utils/misc.ts` | `src/utils/misc.ts` | General utilities |
+| `src/utils/CryptoUtils.ts` | `src/utils/CryptoUtils.ts` | Crypto utilities |
+| `src/utils/env.ts` | `src/utils/env.ts` | Environment utilities |
+| `src/services/conditionalRouter.ts` | `src/services/conditionalRouter.ts` | Conditional routing logic ($eq, $in, $regex, $and, $or) |
+
+### G. Error Classes ✅ Copied
+
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/errors/RouterError.ts` | `src/RouterError.ts` | Router-specific error class |
+| `src/errors/GatewayError.ts` | `src/GatewayError.ts` | Gateway error class |
+
+### H. Anthropic Base (Shared) ✅ Copied
+
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/anthropic-base/constants.ts` | `src/providers/anthropic-base/constants.ts` | Anthropic constants |
+| `src/providers/anthropic-base/messages.ts` | `src/providers/anthropic-base/messages.ts` | Anthropic messages config |
+| `src/providers/anthropic-base/types.ts` | `src/providers/anthropic-base/types.ts` | Anthropic base types |
+| `src/providers/anthropic-base/utils/streamGenerator.ts` | `src/providers/anthropic-base/utils/streamGenerator.ts` | Stream generation utilities |
+
+### I. OpenAI Base (Shared) ✅ Copied
+
+| Source File | Dest File | Purpose |
+|-------------|-----------|---------|
+| `src/providers/open-ai-base/createModelResponse.ts` | `src/providers/open-ai-base/createModelResponse.ts` | Model response creation |
+| `src/providers/open-ai-base/index.ts` | `src/providers/open-ai-base/index.ts` | OpenAI base index |
+
+### Components NOT Copied (Intentionally Omitted)
+
+- `src/handlers/chatCompletionsHandler.ts` — Hono HTTP handler, coupled to Cloudflare Workers
+- `src/handlers/messagesHandler.ts` — Hono HTTP handler
+- `src/middlewares/` (other than hooks) — Middleware pipeline, CF Workers specific
+- `plugins/` — Plugin system (guardrails, observability)
+- `src/providers/*/index.ts` (per-provider) — Re-exported by provider, not needed
+- `src/types/inputList.ts` — Not needed for core functionality
+- `src/types/embedRequestBody.ts` — Embeddings not in scope for Phase 1
 
 ---
 
-## 5. Implementation Phases
+## 4. Implementation Phases
 
-### Phase 1: Core Foundation (Week 1-2)
+### Phase 1: Core Foundation ✅ In Progress
 
-**Goal**: Basic fallback routing with OpenAI and one transform
+**Goal**: Project scaffolding + all Portkey source files copied
+
+**Status**: ✅ Scaffolding complete | ✅ Portkey files copied | ⬜ Core Router unimplemented
 
 **Deliverables**:
-- [ ] Project scaffolding (tsconfig, tsup, vitest)
-- [ ] Type definitions (copied from Portkey)
-- [ ] OpenAI provider (passthrough, no transform)
-- [ ] Basic Router class with fallback strategy
-- [ ] Simple retry handler
+- [x] Project scaffolding (tsconfig, tsup, vitest, package.json)
+- [x] Git repo initialized, GitHub remote configured
+- [x] Portkey source files copied (46 files across providers, handlers, types, utils, errors, globals)
+- [ ] Core Router class with fallback strategy
+- [ ] Basic retry handler wrapper
 - [ ] Unit tests for core routing
 
-**Files**:
+**Remaining Files to Implement**:
 ```
-src/
-├── types.ts                    # Core types
-├── providers/openai/api.ts    # OpenAI API config
-├── core/Router.ts             # Main router
-├── core/FallbackStrategy.ts   # Fallback logic
-└── core/RetryHandler.ts       # Retry logic
+src/core/
+├── Router.ts              # Main entry point
+├── strategies/
+│   ├── FallbackStrategy.ts
+│   ├── LoadBalanceStrategy.ts
+│   └── index.ts
+├── transformRequest.ts    # OpenAI body → provider-specific body
+├── transformResponse.ts   # Provider response → OpenAI body
+└── RetryHandler.ts        # Retry logic wrapper
 ```
 
-### Phase 2: Multi-Provider Support (Week 2-3)
+### Phase 2: Multi-Provider Support
 
-**Goal**: Support Anthropic and Google Vertex with request transforms
+**Goal**: Support Anthropic and Google Vertex with full request/response transforms
 
 **Deliverables**:
-- [ ] Anthropic provider with request transform
-- [ ] Anthropic SSE stream transform
+- [ ] Anthropic provider with request transform (chatComplete.ts)
+- [ ] Anthropic SSE stream transform (streamGenerator.ts integration)
 - [ ] Google Vertex provider with complex URL construction
-- [ ] Response transformation layer
+- [ ] Response transformation layer (responseHandlers.ts adaptation)
 - [ ] Integration tests with mock providers
 
-**Files**:
-```
-src/providers/anthropic/
-├── api.ts
-└── chatComplete.ts
-src/providers/google-vertex-ai/
-├── api.ts
-└── chatComplete.ts
-src/core/transformRequest.ts
-src/core/transformResponse.ts
-```
-
-### Phase 3: Load Balancing & Advanced Features (Week 3-4)
+### Phase 3: Load Balancing & Advanced Features
 
 **Goal**: Complete feature parity with Portkey fallback/loadbalance
 
 **Deliverables**:
-- [ ] LoadBalanceStrategy
-- [ ] Nested strategy support
+- [ ] LoadBalanceStrategy with weighted random selection
+- [ ] Nested strategy support (fallback + loadbalance combined)
 - [ ] Sticky sessions (optional)
 - [ ] Request timeout handling
 - [ ] Configuration validation
 
-### Phase 4: Firebase Integration & Polish (Week 4-5)
+### Phase 4: Firebase Integration & Polish
 
 **Goal**: Production-ready with Firebase example
 
 **Deliverables**:
-- [ ] OpenRouter provider
+- [ ] OpenRouter provider (already copied, needs integration)
 - [ ] Firebase Functions example
 - [ ] Comprehensive README
 - [ ] Performance benchmarks
@@ -316,7 +428,7 @@ src/core/transformResponse.ts
 
 ---
 
-## 6. API Design
+## 5. API Design
 
 ### Main Entry Point
 
@@ -357,14 +469,13 @@ const strategy = new FallbackStrategy([
 ]);
 
 await strategy.execute(async (target) => {
-  // Call target.provider with target.api_key
   return callLLM(target);
 });
 ```
 
 ---
 
-## 7. Testing Strategy
+## 6. Testing Strategy
 
 ### Unit Tests
 - Router initialization and validation
@@ -380,12 +491,12 @@ await strategy.execute(async (target) => {
 
 ### Test Tools
 - **vitest**: Test runner
-- **msw**: Mock Service Worker for HTTP mocking (or nock)
+- **msw** or **nock**: HTTP mocking
 - **@faker-js/faker**: Test data generation
 
 ---
 
-## 8. Dependencies
+## 7. Dependencies
 
 ### Production
 - `typescript` (peer dependency)
@@ -397,10 +508,11 @@ await strategy.execute(async (target) => {
 - `prettier`: Formatting
 - `eslint`: Linting
 - `@types/node`: Node.js types
+- `async-retry`: Retry logic (used by retryHandler.ts — check if we bundle or inline)
 
 ---
 
-## 9. Comparison with Alternatives
+## 8. Comparison with Alternatives
 
 | Feature | Chainr | Portkey (Hosted) | LiteLLM (Python) | @khanglvm/llm-router |
 |---------|--------|------------------|-------------------|---------------------|
@@ -416,25 +528,65 @@ await strategy.execute(async (target) => {
 
 ---
 
-## 10. Risks & Mitigations
+## 9. Risks & Mitigations
 
 ### Risk 1: Portkey License Compatibility
 - **Risk**: Modifying and distributing Portkey code requires maintaining MIT license
-- **Mitigation**: Clearly attribute Portkey in source, maintain MIT license
+- **Mitigation**: All copied files retain MIT license. LICENSE_NOTICE added to attribute source.
 
 ### Risk 2: Maintenance Burden
-- **Risk**: Adapting Portkey code creates ongoing maintenance
-- **Mitigation**: Create clear adaptation layer, minimize modifications
+- **Risk**: Adapting Portkey code creates ongoing maintenance when Portkey updates
+- **Mitigation**: Create clear adaptation layer, minimize modifications to copied files
 
 ### Risk 3: Provider API Changes
 - **Risk**: Provider API changes break transforms
 - **Mitigation**: Version locks on provider configs, test against real providers
 
+### Risk 4: Hono/CF Workers Coupling
+- **Risk**: Portkey handler code is tightly coupled to Hono and Cloudflare Workers
+- **Mitigation**: Extract only the pure TypeScript logic (transforms, routing), discard HTTP layer
+
+---
+
+## 10. License Notice
+
+> Portkey AI Gateway source code is used under the terms of the MIT License.
+> Portkey AI Gateway is Copyright (c) 2023 Portkey AI, Inc. and available at https://github.com/Portkey-AI/gateway
+
+```
+MIT License
+
+Copyright (c) 2023 Portkey AI, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ---
 
 ## 11. Success Metrics
 
-- [ ] Phase 1 tests passing
+- [ ] Phase 1: Router class + basic fallback implemented
+- [ ] Phase 1: Unit tests passing
+- [ ] Phase 2: Anthropic + Vertex transforms working end-to-end
+- [ ] Phase 2: Integration tests passing
+- [ ] Phase 3: LoadBalance + nested strategies working
+- [ ] Phase 4: Firebase Functions example deployed
 - [ ] Firebase Functions example working
 - [ ] OpenAI passthrough latency < 5ms overhead
 - [ ] Fallback switch < 100ms
