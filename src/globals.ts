@@ -1,5 +1,4 @@
 // Chainr - 全局常量与 Provider 定义
-// Phase 1: 支持 OpenAI, Anthropic, Google Vertex AI, OpenRouter + 6 个 OpenAI-compatible Provider
 
 export const POWERED_BY: string = 'chainr';
 
@@ -41,6 +40,61 @@ export const RECRAFT_AI_URL = 'https://api.recraft.ai';
 export const STABILITY_AI_URL = 'https://api.stability.ai';
 export const MESHY_URL = 'https://api.meshy.ai';
 export const TRIPO3D_URL = 'https://api.tripo3d.ai';
+
+// OpenAI-compatible Provider URLs
+export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
+  'openai': 'https://api.openai.com/v1/chat/completions',
+  'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
+  'together-ai': 'https://api.together.ai/v1/chat/completions',
+  'perplexity': 'https://api.perplexity.ai/chat/completions',
+  'groq': 'https://api.groq.com/openai/v1/chat/completions',
+  'deepseek': 'https://api.deepseek.com/chat/completions',
+  'mistral-ai': 'https://api.mistral.ai/v1/chat/completions',
+  'cohere': 'https://api.cohere.ai/compatibility/v2/chat',
+  'dashscope': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  'cerebras': 'https://api.cerebras.ai/v1/chat/completions',
+  'huggingface': 'https://api-inference.huggingface.co/v1/chat/completions',
+  'anyscale': 'https://api.endpoints.anyscale.com/v1/chat/completions',
+  'ollama': 'http://localhost:11434/v1/chat/completions',
+  'fireworks-ai': 'https://api.fireworks.ai/v1/chat/completions',
+  'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/chat/completions',
+  'moonshot': 'https://api.moonshot.cn/v1/chat/completions',
+  'lambda': 'https://api.lambda.ai/v1/chat/completions',
+  'lingyi': 'https://api.lingyiwanwu.com/v1/chat/completions',
+  'zhipu': 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+  'novita-ai': 'https://api.novita.ai/v3.5/chat/completions',
+  'predibase': 'https://serving.predibase.com/v3/chat/completions',
+  'sambanova': 'https://api.sambanova.ai/api/paa/v1/chat/completions',
+  'siliconflow': 'https://api.siliconflow.cn/v1/chat/completions',
+  'lemonfox-ai': 'https://api.lemonfox.ai/v1/chat/completions',
+  'lepton': 'https://api.lepton.ai/api/v1/chat/completions',
+  'hyperbolic': 'https://api.hyperbolic.ai/v1/chat/completions',
+  '302ai': 'https://api.302.ai/v1/chat/completions',
+  'oracle': 'https://inference.oracle.ai/v1/chat/completions',
+  'ovhcloud': 'https://auth.api.platform.ovh.net/chat/completions',
+  'ncompass': 'https://api.ncompass.com/v1/chat/completions',
+  'deepbricks': 'https://api.deepbricks.io/v1/chat/completions',
+  'deepinfra': 'https://api.deepinfra.com/v1/chat/completions',
+  'azure-openai': '', // Uses custom URL format
+  'nebius': 'https://api.nebius.ai/v1/chat/completions',
+  'featherless-ai': 'https://api.featherless.ai/v1/chat/completions',
+  'ai21': 'https://api.ai21.com/v1/chat/completions',
+  'stability-ai': 'https://api.stability.ai/v1/chat/completions',
+  'triton': 'https://triton聊天.com/v1/chat/completions',
+  'replicate': 'https://api.replicate.com/v1/chat/completions',
+  'x-ai': 'https://api.x.ai/v1/chat/completions',
+  'modal': 'https://api.modal.com/v1/chat/completions',
+  'github': 'https://models.github.ai/inference/chat/completions',
+  'azure-ai': '', // Uses custom foundryUrl
+  'aibadgr': 'https://api.aibadgr.com/v1/chat/completions',
+  'bedrock': '', // AWS Bedrock uses different auth
+  'cometapi': 'https://api.comet.com/chat/completions',
+  'iointelligence': 'https://api.iointelligence.ai/v1/chat/completions',
+  'kluster-ai': 'https://api.kluster.ai/v1/chat/completions',
+  'matterai': 'https://api.matter.ai/chat/completions',
+  'nextbit': 'https://api.nextbit.ai/v1/chat/completions',
+  'sagemaker': '', // AWS SageMaker uses custom endpoints
+};
 
 // 支持的 Provider 列表
 export const VALID_PROVIDERS = [

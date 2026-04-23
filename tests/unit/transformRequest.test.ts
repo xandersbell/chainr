@@ -1239,4 +1239,72 @@ describe('transformRequest', () => {
       expect(result.url).toBe('https://api.tripo3d.ai/v1/tasks');
     });
   });
+
+  describe('OpenAI-Compatible Default Case (Fallback)', () => {
+    it('uses OPENAI_COMPATIBLE_URLS for known providers', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.together.ai/v1/chat/completions');
+    });
+
+    it('uses customHost when provided', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'unknown-provider' as any, {
+        apiKey: 'test-key',
+        customHost: 'https://custom.example.com/v1/chat',
+      });
+
+      expect(result.url).toBe('https://custom.example.com/v1/chat');
+    });
+
+    it('uses urlToFetch when provided', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'unknown-provider' as any, {
+        apiKey: 'test-key',
+        urlToFetch: 'https://custom.example.com/chat',
+      });
+
+      expect(result.url).toBe('https://custom.example.com/chat');
+    });
+
+    it('adds Authorization header with apiKey', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'my-secret-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer my-secret-key');
+    });
+
+    it('does not add Authorization header when no apiKey', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'non-existent-provider' as any, {
+        customHost: 'https://test.com',
+      });
+
+      expect(result.headers).not.toHaveProperty('Authorization');
+    });
+
+    it('preserves body params', () => {
+      const params: Params = {
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hello' }],
+        temperature: 0.7,
+      };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'key' });
+
+      expect(result.body).toHaveProperty('model', 'gpt-4');
+      expect(result.body).toHaveProperty('temperature', 0.7);
+    });
+
+    it('urlToFetch takes precedence over customHost', () => {
+      const params: Params = { messages: [{ role: 'user', content: 'hello' }] };
+      const result = transformRequest(params, 'unknown-provider' as any, {
+        apiKey: 'test-key',
+        customHost: 'https://custom.example.com/v1',
+        urlToFetch: 'https://urltopick.example.com/chat',
+      });
+
+      expect(result.url).toBe('https://urltopick.example.com/chat');
+    });
+  });
 });

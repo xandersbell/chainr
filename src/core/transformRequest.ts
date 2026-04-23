@@ -1,6 +1,6 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS } from '../globals';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -64,12 +64,36 @@ export function transformRequest(
       return transformMeshyRequest(params, opts);
     case TRIPO3D:
       return transformTripo3DRequest(params, opts);
-    default:
+    default: {
+      const optsRecord = opts as Record<string, unknown>;
+      const customHost = optsRecord?.customHost as string | undefined;
+      const urlToFetch = optsRecord?.urlToFetch as string | undefined;
+      const apiKeyRaw = optsRecord?.apiKey;
+      const key = typeof apiKeyRaw === 'string' && apiKeyRaw.length > 0 ? apiKeyRaw : '';
+
+      let url = '';
+      if (urlToFetch) {
+        url = urlToFetch;
+      } else if (customHost) {
+        url = customHost;
+      } else {
+        url = OPENAI_COMPATIBLE_URLS[normalizedProvider] || '';
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (key.length > 0) {
+        headers['Authorization'] = `Bearer ${key}`;
+      }
+
       return {
         body: params as Record<string, unknown>,
-        headers: { 'Content-Type': 'application/json' },
-        url: '',
+        headers,
+        url,
       };
+    }
   }
 }
 
