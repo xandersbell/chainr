@@ -146,8 +146,8 @@ src/
 └── core/
     ├── Router.ts               # Main Chainr class
     ├── types.ts                # Core types (ChatCompletionResponse, StrategyResult, etc.)
-    ├── transformRequest.ts     # Provider request transform (4 providers)
-    ├── transformResponse.ts    # Provider response transform (4 providers)
+    ├── transformRequest.ts     # Provider request transform (10 providers)
+    ├── transformResponse.ts    # Provider response transform (10 providers)
     ├── RetryHandler.ts         # Exponential backoff retry
     └── strategies/
         ├── FallbackStrategy.ts  # Priority-based failover
