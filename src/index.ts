@@ -1,13 +1,6 @@
-/**
- * Chainr - Unified LLM Gateway SDK
- * 
- * A TypeScript/Node.js SDK for routing LLM requests across multiple providers
- * with priority-based fallback and load balancing.
- * 
- * @see https://github.com/xandersbell/chainr
- */
+import { Chainr } from './core/Router';
+import { FallbackStrategy } from './core/strategies/FallbackStrategy';
+import { LoadBalanceStrategy } from './core/strategies/LoadBalanceStrategy';
+import { SingleStrategy } from './core/strategies/SingleStrategy';
 
-export { Chainr } from './core/Router';
-export { FallbackStrategy } from './core/strategies/FallbackStrategy';
-export { LoadBalanceStrategy } from './core/strategies/LoadBalanceStrategy';
-export * from './providers/types';
+export { Chainr, FallbackStrategy, LoadBalanceStrategy, SingleStrategy };

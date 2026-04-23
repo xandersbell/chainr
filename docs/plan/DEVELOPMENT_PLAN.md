@@ -2,36 +2,107 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟡 Phase 1 In Progress — Core Foundation
+**Status**: 🔴 Phase 1 Blocked — Core Router unimplemented
 
 ---
 
-## 0. Project Origin & Source Material
+## 0. Business Requirements & Project Origin
 
-### Why This Project Exists
+### 0.1 Problem Statement
 
-When building LLM-powered applications, developers face:
-- **Provider reliability**: Single provider outages cause application failures
-- **Rate limits**: Individual API keys have strict TPM/RPM limits
-- **Cost optimization**: Different providers have different pricing
-- **Format fragmentation**: Each provider has its own API format (OpenAI, Anthropic, Google Vertex, etc.)
+Building production LLM-powered applications exposes developers to four critical risks:
 
-### Solution
+| Risk | Description | Impact |
+|------|-------------|--------|
+| **Provider Outage** | Single LLM provider (OpenAI, Anthropic, etc.) experiences downtime | Application returns errors or fails completely |
+| **Rate Limit Exhaustion** | Individual API keys have strict TPM/RPM limits | Requests throttled, users see degraded performance |
+| **Cost Overrun** | Different providers have different pricing; no way to route traffic to cheaper options | Unpredictable or excessive API costs |
+| **Vendor Lock-in** | Code tightly coupled to a single provider's API format | Painful migration if provider changes pricing or reliability |
 
-Chainr is an embeddable TypeScript SDK that provides:
-- **Fallback routing**: Automatic failover to next provider on failure
-- **Load balancing**: Distribute traffic across multiple keys/accounts
-- **Request/Response transformation**: Unified OpenAI-compatible interface
-- **Zero external dependencies**: No required external services
-- **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
+Additionally, each LLM provider uses a different request/response format:
+- **OpenAI**: `messages[]`, `gpt-4o`, streaming SSE
+- **Anthropic**: `messages[]` with `anthropic_version`, `/messages` endpoint, different streaming format
+- **Google Vertex AI**: REST API with JWT auth, different model naming (`gemini-2.0-flash`)
+- **OpenRouter**: OpenAI-compatible but with provider-specific model prefixes (`google/gemini-2.0-flash`)
 
-### Target Users
+Switching providers currently requires code changes across the entire application.
 
-- Firebase Cloud Functions developers (TypeScript)
-- Node.js backend services needing multi-provider LLM routing
-- Developers who want fallback without running a separate gateway service
+### 0.2 Business Requirements
 
-### Source Code Source
+Chainr must satisfy the following requirements:
+
+**R1: Reliability — Automatic Failover**
+- When the primary LLM provider returns 429 (rate limited) or 5xx (server error), the system must automatically attempt the next configured provider
+- The failover must be transparent to the application — same API call, different underlying provider
+- Retry logic must support configurable retry attempts and status code filters
+
+**R2: Scalability — Load Distribution**
+- Support distributing requests across multiple API keys from the same or different providers
+- Weight-based selection: `weight: 0.7` means 70% of requests go to that target
+- Single attempt per request in load-balance mode (no automatic fallback on failure)
+
+**R3: Cost Optimization**
+- Allow routing traffic to different providers based on pricing
+- Support nested strategies: e.g., load-balance within a single provider (multiple keys) + fallback across providers
+
+**R4: Unified API — Provider Abstraction**
+- Developers use a single, OpenAI-compatible interface regardless of which provider handles the request
+- Request/response transformation is handled internally
+- Currently supported: OpenAI, Anthropic, Google Vertex AI, OpenRouter
+
+**R5: Zero-Operations Deployment**
+- No external gateway service to deploy or maintain
+- Embed directly in application code via npm package
+- Must work in Firebase Cloud Functions (Node.js 18+) without additional configuration
+
+**R6: TypeScript-First**
+- Written in TypeScript with full type safety
+- No runtime type coercion or `any` leakage
+- Strict mode enabled in tsconfig
+
+### 0.3 Target Users
+
+| User Profile | Primary Use Case | How Chainr Helps |
+|---|---|---|
+| **Firebase Cloud Functions Developer** | Serverless LLM calls with high availability requirements | Zero-dependency embed, Node.js 18+ native, no extra infra |
+| **Node.js Backend Service** | REST API backend calling multiple LLM providers | One SDK init, unified `.chat.completions.create()` interface |
+| **Cost-Sensitive Team** | Distribute traffic across cheap + expensive providers | Weighted load-balance routes traffic to cost-optimal provider |
+| **Reliability-Critical App** | Cannot afford downtime from provider outages | Fallback chain: Primary → Secondary → Tertiary provider |
+
+### 0.4 Core Value Proposition
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│  Instead of:                                             │
+│    if (openai.fail) try anthropic;                      │
+│    if (anthropic.fail) try vertex;                       │
+│    parse openaiResponse();                               │
+│    parse anthropicResponse();                            │
+│    parse vertexResponse();                               │
+│                                                          │
+│  Chainr delivers:                                        │
+│    const r = await chainr.chat.completions.create({...})│
+│    // Transparent fallback + unified response format      │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 0.5 Comparison with Alternatives
+
+| Requirement | Chainr | Portkey (Hosted) | LiteLLM (Python) |
+|-------------|--------|------------------|------------------|
+| Deploy separately | ❌ No | ✅ Yes (cloud service) | ✅ Yes (Python service) |
+| TypeScript SDK | ✅ Yes | ❌ HTTP API only | ❌ Python only |
+| Firebase compatible | ✅ Yes | ❌ No | ❌ No |
+| Data passes through third party | ❌ No | ✅ Yes | ⚠️ Through your deployment |
+| Zero external runtime deps | ✅ Yes | ❌ Depends on Portkey | ❌ Depends on LiteLLM service |
+| Weighted load balance | ✅ Yes | ✅ Yes | ✅ Yes |
+| Nested strategies | ✅ Yes | ✅ Yes | ✅ Yes |
+
+> 📊 Full feature matrix comparison (including @khanglvm/llm-router): see [Section 8 - Comparison with Alternatives](#8-comparison-with-alternatives)
+
+### 0.6 Source Code Origin
 
 > ⚠️ **Portkey AI Gateway (MIT License)** — Portkey's gateway is the primary source of truth for provider configs, transforms, and routing logic. Chainr adapts and extracts components from Portkey for use as an embeddable SDK.
 
@@ -39,6 +110,7 @@ Chainr is an embeddable TypeScript SDK that provides:
 - URL: https://github.com/Portkey-AI/gateway
 - License: MIT (see [LICENSE_NOTICE](#license-notice))
 - All copied/modified files retain their original MIT license
+- Chainr is an independent implementation, not a fork or wrapper
 
 ---
 
@@ -366,18 +438,27 @@ const chainr = new Chainr({
 
 ## 4. Implementation Phases
 
-### Phase 1: Core Foundation ✅ In Progress
+### Phase 1: Core Foundation 🔴 Blocked
 
-**Goal**: Project scaffolding + all Portkey source files copied
+**Goal**: Project scaffolding + all Portkey source files copied + Core Router implemented
 
-**Status**: ✅ Scaffolding complete | ✅ Portkey files copied | ⬜ Core Router unimplemented
+**Status**:
+- ✅ Scaffolding complete
+- ✅ Portkey source files copied (47 files, 0 TS errors)
+- ❌ `tsup.config.ts` missing — build blocked
+- ❌ Core Router unimplemented — **BLOCKING ALL**
 
 **Deliverables**:
-- [x] Project scaffolding (tsconfig, tsup, vitest, package.json)
+- [x] Project scaffolding (tsconfig, vitest, package.json)
 - [x] Git repo initialized, GitHub remote configured
-- [x] Portkey source files copied (46 files across providers, handlers, types, utils, errors, globals)
-- [ ] Core Router class with fallback strategy
-- [ ] Basic retry handler wrapper
+- [x] Portkey source files copied (47 files across providers, handlers, types, utils, errors, globals)
+- [x] TypeScript diagnostics clean (0 errors)
+- [ ] `tsup.config.ts` created
+- [ ] `src/core/Router.ts` implemented
+- [ ] `FallbackStrategy` implemented
+- [ ] `LoadBalanceStrategy` implemented
+- [ ] `transformRequest.ts` implemented
+- [ ] `transformResponse.ts` implemented
 - [ ] Unit tests for core routing
 
 **Remaining Files to Implement**:
@@ -391,20 +472,24 @@ src/core/
 ├── transformRequest.ts    # OpenAI body → provider-specific body
 ├── transformResponse.ts   # Provider response → OpenAI body
 └── RetryHandler.ts        # Retry logic wrapper
+
+tsup.config.ts            # Build config (MISSING)
 ```
 
-### Phase 2: Multi-Provider Support
+### Phase 2: Multi-Provider Support ⬜ Not Started
 
 **Goal**: Support Anthropic and Google Vertex with full request/response transforms
 
+**Note**: Provider files (chatComplete.ts, api.ts) are already copied from Portkey. Phase 2 focuses on integration into Router.
+
 **Deliverables**:
-- [ ] Anthropic provider with request transform (chatComplete.ts)
-- [ ] Anthropic SSE stream transform (streamGenerator.ts integration)
-- [ ] Google Vertex provider with complex URL construction
-- [ ] Response transformation layer (responseHandlers.ts adaptation)
+- [ ] Anthropic provider integration (chatComplete.ts already copied)
+- [ ] Anthropic SSE stream transform (streamGenerator.ts already copied)
+- [ ] Google Vertex provider integration (chatComplete.ts already copied)
+- [ ] Response transformation layer (responseHandlers.ts already copied)
 - [ ] Integration tests with mock providers
 
-### Phase 3: Load Balancing & Advanced Features
+### Phase 3: Load Balancing & Advanced Features ⬜ Not Started
 
 **Goal**: Complete feature parity with Portkey fallback/loadbalance
 
@@ -415,12 +500,12 @@ src/core/
 - [ ] Request timeout handling
 - [ ] Configuration validation
 
-### Phase 4: Firebase Integration & Polish
+### Phase 4: Firebase Integration & Polish ⬜ Not Started
 
 **Goal**: Production-ready with Firebase example
 
 **Deliverables**:
-- [ ] OpenRouter provider (already copied, needs integration)
+- [ ] OpenRouter provider integration (files already copied)
 - [ ] Firebase Functions example
 - [ ] Comprehensive README
 - [ ] Performance benchmarks
@@ -581,6 +666,10 @@ SOFTWARE.
 
 ## 11. Success Metrics
 
+### Current Baseline (as of 2026-04-23)
+- [x] Project scaffolding complete
+- [x] Portkey source files copied (47 files)
+- [x] TypeScript diagnostics clean (0 errors)
 - [ ] Phase 1: Router class + basic fallback implemented
 - [ ] Phase 1: Unit tests passing
 - [ ] Phase 2: Anthropic + Vertex transforms working end-to-end

@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js
 
-**⚠️ Status**: In Planning - Not yet implemented
+**⚠️ Status**: Phase 1 - Core implementation in progress
 
 ## Features
 
