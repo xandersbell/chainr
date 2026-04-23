@@ -46,6 +46,8 @@ export function transformRequest(
       return transformAzureOpenAIRequest(params, opts);
     case 'github':
       return transformGithubModelsRequest(params, opts);
+    case 'azure-ai':
+      return transformAzureAIRequest(params, opts);
     default:
       return {
         body: params as Record<string, unknown>,
@@ -359,6 +361,31 @@ function transformAzureOpenAIRequest(params: Params, opts: Record<string, unknow
     },
     headers,
     url,
+  };
+}
+
+/**
+ * Azure AI Inference 请求转换
+ * Azure AI Foundry 使用标准 OpenAI-compatible 格式
+ */
+function transformAzureAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const foundryUrl = (opts.azureFoundryUrl as string) || '';
+
+  return {
+    body: {
+      model: params.model || '',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: foundryUrl,
   };
 }
 

@@ -150,6 +150,8 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
   'x-ai': '\n\n',
   'modal': '\n\n',
   'github': '\n\n',
+  'azure-ai': '\n\n',
+  'aibadgr': '\n\n',
 };
 
 /**
@@ -198,6 +200,8 @@ export const OPENAI_COMPATIBLE_PROVIDERS = [
   'x-ai',
   'modal',
   'github',
+  'azure-ai',
+  'aibadgr',
 ];
 
 export function isOpenAICompatibleProvider(provider: string): boolean {

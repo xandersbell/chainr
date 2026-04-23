@@ -41,6 +41,8 @@ export function getSplitPattern(provider: string, requestURL?: string): SplitPat
     'replicate': '\n\n',
     'modal': '\n\n',
     'github': '\n\n',
+    'azure-ai': '\n\n',
+    'aibadgr': '\n\n',
   };
 
   return splitPatterns[provider] ?? '\n\n';
