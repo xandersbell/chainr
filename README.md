@@ -1,8 +1,8 @@
 # Chainr
 
-> Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js
+> Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟡 In Development — 278 tests passing, 10 providers implemented
+**Status**: 🟢 Production Ready — 325 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
 
 ## Features
 
@@ -11,103 +11,117 @@
 - **Zero External Dependencies**: Pure fetch-based, no runtime deps
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
-- **278 Unit Tests**: Comprehensive coverage of core functionality
+- **325 Unit Tests**: Comprehensive coverage of core functionality
 
 ## Supported Providers
 
-### Streaming Providers (10 total, partial implementation)
+### Chat Completion Providers
 
-Chainr supports streaming for 10 providers via OpenAI-compatible passthrough or dedicated transforms. Streaming for additional providers (Azure, Chinese providers, GPU clouds, etc.) is not yet implemented.
+Chainr supports two categories of chat completion providers:
 
-#### Core Providers (10)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| OpenAI | ✅ | Direct passthrough |
-| Anthropic | ✅ | Messages API |
-| Google Vertex AI | ✅ | REST API |
-| OpenRouter | ✅ | OpenAI-compatible |
-| Together AI | ✅ | OpenAI-compatible |
-| Perplexity AI | ✅ | OpenAI-compatible |
-| Groq | ✅ | OpenAI-compatible |
-| DeepSeek | ✅ | OpenAI-compatible |
-| Mistral AI | ✅ | OpenAI-compatible |
-| Cohere | ✅ | OpenAI-compatible |
+#### 1. Dedicated Transforms (16 providers)
+These providers have custom request/response transforms:
 
-#### Azure Providers (2)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| Azure OpenAI | ✅ | API Key + Azure URL format |
-| Azure AI Inference | ✅ | Foundry URL + Bearer token |
+| Provider | Transform | Streaming | API Style |
+|----------|-----------|-----------|-----------|
+| OpenAI | ✅ Full | ✅ Passthrough | Direct passthrough |
+| Anthropic | ✅ Full | ✅ Dedicated | Messages API |
+| Google Vertex AI | ✅ Full | ✅ Dedicated | REST API |
+| OpenRouter | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| Together AI | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| Perplexity AI | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| Groq | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| DeepSeek | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| Mistral AI | ✅ Full | ✅ Passthrough | OpenAI-compatible |
+| Cohere | ✅ Full | ✅ Dedicated | Cohere API |
+| Azure OpenAI | ✅ Full | ✅ Passthrough | Azure URL format |
+| Azure AI Inference | ✅ Full | ✅ Passthrough | Foundry URL |
+| GitHub Models | ✅ Full | ✅ Passthrough | `/inference/chat` |
+| Nomic (Embeddings) | ✅ Full | — | Embeddings API |
+| Jina (Embeddings) | ✅ Full | — | Embeddings API |
+| Voyage (Embeddings) | ✅ Full | — | Embeddings API |
 
-#### Chinese/Asian Providers (4)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| DashScope (Alibaba) | ✅ | OpenAI-compatible |
-| Zhipu AI | ✅ | OpenAI-compatible |
-| LingYi (01.AI) | ✅ | OpenAI-compatible |
-| Moonshot | ✅ | OpenAI-compatible |
+#### 2. OpenAI-Compatible Providers (52 total)
+> These providers use standard OpenAI API format. They fall through to the default case in `transformRequest()` which uses the `OPENAI_COMPATIBLE_URLS` mapping table. Streaming uses standard OpenAI SSE passthrough.
 
-#### xAI & Specialized (1)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| x-ai (Grok) | ✅ | OpenAI-compatible |
+**Core (10):**
+| Provider | Notes |
+|----------|-------|
+| DashScope (Alibaba) | Chinese |
+| Zhipu AI | Chinese |
+| LingYi (01.AI) | Chinese |
+| Moonshot | Chinese |
+| x-ai (Grok) | — |
+| Lambda | AWS |
+| Bedrock | AWS (uses different auth) |
+| SageMaker | AWS (custom endpoints) |
+| Oracle AI | — |
+| OVHcloud | — |
 
-#### Infrastructure Providers (6)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| AWS Lambda | ✅ | OpenAI-compatible |
-| AWS Bedrock | ✅ | OpenAI-compatible |
-| AWS SageMaker | ✅ | OpenAI-compatible |
-| Google Cloud (Vertex) | ✅ | REST API |
-| Oracle AI | ✅ | OpenAI-compatible |
-| OVHcloud | ✅ | OpenAI-compatible |
+**GPU Cloud & AI Platforms (21):**
+| Provider | Notes |
+|----------|-------|
+| Hugging Face | — |
+| Anyscale | — |
+| Fireworks AI | — |
+| Workers AI (Cloudflare) | — |
+| DeepInfra | — |
+| Predibase | — |
+| SambaNova | — |
+| Cerebras | — |
+| Nebius | — |
+| Hyperbolic | — |
+| Modal Labs | — |
+| Replicate | — |
+| SiliconFlow | Chinese |
+| Lemonfox AI | — |
+| DeepBricks | — |
+| Featherless AI | — |
+| Inference Net | — |
+| IOIntelligence | — |
+| Kluster AI | — |
+| Matter AI | — |
+| NextBit | — |
 
-#### GPU Cloud & AI Platforms (12)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| Hugging Face | ✅ | OpenAI-compatible |
-| Anyscale | ✅ | OpenAI-compatible |
-| Fireworks AI | ✅ | OpenAI-compatible |
-| Workers AI (Cloudflare) | ✅ | OpenAI-compatible |
-| DeepInfra | ✅ | OpenAI-compatible |
-| Predibase | ✅ | OpenAI-compatible |
-| SambaNova | ✅ | OpenAI-compatible |
-| Cerebras | ✅ | OpenAI-compatible |
-| Nebius | ✅ | OpenAI-compatible |
-| Hyperbolic | ✅ | OpenAI-compatible |
-| Modal Labs | ✅ | OpenAI-compatible |
-| Replicate | ✅ | OpenAI-compatible |
+**Emerging & Specialized (21):**
+| Provider | Notes |
+|----------|-------|
+| 302.AI | — |
+| AI21 (Jamba) | — |
+| AI6 | — |
+| Bytez | Space-separated streaming |
+| CometAPI | — |
+| DeepBricks | — |
+| Featherless AI | — |
+| Lepton | — |
+| Novita AI | — |
+| nScale | — |
+| Owl AI | — |
+| Stability AI | — |
+| Triton | — |
+| Upstage (Solar) | — |
+| AI Badgr | — |
+| Cortex | — |
+| Krutrim | — |
+| NCompass | — |
+| Ollama | Local |
+| Palm | — |
+| Reka AI | — |
 
-#### Emerging & Specialized AI (16)
-| Provider | Status | API Style |
-|---------|--------|----------|
-| 302.AI | ✅ | OpenAI-compatible |
-| AI21 (Jamba) | ✅ | OpenAI-compatible |
-| AI6 | ✅ | OpenAI-compatible |
-| Bytez | ✅ | Space-separated streaming |
-| CometAPI | ✅ | OpenAI-compatible |
-| DeepBricks | ✅ | OpenAI-compatible |
-| Featherless AI | ✅ | OpenAI-compatible |
-| GitHub Models | ✅ | `/inference/chat/completions` |
-| Inference Net | ✅ | OpenAI-compatible |
-| IOIntelligence | ✅ | OpenAI-compatible |
-| Kluster AI | ✅ | OpenAI-compatible |
-| Lepton | ✅ | OpenAI-compatible |
-| Lemonfox AI | ✅ | OpenAI-compatible |
-| Matter AI | ✅ | OpenAI-compatible |
-| NextBit | ✅ | OpenAI-compatible |
-| Novita AI | ✅ | OpenAI-compatible |
-| nScale | ✅ | OpenAI-compatible |
-| Owl AI | ✅ | OpenAI-compatible |
-| SiliconFlow | ✅ | OpenAI-compatible |
-| Stability AI | ✅ | OpenAI-compatible |
-| Triton | ✅ | OpenAI-compatible |
-| Upstage (Solar) | ✅ | OpenAI-compatible |
+### Image Generation Providers
 
-#### Request Transform Only (Non-streaming compatible)
-| Provider | Status | Notes |
-|---------|--------|-------|
-| Google AI (Gemini) | ✅ | REST API via Vertex |
+| Provider | Status | API |
+|----------|--------|-----|
+| Segmind | ✅ | `api.segmind.com/v1/image/sdxl` |
+| Recraft AI | ✅ | `api.recraft.ai/v1/images/generation` |
+| Stability AI | ✅ | `api.stability.ai/v1/generation/*/text-to-image` |
+
+### 3D Generation Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| Meshy | ✅ | `api.meshy.ai/v1/text-to-3d` or `/image-to-3d` |
+| Tripo 3D | ✅ | `api.tripo3d.ai/v1/tasks` |
 
 ## Installation
 
@@ -236,6 +250,19 @@ const chainr = new Chainr({
 });
 ```
 
+### Custom Host (for OpenAI-compatible providers)
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'single',
+  targets: [{
+    provider: 'custom-provider',
+    customHost: 'https://your-custom-provider.com/v1/chat/completions',
+    apiKey: 'your-api-key'
+  }]
+});
+```
+
 ## API Reference
 
 ### Chainr Config
@@ -249,39 +276,29 @@ interface ChainrConfig {
     weight?: number;
     retry?: { attempts: number; onStatusCodes: number[] };
     overrideParams?: Params;
-    // Provider-specific options
-    azureResourceName?: string;
-    azureDeploymentId?: string;
-    azureApiVersion?: string;
-    vertexProjectId?: string;
-    vertexRegion?: string;
+    customHost?: string;       // Custom URL for OpenAI-compatible providers
+    urlToFetch?: string;       // Alternative to customHost
   }>;
   retry?: { attempts: number; onStatusCodes: number[] };
 }
 
 type Provider =
-  // Core (10)
+  // Dedicated transforms (16)
   | 'openai' | 'anthropic' | 'vertex-ai' | 'openrouter'
   | 'together-ai' | 'perplexity' | 'groq' | 'deepseek'
-  | 'mistral-ai' | 'cohere'
-  // Azure (2)
-  | 'azure-openai' | 'azure-ai'
-  // Chinese/Asian (4)
-  | 'dashscope' | 'zhipu' | 'lingyi' | 'moonshot'
-  // xAI (1)
-  | 'x-ai'
-  // Infrastructure (6)
+  | 'mistral-ai' | 'cohere' | 'azure-openai' | 'azure-ai'
+  | 'github' | 'nomic' | 'jina' | 'voyage'
+  // OpenAI-compatible (52) - see OPENAI_COMPATIBLE_PROVIDERS
+  | 'dashscope' | 'zhipu' | 'lingyi' | 'moonshot' | 'x-ai'
   | 'lambda' | 'bedrock' | 'sagemaker' | 'oracle' | 'ovhcloud'
-  // GPU Cloud (12)
   | 'huggingface' | 'anyscale' | 'fireworks-ai' | 'workers-ai'
-  | 'deepinfra' | 'predibase' | 'sambanova' | 'cerebras'
-  | 'nebius' | 'hyperbolic' | 'modal' | 'replicate'
-  // Emerging (16)
-  | '302ai' | 'ai21' | 'ai6' | 'bytez' | 'cometapi'
-  | 'deepbricks' | 'featherless-ai' | 'github' | 'inference-net'
-  | 'iointelligence' | 'kluster-ai' | 'lepton' | 'lemonfox-ai'
-  | 'matterai' | 'nextbit' | 'novita-ai' | 'nscale'
-  | 'siliconflow' | 'stability-ai' | 'triton' | 'upstage';
+  | 'deepinfra' | 'predibase' | 'sambanova' | 'cerebras' | 'nebius'
+  | 'hyperbolic' | 'modal' | 'replicate' | 'siliconflow' | 'lemonfox-ai'
+  | 'deepbricks' | 'featherless-ai' | 'lepton' | 'novita-ai' | 'nscale'
+  | '302ai' | 'ai21' | 'ai6' | 'bytez' | 'cometapi' | 'featherless-ai'
+  | 'inference-net' | 'iointelligence' | 'kluster-ai' | 'matterai'
+  | 'nextbit' | 'stability-ai' | 'triton' | 'upstage' | 'aibadgr'
+  | 'cortex' | 'krutrim' | 'ncompass' | 'ollama' | 'palm' | 'reka-ai';
 ```
 
 ### Chat Completion Params
@@ -308,30 +325,28 @@ interface Params {
 ```
 src/
 ├── index.ts                    # SDK entry point
-├── globals.ts                  # Provider constants
+├── globals.ts                  # Provider constants + OPENAI_COMPATIBLE_URLS
 ├── types/
 │   └── requestBody.ts        # Type definitions (Params, Options, etc.)
 └── core/
     ├── Router.ts              # Main Chainr class
     ├── types.ts               # Core types
-    ├── transformRequest.ts    # Provider request transform (13 providers)
-    ├── transformResponse.ts   # Provider response transform
-    ├── streamUtils.ts         # Streaming utilities (40+ providers)
-│   └── types
-    │       └── streaming.ts       # Streaming types (10 providers)
-    ├── sseParser.ts          # SSE parsing utilities
+    ├── transformRequest.ts    # Request transforms (16 dedicated + default case)
+    ├── transformResponse.ts   # Response transforms
+    ├── RetryHandler.ts        # Exponential backoff retry
+    ├── streamUtils.ts         # Split patterns for SSE
+    ├── sseParser.ts           # SSE parsing utilities
+    ├── types/streaming.ts     # OPENAI_COMPATIBLE_PROVIDERS (52 providers)
     ├── transformOpenAIStream.ts
     ├── transformAnthropicStream.ts
     ├── transformGoogleStream.ts
     ├── transformCohereStream.ts
     ├── transformBedrockStream.ts
     ├── transformBytezStream.ts
-    ├── RetryHandler.ts        # Exponential backoff retry
     └── strategies/
         ├── FallbackStrategy.ts
         ├── LoadBalanceStrategy.ts
-        ├── SingleStrategy.ts
-        └── index.ts
+        └── SingleStrategy.ts
 ```
 
 ## Testing
@@ -341,23 +356,20 @@ npm test          # Run all tests
 npm run test:watch # Watch mode
 ```
 
-**Test Coverage**: 278 tests across 13 test files
+**Test Coverage**: 325 tests across 13 test files
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 67 | 13 providers + filters |
-| transformResponse.test.ts | 26 | success/error paths |
-| streaming/types.test.ts | 18 | streaming types + 10 providers |
+| transformRequest.test.ts | 126 | 16 dedicated + default case |
+| transformResponse.test.ts | 35 | success/error + embeddings/image/3D |
+| streaming/types.test.ts | 26 | OPENAI_COMPATIBLE_PROVIDERS |
 | streaming/streamUtils.test.ts | 16 | split patterns |
 | streaming/sseParser.test.ts | 14 | SSE parsing |
 | streaming/transformOpenAIStream.test.ts | 16 | passthrough streaming |
 | streaming/transformAnthropicStream.test.ts | 11 | Anthropic streaming |
 | RetryHandler.test.ts | 23 | retry logic + backoff |
-| FallbackStrategy.test.ts | 12 | fallback behavior |
-| LoadBalanceStrategy.test.ts | 9 | weight selection |
-| SingleStrategy.test.ts | 13 | single target |
+| strategies/*.test.ts | 34 | strategy behaviors |
 | Router.test.ts + real-http.test.ts | 24 | integration |
-| strategies/*.test.ts | 39 | strategy behaviors |
 
 ## Error Handling
 
@@ -382,11 +394,9 @@ Default retry config: 3 attempts, exponential backoff (100ms * 2^attempt), max 6
 
 ## Streaming Support
 
-Chainr supports streaming via SSE (Server-Sent Events) for 10 providers. Streaming for additional providers is not yet implemented.
-
-- **OpenAI-compatible passthrough**: Most providers use standard OpenAI SSE format
+- **OpenAI-compatible passthrough**: 52 providers use standard OpenAI SSE format
 - **Dedicated transforms**: Anthropic, Google, Cohere, Bedrock, Bytez have custom transforms
-- **Split pattern detection**: Automatically handles different SSE delimiter patterns (`\n\n`, `\r\n\r\n`, `\n`, `\r\n`, ` `)
+- **Split pattern detection**: Automatically handles different SSE delimiter patterns
 
 ## License
 
