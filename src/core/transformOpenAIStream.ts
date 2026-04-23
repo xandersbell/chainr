@@ -1,5 +1,5 @@
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEData } from './sseParser';
+import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
 import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 import { OPENAI_COMPATIBLE_PROVIDERS } from './types/streaming';
 
@@ -42,8 +42,8 @@ export function createOpenAIStream(
       try {
         for await (const chunkStr of generator) {
           if (chunkStr) {
-            const parsed = parseSSEData<ChatCompletionChunk>(chunkStr);
-            if (parsed) {
+            const parsedChunks = parseSSEDataMultiple<ChatCompletionChunk>(chunkStr);
+            for (const parsed of parsedChunks) {
               controller.enqueue(parsed);
             }
           }

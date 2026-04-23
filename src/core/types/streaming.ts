@@ -104,14 +104,12 @@ export interface AnthropicStreamState {
  */
 export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n' | ' ';
 
-/**
- * Stream transform function 类型
- * 将原始 chunk 转换为 OpenAI 格式
- */
 export type StreamTransformFn = (
   chunk: string,
   fallbackId: string,
-  streamState: Record<string, unknown>
+  streamState: Record<string, unknown>,
+  strictOpenAiCompliance?: boolean,
+  provider?: string
 ) => string | undefined;
 
 /**

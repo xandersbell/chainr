@@ -76,9 +76,36 @@ export function parseSSEData<T>(data: string): T | null {
     return null;
   }
   if (trimmed.startsWith('data: ')) {
-    return JSON.parse(trimmed.slice(6)) as T;
+    const dataContent = trimmed.slice(6).trim();
+    if (dataContent === '[DONE]') {
+      return null;
+    }
+    return JSON.parse(dataContent) as T;
   }
   return JSON.parse(trimmed) as T;
+}
+
+export function parseSSEDataMultiple<T>(data: string): T[] {
+  const results: T[] = [];
+  const trimmed = data.trim();
+  const parts = trimmed.split(/\n\n/);
+  for (const part of parts) {
+    const trimmedPart = part.trim();
+    if (!trimmedPart || trimmedPart === 'data: [DONE]' || trimmedPart === '[DONE]') {
+      continue;
+    }
+    if (trimmedPart.startsWith('data: ')) {
+      const dataContent = trimmedPart.slice(6).trim();
+      if (dataContent && dataContent !== '[DONE]') {
+        try {
+          results.push(JSON.parse(dataContent) as T);
+        } catch {
+          continue;
+        }
+      }
+    }
+  }
+  return results;
 }
 
 export function isStreamDone(data: string): boolean {

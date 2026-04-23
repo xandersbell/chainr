@@ -106,7 +106,7 @@ describe('transformAnthropicStream', () => {
       const { done, value } = await reader.read();
       expect(done).toBe(false);
       expect(value).toMatchObject({
-        choices: [{ finish_reason: 'stop' }]
+        choices: [{ finish_reason: 'end_turn' }]
       });
     });
 
