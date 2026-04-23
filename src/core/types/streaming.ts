@@ -140,6 +140,7 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
 
 /**
  * 检测是否为 OpenAI-compatible provider
+ * 这些 provider 使用标准 OpenAI SSE 格式，可以直接 passthrough
  */
 export const OPENAI_COMPATIBLE_PROVIDERS = [
   'openai',
@@ -150,6 +151,25 @@ export const OPENAI_COMPATIBLE_PROVIDERS = [
   'deepseek',
   'mistral-ai',
   'cohere',
+  'huggingface',
+  'anyscale',
+  'ollama',
+  'fireworks-ai',
+  'workers-ai',
+  'moonshot',
+  'lingyi',
+  'zhipu',
+  'novita-ai',
+  'predibase',
+  'sambanova',
+  'lemonfox-ai',
+  'lepton',
+  'hyperbolic',
+  '302ai',
+  'oracle',
+  'ovhcloud',
+  'ncompass',
+  'deepinfra',
 ];
 
 export function isOpenAICompatibleProvider(provider: string): boolean {
