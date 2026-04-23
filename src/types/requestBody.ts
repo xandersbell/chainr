@@ -160,6 +160,7 @@ export interface Tool {
 export interface Params {
   model?: string;
   prompt?: string | string[];
+  input?: string | string[] | EmbedInput[];
   messages?: Message[];
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };
@@ -244,3 +245,86 @@ export type RequestBody = {
   config: ShortConfig;
   params: Params;
 };
+
+// ============================================================================
+// Embeddings Types
+// ============================================================================
+
+export interface EmbedInput {
+  text?: string;
+  image?: {
+    url?: string;
+    base64?: string;
+  };
+}
+
+export interface EmbedParams {
+  model?: string;
+  input: string | string[] | EmbedInput[];
+  user?: string;
+  dimensions?: number;
+  encoding_format?: 'float' | 'base64';
+}
+
+export interface EmbedResponseData {
+  object: string;
+  embedding?: number[] | number[][];
+  index: number;
+}
+
+export interface EmbedResponse {
+  object: string;
+  data: EmbedResponseData[];
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+  provider?: string;
+}
+
+// ============================================================================
+// Image Generation Types
+// ============================================================================
+
+export interface ImageGenerateParams {
+  model?: string;
+  prompt: string;
+  n?: number;
+  quality?: 'standard' | 'hd';
+  size?: string;
+  style?: string;
+  response_format?: 'b64_json' | 'url';
+  seed?: number;
+  user?: string;
+}
+
+export interface ImageGenerateResponseData {
+  b64_json?: string;
+  url?: string;
+  revised_prompt?: string;
+}
+
+export interface ImageGenerateResponse {
+  created: number;
+  data: ImageGenerateResponseData[];
+  provider?: string;
+}
+
+// ============================================================================
+// 3D Generation Types
+// ============================================================================
+
+export interface Model3DGenerateParams {
+  model?: string;
+  prompt: string;
+  mesh_format?: 'obj' | 'glb' | 'fbx';
+  texture_format?: 'png' | 'jpg';
+}
+
+export interface Model3DGenerateResponse {
+  task_id: string;
+  status: string;
+  model_url?: string;
+  provider?: string;
+}

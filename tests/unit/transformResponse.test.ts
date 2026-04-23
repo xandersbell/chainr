@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { transformResponse } from '../../src/core/transformResponse';
+import { transformResponse, transformNomicEmbedResponse, transformJinaEmbedResponse, transformVoyageEmbedResponse, transformSegmindImageResponse, transformRecraftImageResponse, transformStabilityImageResponse, transformMeshyResponse, transformTripo3DResponse } from '../../src/core/transformResponse';
 import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER } from '../../src/globals';
-import type { ChatCompletionResponse, ErrorResponse } from '../../src/core/types';
+import type { ChatCompletionResponse, ErrorResponse, EmbedResponse, ImageGenerateResponse, Model3DGenerateResponse } from '../../src/core/types';
 
 describe('transformResponse', () => {
   // ============================================
@@ -553,6 +553,162 @@ describe('transformResponse', () => {
 
       expect(result.error.type).toBe('provider_error');
       expect(result.error.provider).toBe('unknown-provider');
+    });
+  });
+
+  describe('Embeddings Response Transforms', () => {
+    describe('Nomic Embeddings', () => {
+      it('should transform Nomic embeddings response', () => {
+        const rawResponse = {
+          data: [
+            { embedding: [0.1, 0.2, 0.3], index: 0 },
+            { embedding: [0.4, 0.5, 0.6], index: 1 },
+          ],
+          model: 'nomic-embed-text-v1.5',
+          usage: { prompt_tokens: 10, total_tokens: 20 },
+        };
+
+        const result = transformNomicEmbedResponse(rawResponse) as EmbedResponse;
+
+        expect(result.provider).toBe('nomic');
+        expect(result.model).toBe('nomic-embed-text-v1.5');
+        expect(result.data).toHaveLength(2);
+        expect(result.data[0].embedding).toEqual([0.1, 0.2, 0.3]);
+        expect(result.data[1].embedding).toEqual([0.4, 0.5, 0.6]);
+      });
+    });
+
+    describe('Jina Embeddings', () => {
+      it('should transform Jina embeddings response', () => {
+        const rawResponse = {
+          data: [
+            { embedding: [0.1, 0.2], index: 0 },
+          ],
+          model: 'jina-embeddings-v4',
+          usage: { prompt_tokens: 5, total_tokens: 10 },
+        };
+
+        const result = transformJinaEmbedResponse(rawResponse) as EmbedResponse;
+
+        expect(result.provider).toBe('jina');
+        expect(result.model).toBe('jina-embeddings-v4');
+        expect(result.data[0].embedding).toEqual([0.1, 0.2]);
+      });
+    });
+
+    describe('Voyage Embeddings', () => {
+      it('should transform Voyage embeddings response', () => {
+        const rawResponse = {
+          data: [
+            { embedding: [0.9, 0.8, 0.7], index: 0 },
+          ],
+          model: 'voyage-3-lite',
+          usage: { prompt_tokens: 3, total_tokens: 6 },
+        };
+
+        const result = transformVoyageEmbedResponse(rawResponse) as EmbedResponse;
+
+        expect(result.provider).toBe('voyage');
+        expect(result.model).toBe('voyage-3-lite');
+        expect(result.data[0].embedding).toEqual([0.9, 0.8, 0.7]);
+      });
+    });
+  });
+
+  describe('Image Generation Response Transforms', () => {
+    describe('Segmind', () => {
+      it('should transform Segmind image response', () => {
+        const rawResponse = {
+          image: 'base64encodedimage',
+          seed: 12345,
+        };
+
+        const result = transformSegmindImageResponse(rawResponse) as ImageGenerateResponse;
+
+        expect(result.provider).toBe('segmind');
+        expect(result.data[0].b64_json).toBe('base64encodedimage');
+      });
+    });
+
+    describe('Recraft', () => {
+      it('should transform Recraft image response', () => {
+        const rawResponse = {
+          url: 'https://example.com/image.png',
+          revised_prompt: 'a beautiful sunset over ocean',
+        };
+
+        const result = transformRecraftImageResponse(rawResponse) as ImageGenerateResponse;
+
+        expect(result.provider).toBe('recraft-ai');
+        expect(result.data[0].url).toBe('https://example.com/image.png');
+        expect(result.data[0].revised_prompt).toBe('a beautiful sunset over ocean');
+      });
+    });
+
+    describe('Stability AI', () => {
+      it('should transform Stability AI image response', () => {
+        const rawResponse = {
+          artifacts: [
+            { base64: 'abc123', finishReason: 'SUCCESS' },
+            { base64: 'def456', finishReason: 'SUCCESS' },
+          ],
+        };
+
+        const result = transformStabilityImageResponse(rawResponse) as ImageGenerateResponse;
+
+        expect(result.provider).toBe('stability-ai');
+        expect(result.data).toHaveLength(2);
+        expect(result.data[0].b64_json).toBe('abc123');
+        expect(result.data[1].b64_json).toBe('def456');
+      });
+    });
+  });
+
+  describe('3D Generation Response Transforms', () => {
+    describe('Meshy', () => {
+      it('should transform Meshy 3D response', () => {
+        const rawResponse = {
+          id: 'task-123',
+          status: 'completed',
+          model_url: 'https://example.com/model.glb',
+        };
+
+        const result = transformMeshyResponse(rawResponse) as Model3DGenerateResponse;
+
+        expect(result.provider).toBe('meshy');
+        expect(result.task_id).toBe('task-123');
+        expect(result.status).toBe('completed');
+        expect(result.model_url).toBe('https://example.com/model.glb');
+      });
+
+      it('should handle pending status', () => {
+        const rawResponse = {
+          id: 'task-456',
+          status: 'pending',
+        };
+
+        const result = transformMeshyResponse(rawResponse) as Model3DGenerateResponse;
+
+        expect(result.status).toBe('pending');
+        expect(result.model_url).toBeUndefined();
+      });
+    });
+
+    describe('Tripo3D', () => {
+      it('should transform Tripo3D response', () => {
+        const rawResponse = {
+          id: 'tripo-task-789',
+          status: 'completed',
+          result: { model_url: 'https://example.com/tripo.glb' },
+        };
+
+        const result = transformTripo3DResponse(rawResponse) as Model3DGenerateResponse;
+
+        expect(result.provider).toBe('tripo3d');
+        expect(result.task_id).toBe('tripo-task-789');
+        expect(result.status).toBe('completed');
+        expect(result.model_url).toBe('https://example.com/tripo.glb');
+      });
     });
   });
 });

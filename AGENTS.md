@@ -1,33 +1,39 @@
 # AGENTS.md — Chainr
 
-Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js.
+LLM gateway SDK with priority-based fallback and weighted load balancing.
 
 ---
 
 ## 项目状态
 
-- **状态**: ✅ Production Ready
-- **测试**: 278 tests passing
-- **Streaming**: 51 providers
-- **依赖**: Zero external deps (pure fetch)
+| 维度 | 状态 |
+|------|------|
+| 测试 | 278 tests, 全部通过 |
+| Provider | 10 个已实现 |
+| Streaming | 部分实现（OpenAI、Anthropic、Google、Cohere） |
+| Phase 1 & 2 | ✅ 完成 |
+| Phase 3 (Nested Strategies) | ⬜ 未开始 |
+| Phase 4 (Firebase) | ⬜ 未开始 |
+
+**实际状态**: 核心功能（fallback/loadbalance/single + 10 provider）已完成并通过测试。但有已知 gap，Phase 3/4 未开始。
 
 ---
 
 ## 技术栈
 
 - **语言**: TypeScript (strict mode)
-- **构建**: tsup
 - **测试**: Vitest
+- **构建**: tsup
 - **运行时**: Node.js 18+ / Firebase Cloud Functions
+- **依赖**: 零外部运行时依赖（纯 fetch）
 
 ---
 
 ## 开发命令
 
 ```bash
-npm test          # 运行所有测试
-npm run test:watch # watch 模式
-npm run build      # 构建 (tsup → dist/)
+npm test      # 运行所有测试 (278 tests)
+npm run build # 构建到 dist/
 ```
 
 ---
@@ -35,138 +41,195 @@ npm run build      # 构建 (tsup → dist/)
 ## 核心架构
 
 ### 入口
-- `src/index.ts` — SDK 导出
+- `src/index.ts` — SDK 导出（Chainr, Strategies, ChatCompletionChunk）
 
-### 核心模块 (`src/core/`)
+### Router (`src/core/Router.ts`)
+主类，接收配置，执行 strategy，返回统一格式响应。
 
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback', // 'fallback' | 'loadbalance' | 'single'
+  targets: [...],
+  retry?: { attempts: number; onStatusCodes: number[] }
+});
+```
+
+### Strategies (`src/core/strategies/`)
+| Strategy | 行为 |
+|----------|------|
+| FallbackStrategy | 顺序尝试，失败则回退 |
+| LoadBalanceStrategy | 按 weight 权重分发，单次尝试 |
+| SingleStrategy | 仅用第一个 target |
+
+### Request Transform (`src/core/transformRequest.ts`)
+将 OpenAI 格式请求转换为各 provider 格式。
+
+**已实现 10 个 provider**:
+- OpenAI — 直接透传
+- Anthropic — 转换 Messages API 格式
+- Vertex AI — 转换 REST API 格式
+- OpenRouter, Together AI, Perplexity, Groq, DeepSeek, Mistral AI, Cohere — OpenAI-compatible 透传
+
+### Response Transform (`src/core/transformResponse.ts`)
+将各 provider 响应转换为统一 OpenAI 格式。
+
+### Streaming (`src/core/`)
 | 文件 | 作用 |
 |------|------|
-| `Router.ts` | 主类 Chainr，接收请求并选择 strategy |
-| `RetryHandler.ts` | 指数退避重试 |
-| `transformRequest.ts` | 13 个 provider 的请求转换 |
-| `transformResponse.ts` | 响应转换 |
-| `streamUtils.ts` | 40+ provider 的 streaming 工具 |
 | `sseParser.ts` | SSE 解析 |
-| `transform*Stream.ts` | 各 provider 的流式响应转换 |
-
-### Strategy 模式 (`src/core/strategies/`)
-
-| 文件 | 作用 |
-|------|------|
-| `FallbackStrategy.ts` | 按优先级尝试，失败则回退 |
-| `LoadBalanceStrategy.ts` | 按 weight 权重分发 |
-| `SingleStrategy.ts` | 单 provider |
-
-### 类型定义 (`src/types/`)
-
-- `requestBody.ts` — `Params`, `Options`, `Message` 等
+| `streamUtils.ts` | 流式工具 |
+| `transformOpenAIStream.ts` | OpenAI 流式转换 |
+| `transformAnthropicStream.ts` | Anthropic SSE → OpenAI |
+| `transformGoogleStream.ts` | Google SSE → OpenAI |
+| `transformCohereStream.ts` | Cohere SSE → OpenAI |
+| `transformBedrockStream.ts` | Bedrock 流式转换 |
+| `types/streaming.ts` | 流式类型定义 |
 
 ---
 
-## Provider 注册
-
-Provider key 在 `src/globals.ts` 中定义。
-
----
-
-## 添加新 Provider 的流程
-
-### 1. 请求转换（如果需要）
-
-在 `src/core/transformRequest.ts` 中添加 provider 的 `transform` 函数。
-
-### 2. Streaming 转换（如果需要）
-
-在 `src/core/` 下创建 `transform<Provider>Stream.ts`，或添加到 `streamUtils.ts`。
-
-### 3. Provider Key
-
-在 `src/globals.ts` 的 `PROVIDER_URLS` 或相关常量中添加 provider 标识。
-
-### 4. 测试
-
-在 `tests/` 下添加对应的 test 文件。
-
----
-
-## 测试结构
+## 目录结构
 
 ```
+src/
+├── index.ts                 # SDK 导出
+├── globals.ts               # 常量定义
+├── types/
+│   └── requestBody.ts       # Params, Message, Options
+└── core/
+    ├── Router.ts            # 主类
+    ├── types.ts             # ChainrConfig, StrategyResult
+    ├── transformRequest.ts  # 请求转换 (10 providers)
+    ├── transformResponse.ts # 响应转换
+    ├── RetryHandler.ts       # 指数退避重试
+    ├── sseParser.ts          # SSE 解析
+    ├── streamUtils.ts       # 流式工具
+    ├── transform*Stream.ts   # 各 provider 流式转换
+    └── strategies/
+        ├── FallbackStrategy.ts
+        ├── LoadBalanceStrategy.ts
+        └── SingleStrategy.ts
+
 tests/
-├── transformRequest.test.ts      # 67 tests, 13 providers
-├── transformResponse.test.ts     # 26 tests
-├── streaming/
-│   ├── types.test.ts             # 18 tests, 51 providers
-│   ├── streamUtils.test.ts       # 16 tests
-│   ├── sseParser.test.ts         # 14 tests
-│   └── transform*Stream.test.ts
-├── RetryHandler.test.ts          # 23 tests
-├── strategies/
-│   ├── FallbackStrategy.test.ts   # 12 tests
-│   ├── LoadBalanceStrategy.test.ts # 9 tests
-│   └── SingleStrategy.test.ts    # 13 tests
-├── Router.test.ts
-└── real-http.test.ts             # 集成测试
+├── setup.ts
+├── unit/
+│   ├── transformRequest.test.ts
+│   ├── transformResponse.test.ts
+│   ├── RetryHandler.test.ts
+│   ├── strategies/
+│   └── streaming/
+└── integration/
+    ├── Router.test.ts
+    └── real-http.test.ts
+
+docs/
+├── phase1-evaluation.md     # 代码评估报告（含已知问题）
+├── PROVIDER_EVALUATION*.md # Provider 支持分析
+└── plan/DEVELOPMENT_PLAN.md # 开发计划
 ```
 
 ---
 
-## 常见任务
+## 已知问题与限制
 
-### 新增 Provider 的请求转换
+### Phase 3 未实现
+| 问题 | 说明 | 影响 |
+|------|------|------|
+| Nested Strategies | 不支持策略嵌套 | 无法配置复杂拓扑 |
+| Vertex AI GCP OAuth | 仅支持 API Key | GCP 生产环境无法使用 |
+
+### Streaming 部分实现
+- ✅ OpenAI: pass-through
+- ✅ Anthropic: SSE → OpenAI
+- ✅ Google: SSE → OpenAI
+- ✅ Cohere: SSE → OpenAI
+- ✅ OpenRouter: pass-through
+- ❌ 其他 6 个 provider: 未测试/未实现
+
+### Integration Test 限制
+- `real-http.test.ts` 需要真实 API key，跳过而非真正请求
+- 无 msw/nock HTTP mock 测试层
+
+---
+
+## 添加新 Provider
+
+### 1. 请求转换 (`transformRequest.ts`)
+
+在 switch 中添加 case，调用 transform 函数：
 
 ```typescript
-// src/core/transformRequest.ts
-export const providerTransform: ProviderTransform = {
-  // transform function
-};
+case 'my-provider':
+  return transformMyProviderRequest(params, opts);
 ```
 
-### 新增 Provider 的 Streaming 转换
+实现 transform 函数，构造 `TransformResult`：
 
 ```typescript
-// src/core/transformProviderStream.ts
-export function transformProviderStream(/* ... */) {
-  // 处理 provider 特定的 SSE 格式
+function transformMyProviderRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  return {
+    url: 'https://api.myprovider.com/v1/chat/completions',
+    headers: { 'Authorization': `Bearer ${opts.apiKey}` },
+    body: { model: params.model, messages: params.messages, ... }
+  };
 }
 ```
 
-### 添加测试
+### 2. 响应转换 (`transformResponse.ts`)
 
-```typescript
-// tests/transformProvider.test.ts
-import { describe, it, expect } from 'vitest';
-// ...
-```
+在 switch 中添加 case。
+
+### 3. 常量定义 (`globals.ts`)
+
+在 `VALID_PROVIDERS` 数组中添加 provider key。
+
+### 4. 测试
+
+在 `tests/unit/transformRequest.test.ts` 和 `transformResponse.test.ts` 中添加测试。
 
 ---
 
-## Provider 列表（51 个）
+## 类型定义
 
-### Core (10)
-OpenAI, Anthropic, Vertex AI, OpenRouter, Together AI, Perplexity, Groq, DeepSeek, Mistral AI, Cohere
+### ChainrConfig (`src/core/types.ts`)
+```typescript
+interface ChainrConfig {
+  strategy: 'fallback' | 'loadbalance' | 'single';
+  targets: Array<{
+    provider: string;
+    apiKey?: string;
+    weight?: number;
+    retry?: { attempts: number; onStatusCodes: number[] };
+    // Provider-specific options
+    vertexProjectId?: string;
+    vertexRegion?: string;
+  }>;
+  retry?: { attempts: number; onStatusCodes: number[] };
+}
+```
 
-### Azure (2)
-Azure OpenAI, Azure AI Inference
-
-### Chinese/Asian (4)
-DashScope, Zhipu AI, LingYi, Moonshot
-
-### xAI (1)
-x-ai (Grok)
-
-### Infrastructure (6)
-Lambda, Bedrock, SageMaker, Oracle, OVHcloud
-
-### GPU Cloud (12)
-HuggingFace, Anyscale, Fireworks AI, Workers AI, DeepInfra, Predibase, SambaNova, Cerebras, Nebius, Hyperbolic, Modal, Replicate
-
-### Emerging (16)
-302.AI, AI21 (Jamba), AI6, Bytez, CometAPI, DeepBricks, Featherless AI, GitHub Models, Inference Net, IOIntelligence, Kluster AI, Lepton, Lemonfox AI, Matter AI, NextBit, Novita AI, nScale, Owl AI, SiliconFlow, Stability AI, Triton, Upstage (Solar)
+### Params (`src/types/requestBody.ts`)
+```typescript
+interface Params {
+  model?: string;
+  messages?: Message[];
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  stream?: boolean;
+  stop?: string | string[];
+  tools?: Tool[];
+  tool_choice?: ToolChoice;
+  // Provider-specific
+  thinking?: { type: 'enabled'; budget_tokens: number }; // DeepSeek
+  reasoning_effort?: string; // Cohere
+}
+```
 
 ---
 
 ## 相关文档
 
-- 完整 API 文档: `README.md`
-- Provider 差距分析: `wiki/sources/20260424_portkey-chainr-provider-gap.md`
+- `README.md` — 项目概述（声称 Production Ready，与 Phase 3/4 未开始矛盾）
+- `docs/phase1-evaluation.md` — 代码评估报告，含 bug 修复记录
+- `docs/PROVIDER_EVALUATION_COMPREHENSIVE.md` — Provider 支持详情
+- `docs/plan/DEVELOPMENT_PLAN.md` — 开发计划，Phase 3/4 未开始

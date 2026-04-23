@@ -81,3 +81,37 @@ export interface ChainrConfig {
     onStatusCodes: number[];
   };
 }
+
+export interface EmbedResponseData {
+  object: string;
+  embedding?: number[] | number[][];
+  index: number;
+}
+
+export interface EmbedResponse {
+  object: string;
+  data: EmbedResponseData[];
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+  provider?: string;
+}
+
+export interface ImageGenerateResponse {
+  created: number;
+  data: {
+    b64_json?: string;
+    url?: string;
+    revised_prompt?: string;
+  }[];
+  provider?: string;
+}
+
+export interface Model3DGenerateResponse {
+  task_id: string;
+  status: string;
+  model_url?: string;
+  provider?: string;
+}

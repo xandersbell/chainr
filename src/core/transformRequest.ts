@@ -1,6 +1,6 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL } from '../globals';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -48,6 +48,22 @@ export function transformRequest(
       return transformGithubModelsRequest(params, opts);
     case 'azure-ai':
       return transformAzureAIRequest(params, opts);
+    case NOMIC:
+      return transformNomicEmbedRequest(params, opts);
+    case JINA:
+      return transformJinaEmbedRequest(params, opts);
+    case VOYAGE:
+      return transformVoyageEmbedRequest(params, opts);
+    case SEGMIND:
+      return transformSegmindImageRequest(params, opts);
+    case RECRAFT_AI:
+      return transformRecraftImageRequest(params, opts);
+    case STABILITY_AI:
+      return transformStabilityImageRequest(params, opts);
+    case MESHY:
+      return transformMeshyRequest(params, opts);
+    case TRIPO3D:
+      return transformTripo3DRequest(params, opts);
     default:
       return {
         body: params as Record<string, unknown>,
@@ -426,4 +442,203 @@ function filterParams(params: Params): Record<string, unknown> {
   if (params.tool_choice !== undefined) result.tool_choice = params.tool_choice;
 
   return result;
+}
+
+function transformNomicEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input as string[];
+  const body: Record<string, unknown> = {
+    input: input,
+    model: params.model || 'nomic-embed-text-v1.5',
+  };
+
+  if (opts.taskType) {
+    body.task_type = opts.taskType;
+  }
+
+  return {
+    body,
+    headers,
+    url: `${NOMIC_URL}/embedding/text`,
+  };
+}
+
+function transformJinaEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      input: params.input,
+      model: params.model || 'jina-embeddings-v4',
+      normalized: true,
+    },
+    headers,
+    url: `${JINA_URL}/embeddings`,
+  };
+}
+
+function transformVoyageEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    input: params.input,
+    model: params.model || 'voyage-3-lite',
+  };
+
+  if (opts.inputType) {
+    body.input_type = opts.inputType;
+  }
+
+  if (opts.outputDimension) {
+    body.output_dimension = opts.outputDimension;
+  }
+
+  return {
+    body,
+    headers,
+    url: `${VOYAGE_URL}/v1/embeddings`,
+  };
+}
+
+function transformSegmindImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['x-api-key'] = key;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+  };
+
+  if (params.size) {
+    const [width, height] = params.size.split('x').map(Number);
+    if (width && height) {
+      body.img_width = width;
+      body.img_height = height;
+    }
+  }
+
+  if (params.n) body.n = params.n;
+  if (params.quality) body.quality = params.quality;
+  if (params.style) body.style = params.style;
+
+  return {
+    body,
+    headers,
+    url: `${SEGMIND_URL}/v1/image/sdxl`,
+  };
+}
+
+function transformRecraftImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+    response_format: 'b64_json',
+  };
+
+  if (params.model) body.model = params.model;
+  if (opts.styleId) body.style_id = opts.styleId;
+
+  return {
+    body,
+    headers,
+    url: `${RECRAFT_AI_URL}/v1/images/generation`,
+  };
+}
+
+function transformStabilityImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    text_prompts: [{ text: params.prompt, weight: 1 }],
+  };
+
+  if (params.size) {
+    const [width, height] = params.size.split('x').map(Number);
+    if (width && height) {
+      body.width = width;
+      body.height = height;
+    }
+  }
+
+  if (params.n) body.n = params.n;
+  if (params.seed) body.seed = params.seed;
+  if (params.quality) body.quality = params.quality;
+
+  const model = params.model || 'stable-diffusion-v1-6';
+  return {
+    body,
+    headers,
+    url: `${STABILITY_AI_URL}/v1/generation/${model}/text-to-image`,
+  };
+}
+
+function transformMeshyRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+    style_preset: (opts.stylePreset as string) || 'realistic',
+  };
+
+  const meshyMode = (opts.mode as string) || 'text-to-3d';
+  const endpoint = meshyMode === 'image-to-3d' ? 'image-to-3d' : 'text-to-3d';
+
+  return {
+    body,
+    headers,
+    url: `${MESHY_URL}/v1/${endpoint}`,
+  };
+}
+
+function transformTripo3DRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      prompt: params.prompt,
+      model: params.model || 'tripo3d',
+    },
+    headers,
+    url: `${TRIPO3D_URL}/v1/tasks`,
+  };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { transformRequest } from '../../src/core/transformRequest';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER } from '../../src/globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, NOMIC, JINA, VOYAGE, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D } from '../../src/globals';
 import type { Params, Message, Tool, ToolChoice } from '../../src/types/requestBody';
 
 function createMessages(content: string): Message[] {
@@ -960,6 +960,283 @@ describe('transformRequest', () => {
       });
 
       expect(result.url).toBe('https://example.ml.azure.com/deployments/llama');
+    });
+  });
+
+  describe('Nomic Embeddings Provider', () => {
+    it('body contains input array and model', () => {
+      const params: Params = {
+        model: 'nomic-embed-text-v1.5',
+        input: ['hello world', 'goodbye world'],
+      };
+      const result = transformRequest(params, NOMIC, { apiKey: 'nomic-key' });
+
+      expect(result.body).toHaveProperty('input');
+      expect(result.body.input).toEqual(['hello world', 'goodbye world']);
+      expect(result.body).toHaveProperty('model', 'nomic-embed-text-v1.5');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { input: ['test'] };
+      const result = transformRequest(params, NOMIC, { apiKey: 'nomic-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer nomic-secret');
+    });
+
+    it('uses correct Nomic URL', () => {
+      const params: Params = { input: ['test'] };
+      const result = transformRequest(params, NOMIC, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.nomic.ai/embedding/text');
+    });
+
+    it('includes task_type when provided', () => {
+      const params: Params = { input: ['test'] };
+      const result = transformRequest(params, NOMIC, {
+        apiKey: 'key',
+        taskType: 'search_document',
+      });
+
+      expect(result.body).toHaveProperty('task_type', 'search_document');
+    });
+  });
+
+  describe('Jina Embeddings Provider', () => {
+    it('body contains input and normalized', () => {
+      const params: Params = {
+        model: 'jina-embeddings-v4',
+        input: 'hello world',
+      };
+      const result = transformRequest(params, JINA, { apiKey: 'jina-key' });
+
+      expect(result.body).toHaveProperty('input', 'hello world');
+      expect(result.body).toHaveProperty('normalized', true);
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, JINA, { apiKey: 'jina-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer jina-secret');
+    });
+
+    it('uses correct Jina URL', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, JINA, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.jina.ai/embeddings');
+    });
+  });
+
+  describe('Voyage Embeddings Provider', () => {
+    it('body contains input and model', () => {
+      const params: Params = {
+        model: 'voyage-3-lite',
+        input: 'hello world',
+      };
+      const result = transformRequest(params, VOYAGE, { apiKey: 'voyage-key' });
+
+      expect(result.body).toHaveProperty('input', 'hello world');
+      expect(result.body).toHaveProperty('model', 'voyage-3-lite');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, VOYAGE, { apiKey: 'voyage-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer voyage-secret');
+    });
+
+    it('uses correct Voyage URL', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, VOYAGE, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.voyageai.com/v1/embeddings');
+    });
+
+    it('includes input_type when provided', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, VOYAGE, {
+        apiKey: 'key',
+        inputType: 'document',
+      });
+
+      expect(result.body).toHaveProperty('input_type', 'document');
+    });
+
+    it('includes output_dimension when provided', () => {
+      const params: Params = { input: 'test' };
+      const result = transformRequest(params, VOYAGE, {
+        apiKey: 'key',
+        outputDimension: 1024,
+      });
+
+      expect(result.body).toHaveProperty('output_dimension', 1024);
+    });
+  });
+
+  describe('Segmind Image Generation Provider', () => {
+    it('body contains prompt', () => {
+      const params: Params = {
+        prompt: 'a beautiful sunset',
+      };
+      const result = transformRequest(params, SEGMIND, { apiKey: 'segmind-key' });
+
+      expect(result.body).toHaveProperty('prompt', 'a beautiful sunset');
+    });
+
+    it('headers contain x-api-key', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, SEGMIND, { apiKey: 'segmind-secret' });
+
+      expect(result.headers).toHaveProperty('x-api-key', 'segmind-secret');
+    });
+
+    it('uses correct Segmind URL', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, SEGMIND, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.segmind.com/v1/image/sdxl');
+    });
+
+    it('transforms size to img_width and img_height', () => {
+      const params: Params = { prompt: 'test', size: '1024x1024' };
+      const result = transformRequest(params, SEGMIND, { apiKey: 'key' });
+
+      expect(result.body).toHaveProperty('img_width', 1024);
+      expect(result.body).toHaveProperty('img_height', 1024);
+    });
+  });
+
+  describe('Recraft Image Generation Provider', () => {
+    it('body contains prompt and response_format', () => {
+      const params: Params = {
+        prompt: 'a modern logo',
+      };
+      const result = transformRequest(params, RECRAFT_AI, { apiKey: 'recraft-key' });
+
+      expect(result.body).toHaveProperty('prompt', 'a modern logo');
+      expect(result.body).toHaveProperty('response_format', 'b64_json');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, RECRAFT_AI, { apiKey: 'recraft-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer recraft-secret');
+    });
+
+    it('uses correct Recraft URL', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, RECRAFT_AI, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.recraft.ai/v1/images/generation');
+    });
+
+    it('includes style_id when provided', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, RECRAFT_AI, {
+        apiKey: 'key',
+        styleId: 'vibrant',
+      });
+
+      expect(result.body).toHaveProperty('style_id', 'vibrant');
+    });
+  });
+
+  describe('Stability AI Image Generation Provider', () => {
+    it('body contains text_prompts array', () => {
+      const params: Params = {
+        prompt: 'a fantasy landscape',
+      };
+      const result = transformRequest(params, STABILITY_AI, { apiKey: 'stability-key' });
+
+      expect(result.body).toHaveProperty('text_prompts');
+      expect(result.body.text_prompts).toEqual([{ text: 'a fantasy landscape', weight: 1 }]);
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, STABILITY_AI, { apiKey: 'stability-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer stability-secret');
+    });
+
+    it('uses correct Stability AI URL with model', () => {
+      const params: Params = { prompt: 'test', model: 'stable-diffusion-v1-6' };
+      const result = transformRequest(params, STABILITY_AI, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image');
+    });
+
+    it('transforms size to width and height', () => {
+      const params: Params = { prompt: 'test', size: '512x512' };
+      const result = transformRequest(params, STABILITY_AI, { apiKey: 'key' });
+
+      expect(result.body).toHaveProperty('width', 512);
+      expect(result.body).toHaveProperty('height', 512);
+    });
+  });
+
+  describe('Meshy 3D Generation Provider', () => {
+    it('body contains prompt and style_preset', () => {
+      const params: Params = {
+        prompt: 'a wooden chair',
+      };
+      const result = transformRequest(params, MESHY, { apiKey: 'meshy-key' });
+
+      expect(result.body).toHaveProperty('prompt', 'a wooden chair');
+      expect(result.body).toHaveProperty('style_preset', 'realistic');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, MESHY, { apiKey: 'meshy-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer meshy-secret');
+    });
+
+    it('uses text-to-3d endpoint by default', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, MESHY, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.meshy.ai/v1/text-to-3d');
+    });
+
+    it('uses image-to-3d endpoint when mode is image-to-3d', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, MESHY, {
+        apiKey: 'key',
+        mode: 'image-to-3d',
+      });
+
+      expect(result.url).toBe('https://api.meshy.ai/v1/image-to-3d');
+    });
+  });
+
+  describe('Tripo3D Generation Provider', () => {
+    it('body contains prompt and model', () => {
+      const params: Params = {
+        prompt: 'a detailed robot',
+      };
+      const result = transformRequest(params, TRIPO3D, { apiKey: 'tripo-key' });
+
+      expect(result.body).toHaveProperty('prompt', 'a detailed robot');
+      expect(result.body).toHaveProperty('model', 'tripo3d');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, TRIPO3D, { apiKey: 'tripo-secret' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer tripo-secret');
+    });
+
+    it('uses correct Tripo3D URL', () => {
+      const params: Params = { prompt: 'test' };
+      const result = transformRequest(params, TRIPO3D, { apiKey: 'key' });
+
+      expect(result.url).toBe('https://api.tripo3d.ai/v1/tasks');
     });
   });
 });

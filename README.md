@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js
 
-**Status**: ✅ Production Ready — 278 tests passing, 51 streaming providers
+**Status**: 🟡 In Development — 278 tests passing, 10 providers implemented
 
 ## Features
 
@@ -15,9 +15,9 @@
 
 ## Supported Providers
 
-### Streaming Providers (51 total)
+### Streaming Providers (10 total, partial implementation)
 
-Chainr supports streaming for 51 providers via OpenAI-compatible passthrough or dedicated transforms.
+Chainr supports streaming for 10 providers via OpenAI-compatible passthrough or dedicated transforms. Streaming for additional providers (Azure, Chinese providers, GPU clouds, etc.) is not yet implemented.
 
 #### Core Providers (10)
 | Provider | Status | API Style |
@@ -317,8 +317,8 @@ src/
     ├── transformRequest.ts    # Provider request transform (13 providers)
     ├── transformResponse.ts   # Provider response transform
     ├── streamUtils.ts         # Streaming utilities (40+ providers)
-    ├── types/
-    │   └── streaming.ts       # Streaming types (51 providers)
+│   └── types
+    │       └── streaming.ts       # Streaming types (10 providers)
     ├── sseParser.ts          # SSE parsing utilities
     ├── transformOpenAIStream.ts
     ├── transformAnthropicStream.ts
@@ -347,7 +347,7 @@ npm run test:watch # Watch mode
 |-----------|-------|----------|
 | transformRequest.test.ts | 67 | 13 providers + filters |
 | transformResponse.test.ts | 26 | success/error paths |
-| streaming/types.test.ts | 18 | streaming types + 51 providers |
+| streaming/types.test.ts | 18 | streaming types + 10 providers |
 | streaming/streamUtils.test.ts | 16 | split patterns |
 | streaming/sseParser.test.ts | 14 | SSE parsing |
 | streaming/transformOpenAIStream.test.ts | 16 | passthrough streaming |
@@ -382,7 +382,7 @@ Default retry config: 3 attempts, exponential backoff (100ms * 2^attempt), max 6
 
 ## Streaming Support
 
-Chainr supports streaming via SSE (Server-Sent Events) for 51 providers:
+Chainr supports streaming via SSE (Server-Sent Events) for 10 providers. Streaming for additional providers is not yet implemented.
 
 - **OpenAI-compatible passthrough**: Most providers use standard OpenAI SSE format
 - **Dedicated transforms**: Anthropic, Google, Cohere, Bedrock, Bytez have custom transforms
