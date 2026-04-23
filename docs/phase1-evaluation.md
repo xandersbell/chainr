@@ -310,54 +310,77 @@ if (Object.keys(generationConfig).length > 0) {
 
 ---
 
-## 五次评估（2026-04-23 23:39）
+## 六次评估（2026-04-24 00:47）
 
 ### 代码状态
 
-**最新 commit**：`9303f15` — docs: update all documentation to latest state（仅文档更新，无代码变更）
+**最新 3 个 commit**：
+- `01c32c5` — feat: add Google and Cohere streaming transforms, fix split patterns
+- `1ac817c` — fix: align streaming implementation with Portkey
+- `91f1dcc` — feat: add streaming support (Phase 3a) — SSE parsing and transform for OpenAI/Anthropic
 
 | 维度 | 状态 |
 |------|------|
-| 测试总数 | **184 tests，100% 通过** ✅ |
-| Provider 数量 | **10 个** ✅ |
-| 代码 | 无变化 |
+| 测试总数 | **254 tests，100% 通过**（184 → 254，+70） |
+| Streaming 测试 | 70 个新增 streaming 测试 |
+| Provider | 10 个 + Bedrock 待集成 |
 
-### 文档更新内容
+### Streaming 支持（Phase 3a ✅ 完成）
 
-`9303f15` 对 5 个文档进行了同步更新：
+新增文件：
 
-| 文档 | 更新内容 |
-|------|----------|
-| `docs/phase1-evaluation.md` | 184 tests、10 providers |
-| `docs/INTEGRATION_TEST_GUIDE.md` | 添加 real-http.test.ts 状态说明 |
-| `docs/PROVIDER_EVALUATION_COMPREHENSIVE.md` | 6 个新 provider 已实现标注 |
-| `docs/PROVIDER_EVALUATION.md` | **已弃用**，指向 COMPREHENSIVE 版 |
-| `docs/plan/DEVELOPMENT_PLAN.md` | 状态更新为 🟢 Phase 1 & 2 Complete |
+| 文件 | 用途 |
+|------|------|
+| `src/core/sseParser.ts` | SSE 数据解析 |
+| `src/core/streamUtils.ts` | 流式工具函数 |
+| `src/core/transformOpenAIStream.ts` | OpenAI 流式转换 |
+| `src/core/transformAnthropicStream.ts` | Anthropic SSE → OpenAI 格式 |
+| `src/core/transformGoogleStream.ts` | Google/Gemini JSON lines → OpenAI |
+| `src/core/transformCohereStream.ts` | Cohere SSE → OpenAI |
+| `src/core/types/streaming.ts` | 流式响应类型定义 |
 
-### Provider 现状（10个）
+覆盖 provider：OpenAI、Anthropic、Google/Gemini、Cohere
 
-OpenAI、Anthropic、Vertex AI、OpenRouter + Together AI、Perplexity、Groq、DeepSeek、Mistral AI、Cohere
+### Bedrock 进展（未集成）
 
-### 问题状态
+**未提交文件**（Working Directory）：
+| 文件 | 行数 | 来源 |
+|------|------|------|
+| `portkey_bedrock_chatComplete.ts` | 1185 | Portkey 原始代码 |
+| `transformBedrockStream.ts` | 323 | chainr 实现 |
+| `transformBytezStream.ts` | 91 | chainr 实现 |
+| `portkey_streamHandler.ts` | — | Portkey 原始代码 |
+
+`transformBedrockStream.ts` 是 chainr 自己的实现（从 Portkey Bedrock 代码适配），其余为 Portkey 原始文件，待审查和集成。
+
+### 问题状态更新
 
 | # | 严重度 | 问题 | 状态 |
 |---|--------|------|------|
 | 1 | 🔴 高 | Provider 名称不一致 | ✅ 已修复 |
 | 2 | 🔴 高 | Anthropic system 消息缺失 | ✅ 已修复 |
-| 3 | 🟡 中 | Nested Strategies 未实现 | 🟡 Phase 3 |
+| 3 | 🟡 中 | Nested Strategies 未实现 | 🟡 Phase 3 仍待 |
 | 4 | 🟡 中 | Integration test HTTP mock | ✅ 已添加 |
 | 5 | 🟢 低 | Provider 常量分散定义 | 🟢 低优先级 |
-| 6 | 🟡 中 | Streaming 支持不完整 | 🟡 Phase 3 |
-| 7 | 🟡 中 | Vertex AI GCP OAuth | 🟡 Phase 3 |
+| **6** | ~~🟡 中~~ | **Streaming 支持不完整** | ✅ **Phase 3a 完成**（OpenAI、Anthropic、Google、Cohere） |
+| 7 | 🟡 中 | Vertex AI GCP OAuth | 🟡 Phase 3 仍待 |
+
+### Phase 3 进度
+
+| 子项 | 状态 |
+|------|------|
+| Streaming（Phase 3a） | ✅ OpenAI、Anthropic、Google、Cohere 完成 |
+| Nested Strategies | 🟡 待实现 |
+| Vertex AI GCP OAuth | 🟡 待实现 |
+| Bedrock 支持 | 🟡 在途（文件已准备，待集成） |
 
 ### 结论
 
-**Phase 1 & 2：✅ 完全完成，文档同步**
+**Phase 3a（Streaming）✅ 完成**：
+- 184 → 254 tests，+70 streaming 测试
+- OpenAI、Anthropic、Google、Cohere 流式响应支持
 
-- 代码无变化，仅文档与最新 commit `9303f15` 保持一致
-- `PROVIDER_EVALUATION.md` 已弃用，统一使用 `PROVIDER_EVALUATION_COMPREHENSIVE.md`
-- Development Plan 状态已更新为 🟢 Phase 1 & 2 Complete
-- Phase 3 待办明确：Nested Strategies、Streaming、Vertex OAuth
+**Phase 3 剩余**：Nested Strategies、Vertex OAuth、Bedrock 集成
 
 ---
 
@@ -365,6 +388,7 @@ OpenAI、Anthropic、Vertex AI、OpenRouter + Together AI、Perplexity、Groq、
 
 | 日期 | 时间 | 更新内容 |
 |------|------|----------|
+| 2026-04-24 | 00:47 | 六次评估：254 tests（+70 streaming），Streaming Phase 3a 完成，Bedrock 文件已准备未集成 |
 | 2026-04-23 | 23:39 | 五次评估：仅文档同步（9303f15），代码无变化，184 tests，10 providers，Phase 1/2 完成 |
 | 2026-04-23 | 23:30 | 四次评估（最终）：184 tests，10 providers，Cohere URL 修正为 v2/chat，Phase 1/2 完成 |
 | 2026-04-23 | 23:21 | 三次评估：确认所有高严重度问题已修复，158 tests，Vertex OAuth 仍待 Phase 3 |
