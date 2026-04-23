@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js
 
-**Status**: ✅ Phase 1 Complete — Core implementation done, ready for testing
+**Status**: ✅ Phase 1 & 2 Complete — 135 tests passing, production ready
 
 ## Features
 
@@ -11,15 +11,16 @@
 - **Zero External Dependencies**: Pure fetch-based, no runtime deps
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
+- **135 Unit Tests**: Comprehensive coverage of core functionality
 
 ## Supported Providers
 
-| Provider | Status |
-|----------|--------|
-| OpenAI | ✅ |
-| Anthropic | ✅ |
-| Google Vertex AI | ✅ |
-| OpenRouter | ✅ |
+| Provider | Status | API Style |
+|----------|--------|-----------|
+| OpenAI | ✅ | Direct passthrough |
+| Anthropic | ✅ | Messages API |
+| Google Vertex AI | ✅ | REST API |
+| OpenRouter | ✅ | OpenAI-compatible |
 
 ## Installation
 
@@ -37,18 +38,13 @@ const chainr = new Chainr({
   targets: [
     {
       provider: 'openai',
-      api_key: process.env.OPENAI_API_KEY,
-      override_params: { model: 'gpt-4o' }
+      apiKey: process.env.OPENAI_API_KEY,
+      overrideParams: { model: 'gpt-4o' }
     },
     {
       provider: 'anthropic',
-      api_key: process.env.ANTHROPIC_API_KEY,
-      override_params: { model: 'claude-3-5-sonnet-20241022' }
-    },
-    {
-      provider: 'openrouter',
-      api_key: process.env.OPENROUTER_API_KEY,
-      override_params: { model: 'openrouter/auto' }
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      overrideParams: { model: 'claude-3-5-sonnet-20241022' }
     }
   ]
 });
@@ -62,27 +58,27 @@ const response = await chainr.chat.completions.create({
 ## Strategies
 
 ### Fallback (Priority-based)
-Tries targets in order, automatically fails over to next on error.
+Tries targets in order, automatically fails over to next on error (429/5xx).
 
 ```typescript
 const chainr = new Chainr({
   strategy: 'fallback',
   targets: [
-    { provider: 'openai', api_key: 'primary-key', weight: 1 },
-    { provider: 'openai', api_key: 'fallback-key', weight: 1 }
+    { provider: 'openai', apiKey: 'primary-key' },
+    { provider: 'openai', apiKey: 'fallback-key' }
   ]
 });
 ```
 
 ### Load Balance (Weighted)
-Distributes requests based on weight values.
+Distributes requests based on weight values (0-1).
 
 ```typescript
 const chainr = new Chainr({
   strategy: 'loadbalance',
   targets: [
-    { provider: 'openai', api_key: 'key1', weight: 0.7 },
-    { provider: 'openai', api_key: 'key2', weight: 0.3 }
+    { provider: 'openai', apiKey: 'key1', weight: 0.7 },
+    { provider: 'openai', apiKey: 'key2', weight: 0.3 }
   ]
 });
 ```
@@ -94,21 +90,14 @@ Uses a single provider without fallback.
 const chainr = new Chainr({
   strategy: 'single',
   targets: [
-    { provider: 'openai', api_key: 'my-key' }
+    { provider: 'openai', apiKey: 'my-key' }
   ]
 });
 ```
 
 ## API Reference
 
-### Chainr
-
-```typescript
-const chainr = new Chainr(config);
-chainr.chat.completions.create(params);
-```
-
-### Config
+### Chainr Config
 
 ```typescript
 interface ChainrConfig {
@@ -124,25 +113,82 @@ interface ChainrConfig {
 }
 ```
 
+### Chat Completion Params
+
+```typescript
+interface Params {
+  model?: string;
+  messages?: Message[];
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  stream?: boolean;
+  stop?: string | string[];
+  tools?: Tool[];
+  tool_choice?: ToolChoice;
+}
+```
+
 ## Architecture
 
 ```
 src/
-├── index.ts                 # SDK entry point
-├── globals.ts              # Provider constants
+├── index.ts                    # SDK entry point
+├── globals.ts                  # Provider constants (OPEN_AI, ANTHROPIC, etc.)
 ├── types/
-│   └── requestBody.ts       # Type definitions
+│   └── requestBody.ts          # Type definitions (Params, Options, etc.)
 └── core/
-    ├── Router.ts           # Main Chainr class
-    ├── types.ts            # Core types
-    ├── transformRequest.ts # Provider request transform
-    ├── transformResponse.ts# Provider response transform
-    ├── RetryHandler.ts     # Exponential backoff retry
+    ├── Router.ts               # Main Chainr class
+    ├── types.ts                # Core types (ChatCompletionResponse, StrategyResult, etc.)
+    ├── transformRequest.ts     # Provider request transform (4 providers)
+    ├── transformResponse.ts    # Provider response transform (4 providers)
+    ├── RetryHandler.ts         # Exponential backoff retry
     └── strategies/
-        ├── FallbackStrategy.ts
-        ├── LoadBalanceStrategy.ts
-        └── SingleStrategy.ts
+        ├── FallbackStrategy.ts  # Priority-based failover
+        ├── LoadBalanceStrategy.ts # Weighted load distribution
+        ├── SingleStrategy.ts    # Single provider
+        └── index.ts            # Strategy exports
 ```
+
+## Testing
+
+```bash
+npm test          # Run all tests
+npm run test:watch # Watch mode
+```
+
+**Test Coverage**: 135 tests across 7 test files
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| transformRequest.test.ts | 40 | 4 providers + filterParams |
+| transformResponse.test.ts | 26 | success/error paths |
+| RetryHandler.test.ts | 23 | retry logic + backoff |
+| FallbackStrategy.test.ts | 12 | fallback behavior |
+| LoadBalanceStrategy.test.ts | 9 | weight selection |
+| SingleStrategy.test.ts | 13 | single target |
+| Router.test.ts | 12 | full pipeline |
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| 429 Rate Limited | Retry with backoff, then fallback to next provider |
+| 500/502/503/504 | Retry with backoff, then fallback |
+| 401 Unauthorized | Fail immediately |
+| Network timeout | Retry up to N times (default: 3) |
+
+## Retry Configuration
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback',
+  retry: { attempts: 3, onStatusCodes: [429, 500, 502, 503, 504] },
+  targets: [...]
+});
+```
+
+Default retry config: 3 attempts, exponential backoff (100ms * 2^attempt), max 60s.
 
 ## License
 

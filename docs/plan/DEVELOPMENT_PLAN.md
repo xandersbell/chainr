@@ -2,7 +2,7 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 1 Complete — Core implementation done (2026-04-23)
+**Status**: 🟢 Phase 1 & 2 Complete — 135 tests passing (2026-04-23)
 
 ---
 
@@ -84,40 +84,53 @@ chainr/
 │   └── core/
 │       ├── Router.ts               # Main Chainr class
 │       ├── types.ts                # Core types
-│       ├── transformRequest.ts      # Provider request transform
+│       ├── transformRequest.ts     # Provider request transform
 │       ├── transformResponse.ts    # Provider response transform
-│       ├── RetryHandler.ts          # Exponential backoff retry
+│       ├── RetryHandler.ts         # Exponential backoff retry
 │       └── strategies/
 │           ├── FallbackStrategy.ts
 │           ├── LoadBalanceStrategy.ts
 │           ├── SingleStrategy.ts
 │           └── index.ts
 ├── tests/
+│   ├── setup.ts                    # Shared mock utilities
+│   ├── unit/
+│   │   ├── transformRequest.test.ts  (40 tests)
+│   │   ├── transformResponse.test.ts (26 tests)
+│   │   ├── RetryHandler.test.ts      (23 tests)
+│   │   └── strategies/
+│   │       ├── FallbackStrategy.test.ts  (12 tests)
+│   │       ├── LoadBalanceStrategy.test.ts (9 tests)
+│   │       └── SingleStrategy.test.ts     (13 tests)
+│   └── integration/
+│       └── Router.test.ts          (12 tests)
 ├── docs/
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts
-└── vitest.config.ts
+├── vitest.config.ts
+└── README.md
 ```
 
 ---
 
 ## 2. Feature Specification
 
-### 2.1 Core Features (Phase 1 Complete)
+### 2.1 Core Features (Phase 1 & 2 Complete ✅)
 
 #### F1: Priority-based Fallback ✅
 
 **Behavior**:
 1. Try provider 1 with api_key
-2. On 429/5xx error, try provider 2
-3. Continue until success or all providers exhausted
-4. Return error from last attempt
+2. On 429/5xx error, retry with exponential backoff
+3. If retries exhausted, try provider 2
+4. Continue until success or all providers exhausted
+5. Return error from last attempt
 
 #### F2: Weighted Load Balancing ✅
 
 **Behavior**:
-1. Calculate cumulative weights
+1. Calculate cumulative weights (normalize missing weights to 1)
 2. Generate random value within total weight
 3. Select provider based on weight ranges
 4. Single attempt (no auto-fallback on failure)
@@ -125,6 +138,14 @@ chainr/
 #### F3: Single Strategy ✅
 
 Uses a single provider without fallback.
+
+#### F4: Retry Logic ✅
+
+- Configurable retry attempts per target or global
+- Exponential backoff: `delay = 100ms * 2^attempt`
+- Max retry timeout: 60 seconds
+- Retryable status codes: [429, 500, 502, 503, 504]
+- Non-retryable: 400, 401, 404 (fail immediately)
 
 ### 2.2 Provider Support
 
@@ -139,17 +160,11 @@ Uses a single provider without fallback.
 
 | Scenario | Behavior |
 |----------|----------|
-| 429 Rate Limited | Try next provider (fallback) or retry (single) |
-| 500/502/503/504 | Try next provider (fallback) |
+| 429 Rate Limited | Retry with backoff, then fallback (fallback mode) |
+| 500/502/503/504 | Retry with backoff, then fallback |
 | 401 Unauthorized | Fail immediately |
-| Network timeout | Retry up to N times, then next provider |
-
-### 2.4 Retry Logic
-
-- Configurable retry attempts per target
-- Exponential backoff: `delay = 100ms * 2^attempt`
-- Max retry timeout: 60 seconds
-- No external dependencies (pure fetch-based)
+| 400 Bad Request | Fail immediately |
+| Network error | Retry with backoff, then next provider |
 
 ---
 
@@ -169,18 +184,29 @@ Uses a single provider without fallback.
 - [x] TypeScript 0 errors
 - [x] Build success (ESM + CJS)
 
-**Status**: Git commit `8f414fb` pushed
+**Git Commit**: `8f414fb`
 
-### Phase 2: Testing & Validation ⬜ Not Started
+### Phase 2: Testing & Validation 🟢 COMPLETE
 
-**Goal**: Unit tests with mocked fetch, integration validation
+**Completed** (2026-04-23):
+- [x] vitest.config.ts with TypeScript and coverage settings
+- [x] tests/setup.ts with shared mock utilities
+- [x] transformRequest.test.ts (40 tests) - all 4 providers
+- [x] transformResponse.test.ts (26 tests) - success/error paths
+- [x] RetryHandler.test.ts (23 tests) - retry logic
+- [x] FallbackStrategy.test.ts (12 tests)
+- [x] LoadBalanceStrategy.test.ts (9 tests)
+- [x] SingleStrategy.test.ts (13 tests)
+- [x] Router.test.ts (12 tests) - full pipeline
+- [x] All 135 tests pass
+- [x] TypeScript 0 errors
+- [x] Build succeeds
 
-**Deliverables**:
-- [ ] Unit tests for FallbackStrategy
-- [ ] Unit tests for LoadBalanceStrategy
-- [ ] Unit tests for transformRequest
-- [ ] Unit tests for transformResponse
-- [ ] Integration test with mocked providers
+**Bugs Fixed**:
+1. `transformResponse.ts` - status 200 with error body now correctly returns ErrorResponse
+2. `RetryHandler.ts` - HTTP errors now properly set lastError before retry loop
+
+**Git Commit**: `09fae26`
 
 ### Phase 3: Advanced Features ⬜ Not Started
 
@@ -214,12 +240,12 @@ const chainr = new Chainr({
   targets: [
     {
       provider: 'openai',
-      api_key: 'sk-xxx',
+      apiKey: 'sk-xxx',
       retry: { attempts: 2, onStatusCodes: [429, 503] }
     },
     {
       provider: 'anthropic',
-      api_key: process.env.ANTHROPIC_API_KEY
+      apiKey: process.env.ANTHROPIC_API_KEY
     }
   ]
 });
@@ -243,21 +269,24 @@ const result = await strategy.execute(targets, params, retryConfig);
 
 ## 5. Testing Strategy
 
-### Unit Tests (Phase 2)
-- Router initialization and validation
-- Strategy selection logic
-- Weight calculation for load balance
-- Retry logic and backoff
+### Test Coverage (135 tests ✅)
 
-### Integration Tests (Phase 2)
-- Fallback: Verify sequential attempts
-- LoadBalance: Verify weight distribution
-- Error propagation: Verify correct error returned
-- Timeout handling
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| transformRequest.test.ts | 40 | 4 providers + filterParams |
+| transformResponse.test.ts | 26 | success/error paths, all providers |
+| RetryHandler.test.ts | 23 | retry logic, exponential backoff |
+| FallbackStrategy.test.ts | 12 | fallback behavior |
+| LoadBalanceStrategy.test.ts | 9 | weight-based selection |
+| SingleStrategy.test.ts | 13 | single target usage |
+| Router.test.ts | 12 | full pipeline integration |
+
+**Total: 135 tests passing**
 
 ### Test Tools
 - **vitest**: Test runner
-- **vi.mock()**: HTTP mocking (fetch)
+- **vi.mock()**: HTTP mocking (fetch), strategy mocking
+- **vi.spyOn()**: Math.random control for load balance tests
 
 ---
 
@@ -276,7 +305,7 @@ const result = await strategy.execute(targets, params, retryConfig);
 
 ## 7. Success Metrics
 
-### Phase 1 Complete (2026-04-23)
+### Phase 1 Complete ✅
 - [x] Project scaffolding complete
 - [x] Chainr Router class implemented
 - [x] All 3 strategies implemented
@@ -284,10 +313,18 @@ const result = await strategy.execute(targets, params, retryConfig);
 - [x] Build success (ESM + CJS)
 - [x] Git push to main
 
+### Phase 2 Complete ✅ (2026-04-23)
+- [x] All 135 tests passing
+- [x] transformRequest coverage complete
+- [x] transformResponse coverage complete
+- [x] RetryHandler coverage complete
+- [x] Strategy coverage complete
+- [x] Router integration tests complete
+- [x] 2 bugs fixed during testing
+- [x] Git push to main
+
 ### Remaining
-- [ ] Phase 2: Unit tests passing
-- [ ] Phase 2: Integration tests passing
-- [ ] Phase 3: LoadBalance + nested strategies working
+- [ ] Phase 3: Nested strategies
 - [ ] Phase 4: Firebase Functions example deployed
 
 ---
@@ -296,4 +333,4 @@ const result = await strategy.execute(targets, params, retryConfig);
 
 MIT - See [LICENSE](./LICENSE)
 
-Chainr is an independent implementation inspired by Portkey AI Gateway (MIT License).
+Chainr is an independent implementation.
