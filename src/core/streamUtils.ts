@@ -20,6 +20,7 @@ export function getSplitPattern(provider: string, requestURL?: string): SplitPat
     'google': '\r\n',
     'deepinfra': '\n',
     'sambanova': '\n',
+    'bytez': ' ',
   };
 
   return splitPatterns[provider] ?? '\n\n';
