@@ -1,0 +1,60 @@
+{
+  "name": "chainr",
+  "version": "0.1.0",
+  "description": "Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "llm",
+    "router",
+    "fallback",
+    "load-balancing",
+    "multi-provider",
+    "openai",
+    "anthropic",
+    "gemini",
+    "vertex",
+    "openrouter",
+    "firebase",
+    "typescript"
+  ],
+  "author": "xandersbell",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xandersbell/chainr"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}
