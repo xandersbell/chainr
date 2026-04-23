@@ -60,6 +60,12 @@ export interface RetryResult {
   error?: string;
 }
 
+export interface RetryResultForStream {
+  success: boolean;
+  response?: Response;
+  error?: string;
+}
+
 export interface StrategyResult {
   success: boolean;
   response?: Record<string, unknown>;

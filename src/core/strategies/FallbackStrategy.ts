@@ -1,7 +1,10 @@
 import type { Params } from '../../types/requestBody';
 import type { StrategyResult } from '../types';
-import { retryRequest } from '../RetryHandler';
+import type { ChatCompletionChunk } from '../types/streaming';
+import { retryRequest, retryRequestForStream } from '../RetryHandler';
 import { transformRequest } from '../transformRequest';
+import { createOpenAIStream, isOpenAICompatibleProvider } from '../transformOpenAIStream';
+import { createAnthropicStream, isAnthropicProvider } from '../transformAnthropicStream';
 
 export class FallbackStrategy {
   async execute(
@@ -26,6 +29,25 @@ export class FallbackStrategy {
       success: false,
       error: lastError || 'All fallback targets exhausted',
     };
+  }
+
+  async executeStream(
+    targets: Array<Record<string, unknown>>,
+    params: Params,
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+  ): Promise<ReadableStream<ChatCompletionChunk>> {
+    let lastError: string | undefined;
+
+    for (const target of targets) {
+      try {
+        const stream = await this.tryTargetStream(target, params, retryConfig);
+        return stream;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new Error(lastError || 'All fallback targets exhausted for streaming');
   }
 
   private async tryTarget(
@@ -54,5 +76,44 @@ export class FallbackStrategy {
       provider,
       error: retryResult.error,
     };
+  }
+
+  private async tryTargetStream(
+    target: Record<string, unknown>,
+    params: Params,
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+  ): Promise<ReadableStream<ChatCompletionChunk>> {
+    const provider = (target['provider'] as string) || 'openai';
+    const mergedParams = {
+      ...params,
+      stream: true,
+      ...(target['overrideParams'] as Record<string, unknown>),
+    };
+
+    const { body, headers, url } = transformRequest(mergedParams, provider, target);
+
+    const retryResult = await retryRequestForStream(
+      url,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      },
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+    );
+
+    if (!retryResult.success || !retryResult.response) {
+      throw new Error(retryResult.error || 'Stream request failed');
+    }
+
+    if (isAnthropicProvider(provider)) {
+      return createAnthropicStream(retryResult.response, provider);
+    }
+
+    if (isOpenAICompatibleProvider(provider)) {
+      return createOpenAIStream(retryResult.response, provider);
+    }
+
+    return createOpenAIStream(retryResult.response, provider);
   }
 }

@@ -1,4 +1,4 @@
-import type { RetryResult } from './types';
+import type { RetryResult, RetryResultForStream } from './types';
 import { MAX_RETRY_LIMIT_MS } from '../globals';
 
 const DEFAULT_RETRY_ATTEMPTS = 3;
@@ -79,4 +79,46 @@ export async function retryRequest(
     response: lastResponse,
     error: lastError || 'Max retries exceeded',
   };
+}
+
+export async function retryRequestForStream(
+  url: string,
+  options: RequestInit,
+  retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+  timeoutMs: number = 60000
+): Promise<RetryResultForStream> {
+  const attempts = retryConfig?.attempts ?? DEFAULT_RETRY_ATTEMPTS;
+  const statusCodes = retryConfig?.onStatusCodes ?? DEFAULT_RETRY_STATUS_CODES;
+
+  let lastError: string | undefined;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await fetchWithTimeout(url, options, timeoutMs);
+
+      if (response.ok) {
+        return { success: true, response };
+      }
+
+      const shouldRetry = statusCodes.includes(response.status);
+      if (!shouldRetry) {
+        return { success: false, error: `HTTP ${response.status}` };
+      }
+
+      lastError = `HTTP ${response.status}`;
+
+      if (attempt < attempts - 1) {
+        const delay = getRetryDelay(attempt);
+        await sleep(delay);
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      if (attempt < attempts - 1) {
+        const delay = getRetryDelay(attempt);
+        await sleep(delay);
+      }
+    }
+  }
+
+  return { success: false, error: lastError || 'Max retries exceeded' };
 }
