@@ -59,6 +59,8 @@ export async function retryRequest(
         return { success: false, response: lastResponse, error: `HTTP ${response.status}` };
       }
 
+      lastError = `HTTP ${response.status}`;
+
       if (attempt < attempts - 1) {
         const delay = getRetryDelay(attempt);
         await sleep(delay);

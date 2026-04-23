@@ -1,0 +1,210 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { LoadBalanceStrategy } from '../../../src/core/strategies/LoadBalanceStrategy';
+
+vi.mock('../../../src/core/RetryHandler', () => ({
+  retryRequest: vi.fn(),
+}));
+
+vi.mock('../../../src/core/transformRequest', () => ({
+  transformRequest: vi.fn(),
+}));
+
+import { retryRequest } from '../../../src/core/RetryHandler';
+import { transformRequest } from '../../../src/core/transformRequest';
+
+describe('LoadBalanceStrategy', () => {
+  let strategy: LoadBalanceStrategy;
+
+  beforeEach(() => {
+    strategy = new LoadBalanceStrategy();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('execute()', () => {
+    it('空 targets 数组时抛出 Error("No targets provided for load balance")', async () => {
+      await expect(
+        strategy.execute([], { messages: [], model: 'test' })
+      ).rejects.toThrow('No targets provided for load balance');
+    });
+  });
+
+  describe('selectByWeight()', () => {
+    it('单个 target 始终返回该 target', async () => {
+      const targets = [{ provider: 'openai', weight: 1 }];
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+
+      const result = strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result).resolves.toBeDefined();
+    });
+
+    it('两个等权重 target (50/50) - random=0.4 时选择第一个', async () => {
+      const targets = [
+        { provider: 'openai', weight: 1 },
+        { provider: 'anthropic', weight: 1 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result.provider).toBe('openai');
+    });
+
+    it('两个等权重 target (50/50) - random=0.6 时选择第二个', async () => {
+      const targets = [
+        { provider: 'openai', weight: 1 },
+        { provider: 'anthropic', weight: 1 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.6);
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.anthropic.com/v1/messages',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result.provider).toBe('anthropic');
+    });
+
+    it('无 weight 属性的 target 默认 weight=1', async () => {
+      const targets = [
+        { provider: 'openai' },
+        { provider: 'anthropic' },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result.provider).toBe('openai');
+    });
+
+    it('70/30 权重分布 - random=0.5 (<0.7) 选择第一个', async () => {
+      const targets = [
+        { provider: 'openai', weight: 0.7 },
+        { provider: 'anthropic', weight: 0.3 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result.provider).toBe('openai');
+    });
+
+    it('70/30 权重分布 - random=0.8 (>0.7) 选择第二个', async () => {
+      const targets = [
+        { provider: 'openai', weight: 0.7 },
+        { provider: 'anthropic', weight: 0.3 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0.8);
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: {},
+        headers: {},
+        url: 'https://api.anthropic.com/v1/messages',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, { messages: [], model: 'test' });
+      expect(result.provider).toBe('anthropic');
+    });
+  });
+
+  describe('tryTarget()', () => {
+    it('retryRequest 返回成功结果时 success=true', async () => {
+      const target = { provider: 'openai', weight: 1 };
+      const params = { messages: [], model: 'test' };
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: { model: 'test', messages: [] },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test' },
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+
+      const mockResponse = { status: 200, data: { id: 'test-123' } };
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: mockResponse,
+      });
+
+      const result = await strategy.execute([target], params);
+
+      expect(result.success).toBe(true);
+      expect(result.response).toEqual(mockResponse);
+      expect(result.provider).toBe('openai');
+      expect(result.error).toBeUndefined();
+    });
+
+    it('retryRequest 返回失败结果时 success=false', async () => {
+      const target = { provider: 'openai', weight: 1 };
+      const params = { messages: [], model: 'test' };
+
+      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+        body: { model: 'test', messages: [] },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test' },
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+
+      const mockResponse = { status: 429, data: { error: 'Rate limited' } };
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        response: mockResponse,
+        error: 'HTTP 429',
+      });
+
+      const result = await strategy.execute([target], params);
+
+      expect(result.success).toBe(false);
+      expect(result.response).toEqual(mockResponse);
+      expect(result.provider).toBe('openai');
+      expect(result.error).toBe('HTTP 429');
+    });
+  });
+});

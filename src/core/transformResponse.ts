@@ -17,6 +17,20 @@ export function transformResponse(
   const json = response['data'] || response;
 
   if (status === 200 && json && typeof json === 'object') {
+    const jsonObj = json as Record<string, unknown>;
+    if ('error' in jsonObj) {
+      switch (provider) {
+        case OPEN_AI:
+        case OPENROUTER:
+          return transformOpenAIError(status, json);
+        case ANTHROPIC:
+          return transformAnthropicError(status, json);
+        case GOOGLE_VERTEX_AI:
+          return transformVertexAIError(status, json);
+        default:
+          return generateErrorResponse({ message: 'Unknown error', type: 'provider_error', param: null, code: null }, provider);
+      }
+    }
     switch (provider) {
       case OPEN_AI:
       case OPENROUTER:
