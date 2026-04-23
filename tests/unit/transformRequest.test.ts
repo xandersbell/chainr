@@ -611,4 +611,231 @@ describe('transformRequest', () => {
       expect(result.body).toHaveProperty('temperature', 0.7);
     });
   });
+
+  describe('Together AI Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'together-ai/llama-3-8b-instruct',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'together-ai/llama-3-8b-instruct');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'together-ai/llama-3-8b-instruct');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'together-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer together-key');
+    });
+
+    it('uses correct Together AI URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'together-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.together.ai/v1/chat/completions');
+    });
+  });
+
+  describe('Perplexity AI Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'sonar',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'perplexity' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'sonar');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'perplexity' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'sonar');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'perplexity' as any, { apiKey: 'perplexity-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer perplexity-key');
+    });
+
+    it('uses correct Perplexity AI URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'perplexity' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.perplexity.ai/chat/completions');
+    });
+  });
+
+  describe('Groq Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'llama-3.3-70b-versatile',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'groq' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'llama-3.3-70b-versatile');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'groq' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'llama-3.3-70b-versatile');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'groq' as any, { apiKey: 'groq-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer groq-key');
+    });
+
+    it('uses correct Groq URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'groq' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    });
+  });
+
+  describe('DeepSeek Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'deepseek-chat',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'deepseek' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'deepseek-chat');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'deepseek' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'deepseek-chat');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'deepseek' as any, { apiKey: 'deepseek-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer deepseek-key');
+    });
+
+    it('uses correct DeepSeek URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'deepseek' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.deepseek.com/chat/completions');
+    });
+
+    it('passes through thinking param when provided', () => {
+      const params: Params = {
+        model: 'deepseek-reasoner',
+        messages: createMessages('Hello'),
+        thinking: { type: 'enabled', budget_tokens: 1000 },
+      };
+      const result = transformRequest(params, 'deepseek' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('thinking');
+      expect(result.body.thinking).toEqual({ type: 'enabled', budget_tokens: 1000 });
+    });
+  });
+
+  describe('Mistral AI Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'mistral-medium-latest',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'mistral-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'mistral-medium-latest');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'mistral-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'mistral-medium-latest');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'mistral-ai' as any, { apiKey: 'mistral-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer mistral-key');
+    });
+
+    it('uses correct Mistral AI URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'mistral-ai' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.mistral.ai/v1/chat/completions');
+    });
+  });
+
+  describe('Cohere Provider', () => {
+    it('body contains model, messages, and filtered params', () => {
+      const params: Params = {
+        model: 'command-a-03-2025',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'cohere' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'command-a-03-2025');
+      expect(result.body).toHaveProperty('messages');
+    });
+
+    it('uses default model when none provided', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'cohere' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'command-a-03-2025');
+    });
+
+    it('headers contain Authorization Bearer', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'cohere' as any, { apiKey: 'cohere-key' });
+
+      expect(result.headers).toHaveProperty('Authorization', 'Bearer cohere-key');
+    });
+
+    it('uses correct Cohere URL', () => {
+      const params: Params = { messages: createMessages('Hello') };
+      const result = transformRequest(params, 'cohere' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.cohere.ai/compatibility/v2/chat');
+    });
+
+    it('passes through reasoning_effort param when provided', () => {
+      const params: Params = {
+        model: 'command-a-03-2025',
+        messages: createMessages('Hello'),
+        reasoning_effort: 'high',
+      };
+      const result = transformRequest(params, 'cohere' as any, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('reasoning_effort', 'high');
+    });
+  });
 });

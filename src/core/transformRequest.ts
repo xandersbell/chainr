@@ -1,6 +1,6 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, POWERED_BY } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY } from '../globals';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -30,6 +30,18 @@ export function transformRequest(
       return transformVertexAIRequest(params, opts);
     case OPENROUTER:
       return transformOpenRouterRequest(params, opts);
+    case TOGETHER_AI:
+      return transformTogetherAIRequest(params, opts);
+    case PERPLEXITY:
+      return transformPerplexityAIRequest(params, opts);
+    case GROQ:
+      return transformGroqRequest(params, opts);
+    case DEEPSEEK:
+      return transformDeepSeekRequest(params, opts);
+    case MISTRAL_AI:
+      return transformMistralAIRequest(params, opts);
+    case COHERE:
+      return transformCohereRequest(params, opts);
     default:
       return {
         body: params as Record<string, unknown>,
@@ -185,6 +197,132 @@ function transformOpenRouterRequest(params: Params, opts: Record<string, unknown
     },
     headers,
     url: 'https://openrouter.ai/api/v1/chat/completions',
+  };
+}
+
+function transformTogetherAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      model: params.model || 'together-ai/llama-3-8b-instruct',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: 'https://api.together.ai/v1/chat/completions',
+  };
+}
+
+function transformPerplexityAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      model: params.model || 'sonar',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: 'https://api.perplexity.ai/chat/completions',
+  };
+}
+
+function transformGroqRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      model: params.model || 'llama-3.3-70b-versatile',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: 'https://api.groq.com/openai/v1/chat/completions',
+  };
+}
+
+function transformDeepSeekRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'deepseek-chat',
+    messages: params.messages,
+    ...filterParams(params),
+  };
+
+  if (params.thinking !== undefined) {
+    body.thinking = params.thinking;
+  }
+
+  return {
+    body,
+    headers,
+    url: 'https://api.deepseek.com/chat/completions',
+  };
+}
+
+function transformMistralAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      model: params.model || 'mistral-medium-latest',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: 'https://api.mistral.ai/v1/chat/completions',
+  };
+}
+
+function transformCohereRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'command-a-03-2025',
+    messages: params.messages,
+    ...filterParams(params),
+  };
+
+  if (params.reasoning_effort !== undefined) {
+    body.reasoning_effort = params.reasoning_effort;
+  }
+
+  return {
+    body,
+    headers,
+    url: 'https://api.cohere.ai/compatibility/v2/chat',
   };
 }
 

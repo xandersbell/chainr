@@ -1,5 +1,5 @@
 import type { ChatCompletionResponse, ErrorResponse } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE } from '../globals';
 
 export type { ChatCompletionResponse, ErrorResponse };
 
@@ -22,6 +22,12 @@ export function transformResponse(
       switch (provider) {
         case OPEN_AI:
         case OPENROUTER:
+        case TOGETHER_AI:
+        case PERPLEXITY:
+        case GROQ:
+        case DEEPSEEK:
+        case MISTRAL_AI:
+        case COHERE:
           return transformOpenAIError(status, json);
         case ANTHROPIC:
           return transformAnthropicError(status, json);
@@ -34,6 +40,12 @@ export function transformResponse(
     switch (provider) {
       case OPEN_AI:
       case OPENROUTER:
+      case TOGETHER_AI:
+      case PERPLEXITY:
+      case GROQ:
+      case DEEPSEEK:
+      case MISTRAL_AI:
+      case COHERE:
         return json as ChatCompletionResponse;
       case ANTHROPIC:
         return transformAnthropicResponse(json);
@@ -47,6 +59,12 @@ export function transformResponse(
   switch (provider) {
     case OPEN_AI:
     case OPENROUTER:
+    case TOGETHER_AI:
+    case PERPLEXITY:
+    case GROQ:
+    case DEEPSEEK:
+    case MISTRAL_AI:
+    case COHERE:
       return transformOpenAIError(status, json);
     case ANTHROPIC:
       return transformAnthropicError(status, json);
