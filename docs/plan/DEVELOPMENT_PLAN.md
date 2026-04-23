@@ -2,7 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 1 & 2 Complete — **184 tests passing** (2026-04-23 23:30)
+**Status**: 🟢 Phase 1-4 Complete — **278 tests passing** (2026-04-24)
+
+**Last Updated**: 2026-04-24 - Added 51 streaming providers, comprehensive tests
 
 ---
 
