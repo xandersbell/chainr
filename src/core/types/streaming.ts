@@ -15,8 +15,8 @@ export interface ChatCompletionChunk {
   model: string;
   choices: ChatCompletionChunkChoice[];
   usage?: StreamUsage;
-  /** Provider-specific field for non-standard providers */
   provider?: string;
+  system_fingerprint?: string;
 }
 
 /**
