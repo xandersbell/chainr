@@ -43,6 +43,13 @@ export function getSplitPattern(provider: string, requestURL?: string): SplitPat
     'github': '\n\n',
     'azure-ai': '\n\n',
     'aibadgr': '\n\n',
+    'bedrock': '\n\n',
+    'cometapi': '\n\n',
+    'iointelligence': '\n\n',
+    'kluster-ai': '\n\n',
+    'matterai': '\n\n',
+    'nextbit': '\n\n',
+    'sagemaker': '\n\n',
   };
 
   return splitPatterns[provider] ?? '\n\n';

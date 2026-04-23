@@ -152,6 +152,13 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
   'github': '\n\n',
   'azure-ai': '\n\n',
   'aibadgr': '\n\n',
+  'bedrock': '\n\n',
+  'cometapi': '\n\n',
+  'iointelligence': '\n\n',
+  'kluster-ai': '\n\n',
+  'matterai': '\n\n',
+  'nextbit': '\n\n',
+  'sagemaker': '\n\n',
 };
 
 /**
@@ -202,6 +209,13 @@ export const OPENAI_COMPATIBLE_PROVIDERS = [
   'github',
   'azure-ai',
   'aibadgr',
+  'bedrock',
+  'cometapi',
+  'iointelligence',
+  'kluster-ai',
+  'matterai',
+  'nextbit',
+  'sagemaker',
 ];
 
 export function isOpenAICompatibleProvider(provider: string): boolean {
