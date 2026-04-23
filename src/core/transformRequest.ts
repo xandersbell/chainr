@@ -42,6 +42,10 @@ export function transformRequest(
       return transformMistralAIRequest(params, opts);
     case COHERE:
       return transformCohereRequest(params, opts);
+    case 'azure-openai':
+      return transformAzureOpenAIRequest(params, opts);
+    case 'github':
+      return transformGithubModelsRequest(params, opts);
     default:
       return {
         body: params as Record<string, unknown>,
@@ -323,6 +327,63 @@ function transformCohereRequest(params: Params, opts: Record<string, unknown>): 
     body,
     headers,
     url: 'https://api.cohere.ai/compatibility/v2/chat',
+  };
+}
+
+/**
+ * Azure OpenAI 请求转换
+ * Azure 使用特殊的 URL 格式和认证方式
+ */
+function transformAzureOpenAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // Azure 使用 api-key 认证而非 Bearer token
+  const key = (opts.apiKey as string) || '';
+  headers['api-key'] = key;
+
+  // Azure 特定参数
+  const resourceName = (opts.azureResourceName as string) || '';
+  const deploymentId = (opts.azureDeploymentId as string) || '';
+  const apiVersion = (opts.azureApiVersion as string) || '2024-06-01';
+
+  // 构建 Azure 特定的 URL 格式
+  const url = `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}/chat/completions?api-version=${apiVersion}`;
+
+  return {
+    body: {
+      model: params.model || '',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url,
+  };
+}
+
+/**
+ * GitHub Models 请求转换
+ * GitHub Models 使用 /inference/chat/completions 路径而非标准 /v1/chat/completions
+ */
+function transformGithubModelsRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2026-03-10',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  return {
+    body: {
+      model: params.model || '',
+      messages: params.messages,
+      ...filterParams(params),
+    },
+    headers,
+    url: 'https://models.github.ai/inference/chat/completions',
   };
 }
 
