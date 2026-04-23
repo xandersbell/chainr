@@ -1,6 +1,17 @@
-import type { Params } from '../types/requestBody';
+import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
 import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, POWERED_BY } from '../globals';
+
+const PROVIDER_ALIASES: Record<string, string> = {
+  'google-vertexai': GOOGLE_VERTEX_AI,
+  'google-vertex-ai': GOOGLE_VERTEX_AI,
+  'vertexai': GOOGLE_VERTEX_AI,
+  'gcp-vertex': GOOGLE_VERTEX_AI,
+};
+
+function normalizeProvider(provider: string): string {
+  return PROVIDER_ALIASES[provider] || provider;
+}
 
 export function transformRequest(
   params: Params,
@@ -8,8 +19,9 @@ export function transformRequest(
   providerOptions: unknown
 ): TransformResult {
   const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
 
-  switch (provider) {
+  switch (normalizedProvider) {
     case OPEN_AI:
       return transformOpenAIRequest(params, opts);
     case ANTHROPIC:
@@ -53,6 +65,30 @@ function transformOpenAIRequest(params: Params, opts: Record<string, unknown>): 
   };
 }
 
+interface AnthropicRequestBody {
+  model: string;
+  messages: Message[];
+  system?: string;
+  max_tokens: number;
+  metadata?: Record<string, unknown>;
+}
+
+function extractSystemMessage(messages: Message[]): { system: string | undefined; filteredMessages: Message[] } {
+  const systemMessages: string[] = [];
+  const filteredMessages: Message[] = [];
+
+  for (const msg of messages) {
+    if (msg.role === 'system') {
+      systemMessages.push(msg.content as string);
+    } else {
+      filteredMessages.push(msg);
+    }
+  }
+
+  const system = systemMessages.length > 0 ? systemMessages.join('\n\n') : undefined;
+  return { system, filteredMessages };
+}
+
 function transformAnthropicRequest(params: Params, opts: Record<string, unknown>): TransformResult {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -66,12 +102,24 @@ function transformAnthropicRequest(params: Params, opts: Record<string, unknown>
   headers['anthropic-beta'] = betaHeader;
   headers['anthropic-version'] = version;
 
+  const { system, filteredMessages } = extractSystemMessage(params.messages || []);
+
+  const body: AnthropicRequestBody = {
+    model: params.model || 'claude-3-5-sonnet-20241022',
+    messages: filteredMessages,
+    max_tokens: params.max_tokens || 1024,
+  };
+
+  if (system) {
+    body.system = system;
+  }
+
+  if (opts.anthropicMetadata) {
+    body.metadata = opts.anthropicMetadata as Record<string, unknown>;
+  }
+
   return {
-    body: {
-      model: params.model || 'claude-3-5-sonnet-20241022',
-      messages: params.messages,
-      max_tokens: params.max_tokens || 1024,
-    },
+    body,
     headers,
     url: 'https://api.anthropic.com/v1/messages',
   };
@@ -91,10 +139,29 @@ function transformVertexAIRequest(params: Params, opts: Record<string, unknown>)
 
   const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:generateContent`;
 
+  const { system, filteredMessages } = extractSystemMessage(params.messages || []);
+
+  const body: Record<string, unknown> = {
+    contents: filteredMessages,
+  };
+
+  if (system) {
+    body.systemInstruction = {
+      parts: [{ text: system }],
+    };
+  }
+
+  const generationConfig: Record<string, unknown> = {};
+  if (params.temperature !== undefined) generationConfig.temperature = params.temperature;
+  if (params.top_p !== undefined) generationConfig.topP = params.top_p;
+  if (params.max_tokens !== undefined) generationConfig.maxOutputTokens = params.max_tokens;
+
+  if (Object.keys(generationConfig).length > 0) {
+    body.generationConfig = generationConfig;
+  }
+
   return {
-    body: {
-      contents: params.messages,
-    },
+    body,
     headers,
     url,
   };
@@ -108,7 +175,7 @@ function transformOpenRouterRequest(params: Params, opts: Record<string, unknown
   const key = (opts.apiKey as string) || '';
   headers['Authorization'] = `Bearer ${key}`;
   headers['HTTP-Referer'] = 'https://chainr.dev/';
-  headers['X-Title'] = POWERED_BY;
+  headers['X-OpenRouter-Title'] = POWERED_BY;
 
   return {
     body: {

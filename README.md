@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js
 
-**Status**: ✅ Phase 1 & 2 Complete — 135 tests passing, production ready
+**Status**: ✅ Phase 1 & 2 Complete — 158 tests passing, production ready
 
 ## Features
 
@@ -11,7 +11,7 @@
 - **Zero External Dependencies**: Pure fetch-based, no runtime deps
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
-- **135 Unit Tests**: Comprehensive coverage of core functionality
+- **158 Unit Tests**: Comprehensive coverage of core functionality
 
 ## Supported Providers
 
@@ -157,17 +157,18 @@ npm test          # Run all tests
 npm run test:watch # Watch mode
 ```
 
-**Test Coverage**: 135 tests across 7 test files
+**Test Coverage**: 158 tests across 8 test files
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 40 | 4 providers + filterParams |
+| transformRequest.test.ts | 51 | 4 providers + alias + system extraction |
 | transformResponse.test.ts | 26 | success/error paths |
 | RetryHandler.test.ts | 23 | retry logic + backoff |
 | FallbackStrategy.test.ts | 12 | fallback behavior |
 | LoadBalanceStrategy.test.ts | 9 | weight selection |
 | SingleStrategy.test.ts | 13 | single target |
 | Router.test.ts | 12 | full pipeline |
+| real-http.test.ts | 12 | real HTTP integration (optional) |
 
 ## Error Handling
 

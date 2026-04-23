@@ -97,6 +97,46 @@ describe('transformRequest', () => {
       expect(result.body).toHaveProperty('max_tokens', 2048);
     });
 
+    it('extracts system message from messages array', () => {
+      const params: Params = {
+        model: 'claude-3-5-sonnet-20241022',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: 'Hello' },
+        ],
+      };
+      const result = transformRequest(params, ANTHROPIC, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('system', 'You are a helpful assistant.');
+      expect(result.body.messages).toEqual([{ role: 'user', content: 'Hello' }]);
+    });
+
+    it('handles multiple system messages by joining with newlines', () => {
+      const params: Params = {
+        model: 'claude-3-5-sonnet-20241022',
+        messages: [
+          { role: 'system', content: 'System prompt 1' },
+          { role: 'system', content: 'System prompt 2' },
+          { role: 'user', content: 'Hello' },
+        ],
+      };
+      const result = transformRequest(params, ANTHROPIC, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('system', 'System prompt 1\n\nSystem prompt 2');
+      expect(result.body.messages).toEqual([{ role: 'user', content: 'Hello' }]);
+    });
+
+    it('does not include system field when no system messages', () => {
+      const params: Params = {
+        model: 'claude-3-5-sonnet-20241022',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+      const result = transformRequest(params, ANTHROPIC, { apiKey: 'test-key' });
+
+      expect(result.body).not.toHaveProperty('system');
+      expect(result.body.messages).toEqual([{ role: 'user', content: 'Hello' }]);
+    });
+
     it('uses default model and max_tokens when not provided', () => {
       const params: Params = {
         messages: createMessages('Hello'),
@@ -231,6 +271,125 @@ describe('transformRequest', () => {
 
       expect(result.headers).toHaveProperty('Authorization', 'Bearer vertex-key');
     });
+
+    it('extracts system message as systemInstruction', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: 'Hello' },
+        ],
+      };
+      const result = transformRequest(params, GOOGLE_VERTEX_AI, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.body).toHaveProperty('systemInstruction');
+      expect(result.body.systemInstruction).toEqual({
+        parts: [{ text: 'You are a helpful assistant.' }],
+      });
+      expect(result.body.contents).toEqual([{ role: 'user', content: 'Hello' }]);
+    });
+
+    it('adds generationConfig when temperature is set', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+        temperature: 0.9,
+      };
+      const result = transformRequest(params, GOOGLE_VERTEX_AI, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.body).toHaveProperty('generationConfig');
+      expect(result.body.generationConfig).toHaveProperty('temperature', 0.9);
+    });
+
+    it('adds generationConfig when max_tokens is set', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+        max_tokens: 1024,
+      };
+      const result = transformRequest(params, GOOGLE_VERTEX_AI, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.body).toHaveProperty('generationConfig');
+      expect(result.body.generationConfig).toHaveProperty('maxOutputTokens', 1024);
+    });
+
+    it('maps top_p to topP in generationConfig', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+        top_p: 0.95,
+      };
+      const result = transformRequest(params, GOOGLE_VERTEX_AI, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.body).toHaveProperty('generationConfig');
+      expect(result.body.generationConfig).toHaveProperty('topP', 0.95);
+    });
+  });
+
+  describe('Provider Aliases', () => {
+    it('maps google-vertexai to vertex-ai', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'google-vertexai' as any, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.url).toContain('aiplatform.googleapis.com');
+    });
+
+    it('maps google-vertex-ai to vertex-ai', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'google-vertex-ai' as any, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.url).toContain('aiplatform.googleapis.com');
+    });
+
+    it('maps vertexai to vertex-ai', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'vertexai' as any, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.url).toContain('aiplatform.googleapis.com');
+    });
+
+    it('maps gcp-vertex to vertex-ai', () => {
+      const params: Params = {
+        model: 'gemini-1.5-flash',
+        messages: createMessages('Hello'),
+      };
+      const result = transformRequest(params, 'gcp-vertex' as any, {
+        apiKey: 'test-key',
+        vertexProjectId: 'my-project',
+      });
+
+      expect(result.url).toContain('aiplatform.googleapis.com');
+    });
   });
 
   describe('OpenRouter Provider', () => {
@@ -269,11 +428,11 @@ describe('transformRequest', () => {
       expect(result.headers).toHaveProperty('HTTP-Referer', 'https://chainr.dev/');
     });
 
-    it('headers contain X-Title with chainr value', () => {
+    it('headers contain X-OpenRouter-Title with chainr value', () => {
       const params: Params = { messages: createMessages('Hello') };
       const result = transformRequest(params, OPENROUTER, { apiKey: 'test-key' });
 
-      expect(result.headers).toHaveProperty('X-Title', 'chainr');
+      expect(result.headers).toHaveProperty('X-OpenRouter-Title', 'chainr');
     });
 
     it('uses correct OpenRouter URL', () => {
