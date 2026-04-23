@@ -310,10 +310,62 @@ if (Object.keys(generationConfig).length > 0) {
 
 ---
 
+## 五次评估（2026-04-23 23:39）
+
+### 代码状态
+
+**最新 commit**：`9303f15` — docs: update all documentation to latest state（仅文档更新，无代码变更）
+
+| 维度 | 状态 |
+|------|------|
+| 测试总数 | **184 tests，100% 通过** ✅ |
+| Provider 数量 | **10 个** ✅ |
+| 代码 | 无变化 |
+
+### 文档更新内容
+
+`9303f15` 对 5 个文档进行了同步更新：
+
+| 文档 | 更新内容 |
+|------|----------|
+| `docs/phase1-evaluation.md` | 184 tests、10 providers |
+| `docs/INTEGRATION_TEST_GUIDE.md` | 添加 real-http.test.ts 状态说明 |
+| `docs/PROVIDER_EVALUATION_COMPREHENSIVE.md` | 6 个新 provider 已实现标注 |
+| `docs/PROVIDER_EVALUATION.md` | **已弃用**，指向 COMPREHENSIVE 版 |
+| `docs/plan/DEVELOPMENT_PLAN.md` | 状态更新为 🟢 Phase 1 & 2 Complete |
+
+### Provider 现状（10个）
+
+OpenAI、Anthropic、Vertex AI、OpenRouter + Together AI、Perplexity、Groq、DeepSeek、Mistral AI、Cohere
+
+### 问题状态
+
+| # | 严重度 | 问题 | 状态 |
+|---|--------|------|------|
+| 1 | 🔴 高 | Provider 名称不一致 | ✅ 已修复 |
+| 2 | 🔴 高 | Anthropic system 消息缺失 | ✅ 已修复 |
+| 3 | 🟡 中 | Nested Strategies 未实现 | 🟡 Phase 3 |
+| 4 | 🟡 中 | Integration test HTTP mock | ✅ 已添加 |
+| 5 | 🟢 低 | Provider 常量分散定义 | 🟢 低优先级 |
+| 6 | 🟡 中 | Streaming 支持不完整 | 🟡 Phase 3 |
+| 7 | 🟡 中 | Vertex AI GCP OAuth | 🟡 Phase 3 |
+
+### 结论
+
+**Phase 1 & 2：✅ 完全完成，文档同步**
+
+- 代码无变化，仅文档与最新 commit `9303f15` 保持一致
+- `PROVIDER_EVALUATION.md` 已弃用，统一使用 `PROVIDER_EVALUATION_COMPREHENSIVE.md`
+- Development Plan 状态已更新为 🟢 Phase 1 & 2 Complete
+- Phase 3 待办明确：Nested Strategies、Streaming、Vertex OAuth
+
+---
+
 ## 更新日志
 
 | 日期 | 时间 | 更新内容 |
 |------|------|----------|
+| 2026-04-23 | 23:39 | 五次评估：仅文档同步（9303f15），代码无变化，184 tests，10 providers，Phase 1/2 完成 |
 | 2026-04-23 | 23:30 | 四次评估（最终）：184 tests，10 providers，Cohere URL 修正为 v2/chat，Phase 1/2 完成 |
 | 2026-04-23 | 23:21 | 三次评估：确认所有高严重度问题已修复，158 tests，Vertex OAuth 仍待 Phase 3 |
 | 2026-04-23 | 22:55 | 二次评估：确认 #1 #2 已完全修复，额外发现 Vertex AI systemInstruction + generationConfig 已一并修复，Streaming 问题待处理 |
