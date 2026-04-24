@@ -53,6 +53,10 @@ export interface TransformResult {
   headers: Record<string, string>;
   url: string;
   isFormData?: boolean;
+  awsRegion?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
 }
 
 export interface RetryResult {

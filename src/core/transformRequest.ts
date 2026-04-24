@@ -1,6 +1,7 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
 import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE, NSCALE_URL, LEPTON } from '../globals';
+import { generateAWSHeaders, getBedrockModelWithoutRegion } from './awsSigV4';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -50,6 +51,8 @@ export function transformRequest(
       return transformAzureAIRequest(params, opts);
     case 'reka-ai':
       return transformRekaAIRequest(params, opts);
+    case 'bedrock':
+      return transformBedrockChatRequest(params, opts);
     case NOMIC:
       return transformNomicEmbedRequest(params, opts);
     case JINA:
@@ -1548,6 +1551,79 @@ function transformBedrockEmbedRequest(params: Params, opts: Record<string, unkno
     body,
     headers,
     url: 'https://bedrock.us-east-1.amazonaws.com/embeddings',
+  };
+}
+
+function transformBedrockChatRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const model = params.model || '';
+  const modelWithoutRegion = getBedrockModelWithoutRegion(model);
+  const awsRegion = (opts.awsRegion as string) || 'us-east-1';
+
+  const body: Record<string, unknown> = {
+    model: modelWithoutRegion,
+  };
+
+  if (params.messages) {
+    const transformedMessages = params.messages
+      .filter((msg) => msg.role !== 'system')
+      .map((msg) => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: Array.isArray(msg.content)
+          ? msg.content.filter((c) => c.type === 'text').map((c) => ({ text: c.text || '' }))
+          : [{ text: msg.content || '' }],
+      }));
+
+    let prevRole = '';
+    const combinedMessages = transformedMessages.reduce(
+      (acc: typeof transformedMessages, msg) => {
+        if (msg.role === 'user' && prevRole === 'user') {
+          const lastMessage = acc[acc.length - 1];
+          lastMessage.content = [...lastMessage.content, ...msg.content] as typeof lastMessage.content;
+        } else {
+          acc.push(msg);
+        }
+        prevRole = msg.role;
+        return acc;
+      },
+      []
+    );
+
+    (body as any).messages = combinedMessages;
+  }
+
+  const systemMessages = params.messages?.filter((msg) => msg.role === 'system');
+  if (systemMessages && systemMessages.length > 0) {
+    (body as any).system = systemMessages.map((msg) => {
+      const content = Array.isArray(msg.content) ? msg.content : [{ text: msg.content || '' }];
+      return content.filter((c) => c.type === 'text').map((c) => ({ text: c.text || '' }));
+    }).flat();
+  }
+
+  const inferenceConfig: Record<string, unknown> = {};
+  if (params.max_tokens !== undefined) inferenceConfig.maxTokens = params.max_tokens;
+  if (params.max_completion_tokens !== undefined) inferenceConfig.maxTokens = params.max_completion_tokens;
+  if (params.temperature !== undefined) inferenceConfig.temperature = params.temperature;
+  if (params.top_p !== undefined) inferenceConfig.topP = params.top_p;
+  if (params.stop) inferenceConfig.stopSequences = Array.isArray(params.stop) ? params.stop : [params.stop];
+
+  if (Object.keys(inferenceConfig).length > 0) {
+    (body as any).inferenceConfig = inferenceConfig;
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const url = `https://bedrock-runtime.${awsRegion}.amazonaws.com/model/${encodeURIComponent(modelWithoutRegion)}/converse`;
+
+  return {
+    body,
+    headers,
+    url,
+    awsRegion,
+    awsAccessKeyId: opts.awsAccessKeyId as string,
+    awsSecretAccessKey: opts.awsSecretAccessKey as string,
+    awsSessionToken: opts.awsSessionToken as string | undefined,
   };
 }
 

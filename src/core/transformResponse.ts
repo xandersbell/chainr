@@ -57,6 +57,8 @@ case MISTRAL_AI:
         return transformAnthropicResponse(json);
       case GOOGLE_VERTEX_AI:
         return transformVertexAIResponse(json);
+      case 'bedrock':
+        return transformBedrockResponse(json);
       default:
         return json as ChatCompletionResponse;
     }
@@ -76,6 +78,8 @@ case MISTRAL_AI:
       return transformAnthropicError(status, json);
     case GOOGLE_VERTEX_AI:
       return transformVertexAIError(status, json);
+    case 'bedrock':
+      return transformBedrockError(status, json);
     default:
       return generateErrorResponse({ message: 'Unknown error', type: 'provider_error', param: null, code: null }, provider);
   }
@@ -329,4 +333,66 @@ function transformRekaAIResponse(json: unknown): ChatCompletionResponse {
     { message: 'Invalid Reka AI response format', type: 'provider_error', param: null, code: null },
     'reka-ai'
   );
+}
+
+function transformBedrockResponse(json: unknown): ChatCompletionResponse {
+  const data = json as Record<string, unknown>;
+
+  if ('message' in data) {
+    const errorMsg = (data.message as string) || 'Bedrock error';
+    return generateErrorResponse(
+      { message: errorMsg, type: 'provider_error', param: null, code: null },
+      'bedrock'
+    );
+  }
+
+  const output = data.output as Record<string, unknown> | undefined;
+  const message = output?.message as Record<string, unknown> | undefined;
+  const content = message?.content as Array<Record<string, unknown>> | undefined;
+
+  const textContent = content
+    ?.filter((item) => item.text)
+    .map((item) => item.text as string)
+    .join('\n') || '';
+
+  const usage = data.usage as Record<string, number> | undefined;
+  const cacheReadInputTokens = usage?.cacheReadInputTokens || 0;
+  const cacheWriteInputTokens = usage?.cacheWriteInputTokens || 0;
+
+  return {
+    id: `bedrock-${Date.now()}`,
+    object: 'chat.completion',
+    created: Math.floor(Date.now() / 1000),
+    model: (data.model as string) || '',
+    provider: 'bedrock',
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: 'assistant',
+          content: textContent,
+        },
+        finish_reason: (data.stopReason as string) || 'stop',
+      },
+    ],
+    usage: {
+      prompt_tokens: (usage?.inputTokens || 0) + cacheReadInputTokens + cacheWriteInputTokens,
+      completion_tokens: usage?.outputTokens || 0,
+      total_tokens: usage?.totalTokens || 0,
+      prompt_tokens_details: {
+        cached_tokens: cacheReadInputTokens,
+      },
+    },
+  };
+}
+
+function transformBedrockError(status: number, json: unknown): ErrorResponse {
+  const data = json as Record<string, unknown> | null;
+  const message = (data?.['message'] as string) || 'Bedrock error';
+  return generateErrorResponse({
+    message,
+    type: 'provider_error',
+    param: null,
+    code: status.toString(),
+  }, 'bedrock');
 }
