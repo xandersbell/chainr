@@ -2,7 +2,8 @@ import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, Spe
 import type { ChainrConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
 import type { MessagesResponse } from '../types/messagesResponse';
-import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
+import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy, ConditionalStrategy } from './strategies';
+import type { ConditionConfig } from './strategies';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
 import { fetchWithTimeout } from './RetryHandler';
 
@@ -11,7 +12,7 @@ type ErrorResponse = import('./types').ErrorResponse;
 
 export class Chainr {
   private config: ChainrConfig;
-  private strategy: FallbackStrategy | LoadBalanceStrategy | SingleStrategy;
+  private strategy: FallbackStrategy | LoadBalanceStrategy | SingleStrategy | ConditionalStrategy;
 
   constructor(config: ChainrConfig) {
     this.validateConfig(config);
@@ -23,8 +24,16 @@ export class Chainr {
     if (!config.targets || config.targets.length === 0) {
       throw new Error('At least one target is required');
     }
-    // 递归验证所有 target
-    this.validateTargets(config.targets, 'targets');
+    // 递归验证所有 target（conditional 策略下 target 可以没有 provider，只需有 name）
+    if (config.strategy !== 'conditional') {
+      this.validateTargets(config.targets, 'targets');
+    }
+    // conditional 策略需要 conditions 配置
+    if (config.strategy === 'conditional') {
+      if (!config.conditions || config.conditions.length === 0) {
+        throw new Error('conditional strategy requires non-empty "conditions" array');
+      }
+    }
     if (config.timeout !== undefined && (typeof config.timeout !== 'number' || config.timeout <= 0)) {
       throw new Error('timeout must be a positive number (milliseconds)');
     }
@@ -76,7 +85,7 @@ export class Chainr {
     }
   }
 
-  private createStrategy(mode: string): FallbackStrategy | LoadBalanceStrategy | SingleStrategy {
+  private createStrategy(mode: string): FallbackStrategy | LoadBalanceStrategy | SingleStrategy | ConditionalStrategy {
     switch (mode) {
       case 'fallback':
         return new FallbackStrategy();
@@ -84,6 +93,8 @@ export class Chainr {
         return new LoadBalanceStrategy();
       case 'single':
         return new SingleStrategy();
+      case 'conditional':
+        return new ConditionalStrategy();
       default:
         throw new Error(`Unknown strategy mode: ${mode}`);
     }
@@ -170,7 +181,7 @@ export class Chainr {
   };
 
   private async executeChatCompletions(params: Params): Promise<ChatCompletionResponse | ErrorResponse> {
-    const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry, this.config.timeout, 'chatComplete');
+    const result: StrategyResult = await this.executeStrategy(this.config.targets, params, 'chatComplete');
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
@@ -180,17 +191,15 @@ export class Chainr {
   }
 
   private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
-    return this.strategy.executeStream(this.config.targets, params, this.config.retry, this.config.timeout, 'chatComplete');
+    return this.executeStrategyStream(this.config.targets, params, 'chatComplete');
   }
 
   /**
    * Anthropic Messages API — 非流式
-   * 通过策略系统路由，使用 'messages' endpoint 配置
-   * 响应经过 provider 的 responseTransforms.messages 转换
    */
   private async executeMessages(params: Params): Promise<MessagesResponse | ErrorResponse> {
     const targets = this.config.messagesTargets || this.config.targets;
-    const result: StrategyResult = await this.strategy.execute(targets, params, this.config.retry, this.config.timeout, 'messages');
+    const result: StrategyResult = await this.executeStrategy(targets, params, 'messages');
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'anthropic',
@@ -201,20 +210,18 @@ export class Chainr {
 
   /**
    * Anthropic Messages API — 流式
-   * 通过策略系统路由，使用 'messages' endpoint 配置
    */
   private async executeMessagesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.messagesTargets || this.config.targets;
-    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, 'messages');
+    return this.executeStrategyStream(targets, params, 'messages');
   }
 
   /**
    * OpenAI Responses API — 非流式
-   * 通过策略系统路由，使用 'createModelResponse' endpoint 配置
    */
   private async executeResponses(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
     const targets = this.config.responsesTargets || this.config.targets;
-    const result: StrategyResult = await this.strategy.execute(targets, params, this.config.retry, this.config.timeout, 'createModelResponse');
+    const result: StrategyResult = await this.executeStrategy(targets, params, 'createModelResponse');
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
@@ -225,11 +232,44 @@ export class Chainr {
 
   /**
    * OpenAI Responses API — 流式
-   * 通过策略系统路由，使用 'createModelResponse' endpoint 配置
    */
   private async executeResponsesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.responsesTargets || this.config.targets;
-    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, 'createModelResponse');
+    return this.executeStrategyStream(targets, params, 'createModelResponse');
+  }
+
+  /**
+   * 统一策略执行入口 — 处理 conditional 策略的额外参数
+   */
+  private async executeStrategy(
+    targets: TargetConfig[],
+    params: Params,
+    endpoint: import('../providers/types').endpointStrings
+  ): Promise<StrategyResult> {
+    if (this.config.strategy === 'conditional') {
+      return (this.strategy as ConditionalStrategy).execute(
+        targets, params, this.config.retry, this.config.timeout, endpoint,
+        this.config.conditions, this.config.conditionalDefault, this.config.metadata
+      );
+    }
+    return this.strategy.execute(targets, params, this.config.retry, this.config.timeout, endpoint);
+  }
+
+  /**
+   * 统一流式策略执行入口
+   */
+  private async executeStrategyStream(
+    targets: TargetConfig[],
+    params: Params,
+    endpoint: import('../providers/types').endpointStrings
+  ): Promise<ReadableStream<ChatCompletionChunk>> {
+    if (this.config.strategy === 'conditional') {
+      return (this.strategy as ConditionalStrategy).executeStream(
+        targets, params, this.config.retry, this.config.timeout, endpoint,
+        this.config.conditions, this.config.conditionalDefault, this.config.metadata
+      );
+    }
+    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, endpoint);
   }
 
   private async executeEmbeddings(

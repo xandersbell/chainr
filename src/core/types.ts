@@ -107,12 +107,14 @@ export interface TargetConfig {
   targets?: TargetConfig[];
   // 超时（可在任意层级设置，子级覆盖父级）
   timeout?: number;
+  // conditional routing 用的 target 名称
+  name?: string;
   // 其他 provider 特定字段透传
   [key: string]: unknown;
 }
 
 export interface ChainrConfig {
-  strategy: 'fallback' | 'loadbalance' | 'single';
+  strategy: 'fallback' | 'loadbalance' | 'single' | 'conditional';
   targets: TargetConfig[];
   embedTargets?: TargetConfig[];
   imageTargets?: TargetConfig[];
@@ -127,6 +129,10 @@ export interface ChainrConfig {
     onStatusCodes: number[];
   };
   timeout?: number;
+  // conditional routing 配置
+  conditions?: import('./strategies/ConditionalStrategy').ConditionConfig[];
+  conditionalDefault?: string;
+  metadata?: Record<string, string>;
 }
 
 export interface EmbedResponseData {
