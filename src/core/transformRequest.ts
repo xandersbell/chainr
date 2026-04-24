@@ -1,6 +1,6 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE, NSCALE_URL } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE, NSCALE_URL, LEPTON } from '../globals';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -961,6 +961,21 @@ export function transformEmbedRequest(
       return transformWorkersAIEmbedRequest(params, opts);
     case 'siliconflow':
       return transformSiliconFlowEmbedRequest(params, opts);
+    case 'ai21':
+    case 'ai21-embed':
+      return transformAI21EmbedRequest(params, opts);
+    case MISTRAL_AI:
+    case 'mistral-ai-embed':
+      return transformMistralAIEmbedRequest(params, opts);
+    case TOGETHER_AI:
+    case 'together-ai-embed':
+      return transformTogetherAIEmbedRequest(params, opts);
+    case 'anyscale':
+    case 'anyscale-embed':
+      return transformAnyscaleEmbedRequest(params, opts);
+    case 'fireworks-ai':
+    case 'fireworks-ai-embed':
+      return transformFireworksAIEmbedRequest(params, opts);
     default:
       return transformOpenAIEmbeddingsRequest(params, opts);
   }
@@ -984,6 +999,12 @@ export function transformImageRequest(
       return transformWorkersAIImageRequest(params, opts);
     case NSCALE:
       return transformNScaleImageRequest(params, opts);
+    case 'deepbricks':
+    case 'deepbricks-image':
+      return transformDeepbricksImageRequest(params, opts);
+    case 'hyperbolic':
+    case 'hyperbolic-image':
+      return transformHyperbolicImageRequest(params, opts);
     default:
       return transformOpenAIDALLERequest(params, opts);
   }
@@ -1002,6 +1023,10 @@ export function transformAudioRequest(
       return transformOpenAIWhisperRequest(params, opts);
     case LEMONFOX:
       return transformLemonFoxTranscribeRequest(params, opts);
+    case LEPTON:
+    case 'lepton':
+    case 'lepton-transcribe':
+      return transformLeptonTranscribeRequest(params, opts);
     default:
       return transformOpenAIWhisperRequest(params, opts);
   }
@@ -1021,4 +1046,283 @@ export function transformSpeechRequest(
     default:
       return transformOpenAISpeechRequest(params, opts);
   }
+}
+
+function transformOpenAITranslationRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: (params.model as string) || 'whisper-1',
+  };
+
+  if (params.file) {
+    if (params.file instanceof Blob) {
+      const formData = new FormData();
+      formData.append('model', body.model as string);
+      formData.append('file', params.file, 'audio.mp3');
+      return {
+        body: formData,
+        headers,
+        url: 'https://api.openai.com/v1/audio/translations',
+        isFormData: true,
+      };
+    }
+  }
+
+  return {
+    body,
+    headers,
+    url: 'https://api.openai.com/v1/audio/translations',
+  };
+}
+
+function transformLemonFoxTranslationRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {};
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file) {
+    if (params.file instanceof Blob) {
+      formData.append('file', params.file, 'audio.mp3');
+    }
+  }
+
+  return {
+    body: formData,
+    headers,
+    url: LEMONFOX_TRANSCRIBE_URL.replace('/transcriptions', '/translations'),
+    isFormData: true,
+  };
+}
+
+function transformLeptonTranscribeRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {};
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file) {
+    if (params.file instanceof Blob) {
+      formData.append('file', params.file, 'audio.mp3');
+    }
+  }
+
+  if (params.language) formData.append('language', params.language);
+  if (params.response_format) formData.append('response_format', params.response_format as string);
+
+  return {
+    body: formData,
+    headers,
+    url: 'https://api.lepton.ai/v1/audio/transcriptions',
+    isFormData: true,
+  };
+}
+
+function transformAI21EmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    texts,
+  };
+
+  if (params.model) body.model = params.model;
+
+  return {
+    body,
+    headers,
+    url: 'https://api.ai21.com/v1/embeddings',
+  };
+}
+
+function transformMistralAIEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'mistral-embed',
+    input: inputArray,
+  };
+
+  return {
+    body,
+    headers,
+    url: 'https://api.mistral.ai/v1/embeddings',
+  };
+}
+
+function transformTogetherAIEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'mistral-embed',
+    input: inputArray,
+  };
+
+  return {
+    body,
+    headers,
+    url: 'https://api.together.ai/v1/embeddings',
+  };
+}
+
+function transformAnyscaleEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'thenlper/gte-large',
+    input: params.input,
+  };
+
+  if (params.user) body.user = params.user;
+
+  return {
+    body,
+    headers,
+    url: 'https://api.endpoints.anyscale.com/v1/embeddings',
+  };
+}
+
+function transformFireworksAIEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'nomic-ai/nomic-embed-text-v1.5',
+    input: inputArray,
+  };
+
+  if (params.dimensions) body.dimensions = params.dimensions;
+
+  return {
+    body,
+    headers,
+    url: 'https://api.fireworks.ai/v1/embeddings',
+  };
+}
+
+function transformDeepbricksImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+    model: params.model || 'dall-e-2',
+  };
+
+  if (params.n) body.n = params.n;
+  if (params.size) body.size = params.size;
+  if (params.quality) body.quality = params.quality;
+  if (params.response_format) body.response_format = params.response_format;
+  if (params.style) body.style = params.style;
+
+  return {
+    body,
+    headers,
+    url: 'https://api.deepbricks.io/v1/images/generations',
+  };
+}
+
+function transformHyperbolicImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: (params.model as string) || 'stabilityai/stable-diffusion-xl-base-1.0',
+    prompt: params.prompt,
+  };
+
+  if (params.n) body.n = params.n;
+  if (params.size) {
+    const [width, height] = (params.size as string).split('x');
+    if (width) body.width = parseInt(width);
+    if (height) body.height = parseInt(height);
+  }
+
+  return {
+    body,
+    headers,
+    url: 'https://api.hyperbolic.ai/v1/images/generations',
+  };
+}
+
+export function transformTranslationRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
+
+  switch (normalizedProvider) {
+    case OPEN_AI:
+      return transformOpenAITranslationRequest(params, opts);
+    case LEMONFOX:
+      return transformLemonFoxTranslationRequest(params, opts);
+    default:
+      return transformOpenAITranslationRequest(params, opts);
+  }
+}
+
+export function transformLeptonRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  return transformLeptonTranscribeRequest(params, opts);
 }

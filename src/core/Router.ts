@@ -1,9 +1,9 @@
-import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams } from '../types/requestBody';
+import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams, TranslationParams } from '../types/requestBody';
 import type { ChainrConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
 import { transformResponse } from './transformResponse';
-import { transformAudioRequest, transformSpeechRequest } from './transformRequest';
+import { transformAudioRequest, transformSpeechRequest, transformTranslationRequest } from './transformRequest';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
@@ -72,6 +72,11 @@ export class Chainr {
       const targets = this.config.audioTargets || this.config.targets;
       const result = await this.executeAudioTranscription(targets, params);
       return result as unknown as TranscriptionResponse;
+    },
+    translate: async (params: TranslationParams): Promise<TranscriptionResponse> => {
+      const targets = this.config.audioTargets || this.config.targets;
+      const result = await this.executeAudioTranslation(targets, params);
+      return result;
     },
   };
 
@@ -168,5 +173,43 @@ export class Chainr {
     }
 
     throw new Error(lastError || 'All speech synthesis targets exhausted');
+  }
+
+  private async executeAudioTranslation(
+    targets: Array<Record<string, unknown>>,
+    params: TranslationParams
+  ): Promise<TranscriptionResponse> {
+    let lastError: string | undefined;
+
+    for (const target of targets) {
+      try {
+        const provider = (target['provider'] as string) || 'openai';
+        const { body, headers, url, isFormData } = transformTranslationRequest(params, provider, target);
+
+        const options: RequestInit = {
+          method: 'POST',
+          headers,
+        };
+
+        if (isFormData && body instanceof FormData) {
+          options.body = body;
+        } else {
+          options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data as TranscriptionResponse;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new Error(lastError || 'All audio translation targets exhausted');
   }
 }

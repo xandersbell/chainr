@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟢 Production Ready — 347 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
+**Status**: 🟢 Production Ready — 362 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
 
 ## Features
 
@@ -11,8 +11,8 @@
 - **Zero External Dependencies**: Pure fetch-based, no runtime deps
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
-- **347 Unit Tests**: Comprehensive coverage of core functionality
-- **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis
+- **362 Unit Tests**: Comprehensive coverage of core functionality
+- **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis, translation
 
 ## Supported Providers
 
@@ -130,12 +130,20 @@ These providers have custom request/response transforms:
 |----------|--------|-----|
 | OpenAI Whisper | ✅ | `api.openai.com/v1/audio/transcriptions` |
 | LemonFox AI | ✅ | `api.lemonfox.ai/v1/audio/transcriptions` |
+| Lepton | ✅ | `api.lepton.ai/v1/audio/transcriptions` |
 
 ### Speech Synthesis Providers
 
 | Provider | Status | API |
 |----------|--------|-----|
 | OpenAI TTS | ✅ | `api.openai.com/v1/audio/speech` |
+
+### Translation Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| OpenAI | ✅ | `api.openai.com/v1/audio/translations` |
+| LemonFox AI | ✅ | `api.lemonfox.ai/v1/audio/translations` |
 
 ### Additional Embeddings Providers
 
@@ -145,6 +153,11 @@ These providers have custom request/response transforms:
 | Cohere | ✅ | `api.cohere.ai/v2/embed` |
 | Workers AI | ✅ | Cloudflare Workers AI |
 | SiliconFlow | ✅ | `api.siliconflow.cn/v1/embeddings` |
+| AI21 | ✅ | `api.ai21.com/v1/embeddings` |
+| Mistral AI | ✅ | `api.mistral.ai/v1/embeddings` |
+| Together AI | ✅ | `api.together.ai/v1/embeddings` |
+| Anyscale | ✅ | `api.endpoints.anyscale.com/v1/embeddings` |
+| Fireworks AI | ✅ | `api.fireworks.ai/v1/embeddings` |
 
 ### Additional Image Generation Providers
 
@@ -154,6 +167,8 @@ These providers have custom request/response transforms:
 | LemonFox AI | ✅ | `api.lemonfox.ai/v1/images/generations` |
 | Workers AI | ✅ | Cloudflare Workers AI |
 | nscale | ✅ | `api.nscale.io` |
+| DeepBricks | ✅ | `api.deepbricks.io/v1/images/generations` |
+| Hyperbolic | ✅ | `api.hyperbolic.ai/v1/images/generations` |
 
 ## Installation
 
@@ -456,11 +471,11 @@ npm test          # Run all tests
 npm run test:watch # Watch mode
 ```
 
-**Test Coverage**: 347 tests across 13 test files
+**Test Coverage**: 362 tests across 13 test files
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 148 | 16 dedicated + audio/speech/embed/image transforms |
+| transformRequest.test.ts | 162 | 16 dedicated + audio/speech/embed/image/translate transforms |
 | transformResponse.test.ts | 35 | success/error + embeddings/image/3D |
 | streaming/types.test.ts | 26 | OPENAI_COMPATIBLE_PROVIDERS |
 | streaming/streamUtils.test.ts | 16 | split patterns |

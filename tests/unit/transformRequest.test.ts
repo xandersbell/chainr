@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { transformRequest, transformEmbedRequest, transformImageRequest, transformAudioRequest, transformSpeechRequest } from '../../src/core/transformRequest';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, NOMIC, JINA, VOYAGE, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, COHERE, NSCALE, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE_URL } from '../../src/globals';
+import { transformRequest, transformEmbedRequest, transformImageRequest, transformAudioRequest, transformSpeechRequest, transformTranslationRequest, transformLeptonRequest } from '../../src/core/transformRequest';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, NOMIC, JINA, VOYAGE, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, COHERE, NSCALE, TOGETHER_AI, MISTRAL_AI, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE_URL } from '../../src/globals';
 import type { Params, Message, Tool, ToolChoice } from '../../src/types/requestBody';
 
 function createMessages(content: string): Message[] {
@@ -1586,5 +1586,195 @@ describe('transformSpeechRequest', () => {
         expect(result.body).toHaveProperty('voice', voice);
       });
     });
+  });
+});
+
+describe('transformTranslationRequest', () => {
+  describe('OpenAI Translation', () => {
+    it('should transform OpenAI translation request', () => {
+      const params: Params = {
+        model: 'whisper-1',
+        file: new Blob(['audio data'], { type: 'audio/mp3' }),
+      };
+      const result = transformTranslationRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.openai.com/v1/audio/translations');
+      expect(result.isFormData).toBe(true);
+      expect(result.body instanceof FormData).toBe(true);
+    });
+  });
+
+  describe('LemonFox Translation', () => {
+    it('should transform LemonFox translation request', () => {
+      const params: Params = {
+        model: 'whisper-1',
+        file: new Blob(['audio data'], { type: 'audio/mp3' }),
+      };
+      const result = transformTranslationRequest(params, LEMONFOX, { apiKey: 'test-key' });
+
+      expect(result.url).toContain('/audio/translations');
+      expect(result.isFormData).toBe(true);
+    });
+  });
+});
+
+describe('transformLeptonRequest', () => {
+  describe('Lepton Transcription', () => {
+    it('should transform Lepton transcription request', () => {
+      const params: Params = {
+        model: 'whisper-1',
+        file: new Blob(['audio data'], { type: 'audio/mp3' }),
+        language: 'en',
+      };
+      const result = transformLeptonRequest(params, 'lepton' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.lepton.ai/v1/audio/transcriptions');
+      expect(result.isFormData).toBe(true);
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+  });
+});
+
+describe('AI21 Embeddings', () => {
+  it('should transform AI21 embeddings request with texts array', () => {
+    const params: Params = {
+      model: 'embed-english-v3.0',
+      input: ['Hello', 'World'],
+    };
+    const result = transformEmbedRequest(params, 'ai21' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.ai21.com/v1/embeddings');
+    expect(result.body).toHaveProperty('texts', ['Hello', 'World']);
+    expect(result.headers['Authorization']).toBe('Bearer test-key');
+  });
+
+  it('should transform string input to array', () => {
+    const params: Params = { input: 'Single text' };
+    const result = transformEmbedRequest(params, 'ai21' as any, { apiKey: 'test-key' });
+
+    expect(result.body).toHaveProperty('texts', ['Single text']);
+  });
+});
+
+describe('Mistral AI Embeddings', () => {
+  it('should transform Mistral AI embeddings request', () => {
+    const params: Params = {
+      model: 'mistral-embed',
+      input: ['Hello'],
+    };
+    const result = transformEmbedRequest(params, MISTRAL_AI, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.mistral.ai/v1/embeddings');
+    expect(result.body).toHaveProperty('model', 'mistral-embed');
+    expect(result.body).toHaveProperty('input', ['Hello']);
+  });
+
+  it('should use default model when none provided', () => {
+    const params: Params = { input: 'Test' };
+    const result = transformEmbedRequest(params, MISTRAL_AI, { apiKey: 'test-key' });
+
+    expect(result.body).toHaveProperty('model', 'mistral-embed');
+  });
+});
+
+describe('Together AI Embeddings', () => {
+  it('should transform Together AI embeddings request', () => {
+    const params: Params = {
+      model: 'mistral-embed',
+      input: ['Hello'],
+    };
+    const result = transformEmbedRequest(params, TOGETHER_AI, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.together.ai/v1/embeddings');
+    expect(result.body).toHaveProperty('input', ['Hello']);
+  });
+});
+
+describe('Anyscale Embeddings', () => {
+  it('should transform Anyscale embeddings request', () => {
+    const params: Params = {
+      model: 'thenlper/gte-large',
+      input: 'Hello world',
+    };
+    const result = transformEmbedRequest(params, 'anyscale' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.endpoints.anyscale.com/v1/embeddings');
+    expect(result.body).toHaveProperty('model', 'thenlper/gte-large');
+    expect(result.body).toHaveProperty('input', 'Hello world');
+  });
+});
+
+describe('Fireworks AI Embeddings', () => {
+  it('should transform Fireworks AI embeddings request', () => {
+    const params: Params = {
+      model: 'nomic-ai/nomic-embed-text-v1.5',
+      input: ['Hello'],
+    };
+    const result = transformEmbedRequest(params, 'fireworks-ai' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.fireworks.ai/v1/embeddings');
+    expect(result.body).toHaveProperty('input', ['Hello']);
+  });
+
+  it('should include dimensions when provided', () => {
+    const params: Params = {
+      input: ['Test'],
+      dimensions: 1024,
+    };
+    const result = transformEmbedRequest(params, 'fireworks-ai' as any, { apiKey: 'test-key' });
+
+    expect(result.body).toHaveProperty('dimensions', 1024);
+  });
+});
+
+describe('DeepBricks Image Generation', () => {
+  it('should transform DeepBricks image request', () => {
+    const params: Params = {
+      model: 'dall-e-2',
+      prompt: 'A beautiful sunset',
+    };
+    const result = transformImageRequest(params, 'deepbricks' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.deepbricks.io/v1/images/generations');
+    expect(result.body).toHaveProperty('prompt', 'A beautiful sunset');
+    expect(result.body).toHaveProperty('model', 'dall-e-2');
+  });
+
+  it('should include optional params', () => {
+    const params: Params = {
+      prompt: 'Test',
+      n: 2,
+      size: '1024x1024',
+      quality: 'standard',
+    };
+    const result = transformImageRequest(params, 'deepbricks' as any, { apiKey: 'test-key' });
+
+    expect(result.body).toHaveProperty('n', 2);
+    expect(result.body).toHaveProperty('size', '1024x1024');
+    expect(result.body).toHaveProperty('quality', 'standard');
+  });
+});
+
+describe('Hyperbolic Image Generation', () => {
+  it('should transform Hyperbolic image request', () => {
+    const params: Params = {
+      model: 'stabilityai/stable-diffusion-xl-base-1.0',
+      prompt: 'A futuristic city',
+    };
+    const result = transformImageRequest(params, 'hyperbolic' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toBe('https://api.hyperbolic.ai/v1/images/generations');
+    expect(result.body).toHaveProperty('prompt', 'A futuristic city');
+  });
+
+  it('should parse size into width and height', () => {
+    const params: Params = {
+      prompt: 'Test',
+      size: '1024x1024',
+    };
+    const result = transformImageRequest(params, 'hyperbolic' as any, { apiKey: 'test-key' });
+
+    expect(result.body).toHaveProperty('width', 1024);
+    expect(result.body).toHaveProperty('height', 1024);
   });
 });

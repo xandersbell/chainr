@@ -46,6 +46,7 @@ export const WHISPER = 'whisper';
 export const TTS = 'tts';
 export const LEMONFOX = 'lemonfox-ai';
 export const NSCALE = 'nscale';
+export const LEPTON = 'lepton';
 
 // Audio/Speech URLs
 export const OPENAI_WHISPER_URL = 'https://api.openai.com/v1/audio/transcriptions';
@@ -115,12 +116,23 @@ export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'sagemaker': '', // AWS SageMaker uses custom endpoints
   'openai-embeddings': 'https://api.openai.com/v1/embeddings',
   'openai-dalle': 'https://api.openai.com/v1/images/generations',
+  'openai-translation': 'https://api.openai.com/v1/audio/translations',
   'workers-ai-embed': 'https://api.cloudflare.com/client/v4/ai/v1/embeddings',
   'workers-ai-image': 'https://api.cloudflare.com/client/v4/ai/v1/images/generations',
   'siliconflow-embed': 'https://api.siliconflow.cn/v1/embeddings',
   'siliconflow-image': 'https://api.siliconflow.cn/v1/images/generations',
   'lemonfox-image': 'https://api.lemonfox.ai/v1/images/generations',
+  'lemonfox-translation': 'https://api.lemonfox.ai/v1/audio/translations',
   'nscale': 'https://api.nscale.io/v1/image/generate',
+  'monsterapi': 'https://llm.monsterapi.ai/v1/chat/completions',
+  'ai21-embed': 'https://api.ai21.com/v1/embeddings',
+  'mistral-ai-embed': 'https://api.mistral.ai/v1/embeddings',
+  'together-ai-embed': 'https://api.together.ai/v1/embeddings',
+  'anyscale-embed': 'https://api.endpoints.anyscale.com/v1/embeddings',
+  'fireworks-ai-embed': 'https://api.fireworks.ai/v1/embeddings',
+  'deepbricks-image': 'https://api.deepbricks.io/v1/images/generations',
+  'hyperbolic-image': 'https://api.hyperbolic.ai/v1/images/generations',
+  'lepton-transcribe': 'https://api.lepton.ai/v1/audio/transcriptions',
 };
 
 // 支持的 Provider 列表
@@ -129,5 +141,6 @@ export const VALID_PROVIDERS = [
   TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE,
   NOMIC, JINA, VOYAGE,
   SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D,
-  LEMONFOX, NSCALE
+  LEMONFOX, NSCALE,
+  'monsterapi', 'ai21', 'anyscale', 'fireworks-ai', 'deepbricks', 'hyperbolic', 'lepton'
 ];
