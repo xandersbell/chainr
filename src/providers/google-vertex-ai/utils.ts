@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import {
   GoogleErrorResponse,
   GoogleResponseCandidate,
@@ -128,7 +129,7 @@ export const getAccessToken = async (
       method: 'POST',
     });
 
-    const tokenJson: Record<string, any> = await tokenResponse.json();
+    const tokenJson = (await tokenResponse.json()) as Record<string, any>;
 
     return tokenJson.access_token;
   } catch (err) {
@@ -247,7 +248,7 @@ export const transformGeminiToolParameters = (
 
   const transformNode = (node: JsonSchema): JsonSchema => {
     if (Array.isArray(node)) {
-      return node.map(transformNode);
+      return node.map(transformNode) as unknown as JsonSchema;
     }
     if (!node || typeof node !== 'object') return node;
 
@@ -260,7 +261,7 @@ export const transformGeminiToolParameters = (
 
         if (nonNullItems.length === 1 && hadNull) {
           // Flatten to single schema: get rid of anyOf/oneOf and set nullable: true
-          const single = transformNode(nonNullItems[0]);
+          const single = transformNode(nonNullItems[0] as JsonSchema);
           if (single && typeof single === 'object') {
             Object.assign(transformed, single);
             transformed.nullable = true;
@@ -268,12 +269,12 @@ export const transformGeminiToolParameters = (
           continue;
         }
 
-        transformed[key] = transformNode(hadNull ? nonNullItems : value);
+        transformed[key] = transformNode((hadNull ? nonNullItems : value) as unknown as JsonSchema);
         if (hadNull) transformed.nullable = true;
         continue;
       }
 
-      transformed[key] = transformNode(value);
+      transformed[key] = transformNode(value as JsonSchema);
     }
     return transformed;
   };
@@ -778,7 +779,7 @@ export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   // This function is called only when tool.function exists
   if (tool.function?.parameters?.dynamicRetrievalConfig) {
     googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
-      tool.function.parameters.dynamicRetrievalConfig;
+      tool.function.parameters.dynamicRetrievalConfig as { mode: string; dynamicThreshold?: string };
   }
   return googleSearchRetrievalTool;
 };

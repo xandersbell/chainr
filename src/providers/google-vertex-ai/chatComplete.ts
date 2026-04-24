@@ -8,7 +8,6 @@ import {
   Params,
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
-  MESSAGE_ROLES,
   Options,
 } from '../../types/requestBody';
 import {
@@ -47,7 +46,6 @@ import {
   GoogleGenerateContentResponse,
   VertexLlamaChatCompleteStreamChunk,
   VertexLLamaChatCompleteResponse,
-  GoogleSearchRetrievalTool,
   VERTEX_MODALITY,
 } from './types';
 import {
@@ -78,7 +76,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
-            SYSTEM_MESSAGE_ROLES.includes(message.role) &&
+            SYSTEM_MESSAGE_ROLES.includes(message.role as any) &&
             !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
           )
             return;
@@ -194,7 +192,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         if (!firstMessage) return;
 
         if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role as any) &&
           typeof firstMessage.content === 'string'
         ) {
           return {
@@ -208,7 +206,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
         }
 
         if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role as any) &&
           typeof firstMessage.content === 'object' &&
           firstMessage.content?.[0]?.text
         ) {
@@ -312,7 +310,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig;
+          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
         return toolConfig;
       }
       return;
@@ -344,7 +342,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig;
+          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
       }
       return toolConfig;
     },
@@ -529,7 +527,7 @@ export const GoogleChatCompleteResponseTransform: (
           }
 
           const message = {
-            role: MESSAGE_ROLES.ASSISTANT,
+            role: 'assistant' as const,
             ...(toolCalls.length && { tool_calls: toolCalls }),
             ...(content && { content }),
             ...(!strictOpenAiCompliance &&
@@ -751,6 +749,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
                   },
                 };
               }
+              return undefined;
             }),
           };
         } else if (generation.content?.parts[0]?.inlineData) {

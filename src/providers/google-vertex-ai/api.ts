@@ -19,7 +19,7 @@ const getProjectRoute = (
   } = providerOptions;
   let projectId = inputProjectId;
   if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
-    projectId = vertexServiceAccountJson.project_id;
+    projectId = vertexServiceAccountJson.project_id as string;
   }
 
   const { provider } = getModelAndProvider(inputModel as string);
@@ -64,11 +64,11 @@ export const GoogleApiConfig: ProviderAPIConfig = {
 
     return `https://${vertexRegion}-aiplatform.googleapis.com`;
   },
-  headers: async ({ c, providerOptions, gatewayRequestBody }) => {
+  headers: async ({ providerOptions, gatewayRequestBody }) => {
     const { apiKey, vertexServiceAccountJson } = providerOptions;
     let authToken = apiKey;
     if (vertexServiceAccountJson) {
-      authToken = await getAccessToken(c, vertexServiceAccountJson);
+      authToken = await getAccessToken(vertexServiceAccountJson as Record<string, any>);
     }
     const anthropicBeta =
       providerOptions?.['anthropicBeta'] ??
@@ -116,7 +116,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
 
       let projectId = vertexProjectId;
       if (!projectId || vertexServiceAccountJson) {
-        projectId = vertexServiceAccountJson?.project_id;
+        projectId = vertexServiceAccountJson?.project_id as string | undefined;
       }
       switch (fn) {
         case 'retrieveBatch':

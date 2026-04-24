@@ -31,7 +31,9 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
-  if (params?.response_format?.type === 'json_object') {
+  // response_format 可能是字符串或对象，需要类型守卫
+  const responseFormat = params?.response_format;
+  if (typeof responseFormat === 'object' && responseFormat?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
   }
   if (params['logprobs']) {
@@ -43,11 +45,11 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   if (params['seed'] != null && params['seed'] != undefined) {
     generationConfig['seed'] = params['seed'];
   }
-  if (params?.response_format?.type === 'json_schema') {
+  if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     let schema =
-      params?.response_format?.json_schema?.schema ??
-      params?.response_format?.json_schema;
+      (responseFormat as any)?.json_schema?.schema ??
+      (responseFormat as any)?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
     generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }

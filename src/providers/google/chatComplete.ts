@@ -7,7 +7,6 @@ import {
   ToolCall,
   ToolChoice,
   SYSTEM_MESSAGE_ROLES,
-  MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
@@ -59,7 +58,9 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
-  if (params?.response_format?.type === 'json_object') {
+  // response_format 可能是字符串或对象，需要类型守卫
+  const responseFormat = params?.response_format;
+  if (typeof responseFormat === 'object' && responseFormat?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
   }
   if (params['logprobs']) {
@@ -71,11 +72,11 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   if (params['seed'] != null && params['seed'] != undefined) {
     generationConfig['seed'] = params['seed'];
   }
-  if (params?.response_format?.type === 'json_schema') {
+  if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     let schema =
-      params?.response_format?.json_schema?.schema ??
-      params?.response_format?.json_schema;
+      (responseFormat as any)?.json_schema?.schema ??
+      (responseFormat as any)?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
     generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
@@ -230,7 +231,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
           // From gemini-1.5 onwards, systemInstruction is supported
           // Skipping system message and sending it in systemInstruction for gemini 1.5 models
           if (
-            SYSTEM_MESSAGE_ROLES.includes(message.role) &&
+            SYSTEM_MESSAGE_ROLES.includes(message.role as any) &&
             !SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)
           )
             return;
@@ -340,7 +341,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         if (!firstMessage) return;
 
         if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role as any) &&
           typeof firstMessage.content === 'string'
         ) {
           return {
@@ -354,7 +355,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
         }
 
         if (
-          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role) &&
+          SYSTEM_MESSAGE_ROLES.includes(firstMessage.role as any) &&
           typeof firstMessage.content === 'object' &&
           firstMessage.content?.[0]?.text
         ) {
@@ -448,7 +449,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig;
+          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
         return toolConfig;
       }
       return;
@@ -479,7 +480,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       );
       if (googleMapsTool) {
         toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig;
+          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
       }
       return toolConfig;
     },
@@ -686,7 +687,7 @@ export const GoogleChatCompleteResponseTransform: (
           }
 
           const message = {
-            role: MESSAGE_ROLES.ASSISTANT,
+            role: 'assistant' as const,
             ...(toolCalls.length && { tool_calls: toolCalls }),
             ...(content && { content }),
             ...(!strictOpenAiCompliance &&
@@ -855,6 +856,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
                     },
                   };
                 }
+                return undefined;
               }),
             };
           } else if (generation.content?.parts[0]?.inlineData) {

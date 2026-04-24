@@ -4,7 +4,6 @@ import {
   Message,
   ContentType,
   SYSTEM_MESSAGE_ROLES,
-  PromptCache,
   ToolChoiceObject,
 } from '../../types/requestBody';
 import {
@@ -19,7 +18,6 @@ import {
   ANTHROPIC_STOP_REASON,
 } from './types';
 import {
-  generateErrorResponse,
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
@@ -27,7 +25,8 @@ import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
-interface AnthropicTool extends PromptCache {
+interface AnthropicTool {
+  cache_control?: { type: 'ephemeral' };
   name: string;
   description?: string;
   input_schema?: {
@@ -134,14 +133,15 @@ type AnthropicMessageContentItem =
   | AnthropicBase64PdfContentItem
   | AnthropicPlainTextContentItem;
 
-interface AnthropicMessage extends Message, PromptCache {
+interface AnthropicMessage extends Message {
+  cache_control?: { type: 'ephemeral' };
   content: AnthropicMessageContentItem[];
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
   let transformedContent: AnthropicContentItem[] = [];
   let inputContent: ContentType[] | string | undefined =
-    msg.content_blocks ?? msg.content;
+    (msg.content_blocks ?? msg.content) as ContentType[] | string | undefined;
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
   if (inputContent && typeof inputContent === 'string') {
@@ -161,7 +161,7 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
     });
   }
   if (containsToolCalls) {
-    msg.tool_calls.forEach((toolCall: any) => {
+    (msg.tool_calls as any[]).forEach((toolCall: any) => {
       transformedContent.push({
         type: 'tool_use',
         name: toolCall.function.name,
@@ -279,8 +279,8 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & PromptCache) => {
-            if (SYSTEM_MESSAGE_ROLES.includes(msg.role)) return;
+          params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer')) return;
 
             if (msg.role === 'assistant') {
               messages.push(transformAssistantMessage(msg));
@@ -331,9 +331,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
         let systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
         if (!!params.messages) {
-          params.messages.forEach((msg: Message & PromptCache) => {
+          params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
             if (
-              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer') &&
               msg.content &&
               typeof msg.content === 'object' &&
               msg.content[0].text
@@ -348,7 +348,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 });
               });
             } else if (
-              SYSTEM_MESSAGE_ROLES.includes(msg.role) &&
+              SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer') &&
               typeof msg.content === 'string'
             ) {
               systemMessages.push({
@@ -377,10 +377,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               name: tool.function.name,
               description: tool.function?.description || '',
               input_schema: {
-                type: tool.function.parameters?.type || 'object',
-                properties: tool.function.parameters?.properties || {},
-                required: tool.function.parameters?.required || [],
-                $defs: tool.function.parameters?.['$defs'] || {},
+                type: (tool.function.parameters?.['type'] as string) || 'object',
+                properties: (tool.function.parameters?.['properties'] as Record<string, { type: string; description: string }>) || {},
+                required: (tool.function.parameters?.['required'] as string[]) || [],
+                $defs: (tool.function.parameters?.['$defs'] as Record<string, any>) || {},
               },
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
@@ -398,7 +398,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             });
           } else if (tool.type) {
             // Handle special tool types (tool search tools, code_execution, mcp_toolset, etc.)
-            const toolOptions = tool[tool.type];
+            const toolOptions = tool[tool.type] as Record<string, any> | undefined;
             tools.push({
               ...(toolOptions && { ...toolOptions }),
               name: tool.type,

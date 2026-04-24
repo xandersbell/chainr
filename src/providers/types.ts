@@ -312,3 +312,38 @@ export type PROVIDER_FINISH_REASON =
   | MISTRAL_AI_FINISH_REASON
   | TOGETHER_AI_FINISH_REASON
   | COHERE_STOP_REASON;
+
+/**
+ * 微调请求参数接口（从 Portkey 适配）
+ */
+export interface FinetuneRequest {
+  model: string;
+  suffix: string;
+  training_file: string;
+  validation_file?: string;
+  model_type?: string;
+  hyperparameters?: {
+    n_epochs?: number;
+    learning_rate_multiplier?: number;
+    batch_size?: number;
+  };
+  method?: {
+    type: 'supervised' | 'dpo';
+    supervised?: {
+      hyperparameters: {
+        n_epochs?: number;
+        learning_rate_multiplier?: number;
+        batch_size?: number;
+      };
+    };
+    dpo?: {
+      hyperparameters: {
+        beta?: string | number;
+        n_epochs?: number;
+        learning_rate_multiplier?: number;
+        batch_size?: number;
+      };
+    };
+  };
+  [key: string]: any;
+}

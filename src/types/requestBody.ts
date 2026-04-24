@@ -127,7 +127,7 @@ export interface Message {
   content_blocks?: ContentType[];
   name?: string;
   function_call?: unknown;
-  tool_calls?: unknown;
+  tool_calls?: any;
   tool_call_id?: string;
   citationMetadata?: CitationMetadata;
   reasoning_details?: unknown[];
@@ -463,8 +463,10 @@ export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'] as const;
 export const MESSAGE_ROLES = ['system', 'user', 'assistant', 'function', 'tool', 'developer'] as const;
 export type OpenAIMessageRole = (typeof MESSAGE_ROLES)[number];
 
-export interface ContentBlockChunk {
-  type: string;
+// ContentBlockChunk 继承 ContentType 的所有字段，但 type 改为可选，
+// 用于流式响应中的内容块增量数据（text/thinking/data 等顶层字段）
+export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
+  type?: string;
   index?: number;
   delta?: {
     type?: string;
