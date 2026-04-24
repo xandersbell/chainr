@@ -570,13 +570,14 @@ const chainr = new Chainr({
 ## 9. Dependencies
 
 ### Production
-- `typescript` (peer dependency)
-- No external runtime dependencies (pure fetch-based)
+- `@smithy/signature-v4`: AWS SigV4 签名（Bedrock/SageMaker 需要）
+- `@aws-crypto/sha256-js`: SHA256 哈希（@smithy 依赖）
 
 ### Development
 - `vitest`: Testing
 - `tsup`: Build (esbuild-based)
 - `typescript`: Type checking
+- `biome`: Linting + formatting
 
 ---
 

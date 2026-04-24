@@ -58,5 +58,9 @@
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^1.6.1"
+  },
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@smithy/signature-v4": "^5.3.14"
   }
 }

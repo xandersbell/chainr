@@ -10,7 +10,7 @@
 
 - **Priority-based Fallback**: Automatic failover across multiple LLM providers
 - **Weighted Load Balancing**: Distribute traffic across providers based on weights
-- **Zero External Dependencies**: Pure fetch-based, no runtime deps
+- **Minimal Dependencies**: Only AWS SDK for Bedrock signing, everything else is pure fetch
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
 - **370 Unit Tests**: Comprehensive coverage of core functionality
