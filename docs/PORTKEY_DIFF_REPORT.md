@@ -1,6 +1,6 @@
 # Chainr vs Portkey 差异报告
 
-**生成时间**: 2026-04-24 19:28 EEST（Phase 3 全部完成后更新）
+**生成时间**: 2026-04-24 19:46 EEST（Phase 3E conditional routing 规划中）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
 **Chainr 版本**: Phase 3 Complete, 205 tests, main branch
@@ -51,11 +51,20 @@
 | `single` | ✅ | ✅ | ✅ 已对齐 |
 | `fallback` | ✅ | ✅ | ✅ 已对齐 |
 | `loadbalance` | ✅ | ✅ | ✅ 已对齐 |
-| `conditional` | ✅ MongoDB 风格查询路由 | ❌ | ❌ 不做（管理调度功能） |
+| `conditional` | ✅ MongoDB 风格查询路由 | ❌ | ⚠️ P1 待实现 |
 | 嵌套策略 | ✅ 完全递归 | ✅ 完全递归 + 配置继承 | ✅ 已对齐 |
 | 熔断器 (Circuit Breaker) | ⚠️ 钩子扩展点 | ❌ | 🟡 低优先级 |
 
-### 3.1 嵌套策略详情
+### 3.1 `conditional` 策略详情（Portkey 实现，Chainr 待对齐）
+
+Portkey 的 conditional 路由是一种与 fallback/loadbalance 同级的路由策略，根据请求参数在运行时决定路由目标：
+- 操作符：`$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$regex`, `$and`, `$or`
+- 上下文键：`metadata.*`（调用方传入的元数据）、`params.*`（请求 body 字段）
+- 每个 condition 有 `query` + `then`（目标名称），按顺序匹配，有 `default` 兜底
+- 被选中的 target 可以是嵌套的 fallback/loadbalance 组
+- 典型场景：按 model 名称路由到不同 provider、按用户等级选择不同 target 组
+
+### 3.2 嵌套策略详情
 
 Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 - fallback 的某个 target 可以是一个 loadbalance 组
@@ -135,7 +144,6 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 
 | 功能 | 说明 | Chainr 态度 |
 |------|------|-------------|
-| Conditional 路由 | MongoDB 风格条件查询路由（按 metadata/params 分发） | ❌ 不做（管理调度功能） |
 | Hooks / Guardrails 系统 | beforeRequest/afterRequest 钩子，GUARDRAIL + MUTATOR | ❌ 不做 |
 | 20+ 内置 Guardrail 插件 | PII、内容审核、JSON Schema 校验等 | ❌ 不做 |
 | 第三方 Guardrail 集成 | Aporia, Azure, Bedrock, Patronus 等 | ❌ 不做 |
@@ -161,10 +169,11 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 
 | # | 差异项 | 说明 | 工作量 |
 |---|--------|------|--------|
-| 3 | **Anthropic Messages API 原生端点** | 直接暴露 `/messages` 而非仅 chat completions 转换 | 中 |
-| 4 | **OpenAI Responses API** | `createModelResponse` — OpenAI 新 API 格式 | 中 |
-| 5 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
-| 6 | ~~**Provider-specific params 完整对齐**~~ | ~~所有 provider 参数已与 Portkey 一致~~ | ✅ Phase 3D |
+| 3 | **conditional 路由** | MongoDB 风格条件路由（按 params/metadata 分发到不同 target） | 中 |
+| 4 | **Anthropic Messages API 原生端点** | 直接暴露 `/messages` 而非仅 chat completions 转换 | 中 |
+| 5 | **OpenAI Responses API** | `createModelResponse` — OpenAI 新 API 格式 | 中 |
+| 6 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
+| 7 | ~~**Provider-specific params 完整对齐**~~ | ~~所有 provider 参数已与 Portkey 一致~~ | ✅ Phase 3D |
 
 ### 🟢 P2 — 可选实现
 
@@ -200,8 +209,11 @@ graph LR
         T[Provider 特定参数]
     end
 
-    subgraph "明确不做 ❌"
+    subgraph "待实现 ⚠️"
         J[Conditional 路由]
+    end
+
+    subgraph "明确不做 ❌"
         N[Hooks/Guardrails]
         O[缓存系统]
         P[日志/监控]
@@ -221,7 +233,7 @@ graph LR
     style K fill:#d4edda,color:#000
     style S fill:#d4edda,color:#000
     style T fill:#d4edda,color:#000
-    style J fill:#f8d7da,color:#000
+    style J fill:#fff3cd,color:#000
     style N fill:#f8d7da,color:#000
     style O fill:#f8d7da,color:#000
     style P fill:#f8d7da,color:#000
@@ -229,4 +241,4 @@ graph LR
     style R fill:#f8d7da,color:#000
 ```
 
-**核心结论**：Chainr 在 provider 覆盖、路由策略（fallback/loadbalance/single + 嵌套递归）、流式处理、请求转换、Tool Calling、Provider 特定参数、retry-after 等核心 LLM 调用能力方面已与 Portkey 完全对齐。Conditional 路由、Hooks/Guardrails、缓存、日志等管理调度类功能不在 Chainr 范围内。
+**核心结论**：Chainr 在 provider 覆盖、路由策略（fallback/loadbalance/single + 嵌套递归）、流式处理、请求转换、Tool Calling、Provider 特定参数、retry-after 等核心 LLM 调用能力方面已与 Portkey 完全对齐。剩余待实现的核心路由能力为 conditional 路由策略。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。

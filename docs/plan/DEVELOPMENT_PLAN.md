@@ -382,6 +382,23 @@ Uses a single provider without fallback.
 - [x] Tool support (function calling) — 完整实现
 - [x] Provider-specific params — 完整对齐
 
+### Phase 3E: Conditional Routing 🟡 IN PROGRESS
+
+**Goal**: 实现 conditional 路由策略，根据请求参数/metadata 在运行时决定路由目标
+
+**设计**:
+- 与 fallback/loadbalance/single 同级的第四种路由策略
+- MongoDB 风格条件匹配：`$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$regex`, `$and`, `$or`
+- 匹配上下文：`params.*`（请求 body 字段）、`metadata.*`（调用方传入的元数据）
+- 按顺序匹配 conditions，命中第一个走对应 target，都不命中走 `default`
+- 被选中的 target 可以是嵌套的 fallback/loadbalance 组
+
+**Deliverables**:
+- [ ] ConditionalStrategy 类 + MongoDB 风格条件匹配器
+- [ ] Router/Config 类型更新支持 conditional
+- [ ] 完整测试覆盖
+- [ ] 文档更新
+
 ### Phase 4: Firebase Integration ⬜ TODO
 
 **Goal**: Production-ready with Firebase example
@@ -439,6 +456,7 @@ Uses a single provider without fallback.
 #### Nested Strategies
 - [x] Fallback + LoadBalance 组合（递归嵌套）
 - [x] 配置继承（overrideParams 合并，retry/timeout 子级优先）
+- [ ] Conditional routing（MongoDB 风格条件路由，Phase 3E）
 
 ### 5.3 低优先级 (生态集成)
 
@@ -564,6 +582,7 @@ const chainr = new Chainr({
 - [x] Provider-specific params 确认全部对齐
 
 ### Remaining
+- [ ] Phase 3E: Conditional routing（MongoDB 风格条件路由）
 - [ ] Phase 4: Anthropic Messages API + OpenAI Responses API
 - [ ] Phase 5: Firebase Functions example
 
