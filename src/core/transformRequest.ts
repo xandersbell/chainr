@@ -976,6 +976,14 @@ export function transformEmbedRequest(
     case 'fireworks-ai':
     case 'fireworks-ai-embed':
       return transformFireworksAIEmbedRequest(params, opts);
+    case 'google':
+      return transformGoogleEmbedRequest(params, opts);
+    case GOOGLE_VERTEX_AI:
+    case 'google-vertex-ai':
+    case 'vertex-ai':
+      return transformGoogleVertexEmbedRequest(params, opts);
+    case 'bedrock':
+      return transformBedrockEmbedRequest(params, opts);
     default:
       return transformOpenAIEmbeddingsRequest(params, opts);
   }
@@ -1005,6 +1013,10 @@ export function transformImageRequest(
     case 'hyperbolic':
     case 'hyperbolic-image':
       return transformHyperbolicImageRequest(params, opts);
+    case GOOGLE_VERTEX_AI:
+    case 'google-vertex-ai':
+    case 'vertex-ai':
+      return transformGoogleImageRequest(params, opts);
     default:
       return transformOpenAIDALLERequest(params, opts);
   }
@@ -1027,6 +1039,8 @@ export function transformAudioRequest(
     case 'lepton':
     case 'lepton-transcribe':
       return transformLeptonTranscribeRequest(params, opts);
+    case 'azure-openai':
+      return transformAzureWhisperRequest(params, opts);
     default:
       return transformOpenAIWhisperRequest(params, opts);
   }
@@ -1043,6 +1057,8 @@ export function transformSpeechRequest(
   switch (normalizedProvider) {
     case OPEN_AI:
       return transformOpenAISpeechRequest(params, opts);
+    case 'azure-openai':
+      return transformAzureSpeechRequest(params, opts);
     default:
       return transformOpenAISpeechRequest(params, opts);
   }
@@ -1313,6 +1329,8 @@ export function transformTranslationRequest(
       return transformOpenAITranslationRequest(params, opts);
     case LEMONFOX:
       return transformLemonFoxTranslationRequest(params, opts);
+    case 'azure-openai':
+      return transformAzureTranslationRequest(params, opts);
     default:
       return transformOpenAITranslationRequest(params, opts);
   }
@@ -1325,4 +1343,208 @@ export function transformLeptonRequest(
 ): TransformResult {
   const opts = providerOptions as Record<string, unknown>;
   return transformLeptonTranscribeRequest(params, opts);
+}
+
+function transformAzureWhisperRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'multipart/form-data',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['api-key'] = key;
+
+  const resourceName = (opts.azureResourceName as string) || '';
+  const deploymentId = (opts.azureDeploymentId as string) || 'whisper';
+  const apiVersion = (opts.azureApiVersion as string) || '2024-02-15-preview';
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file && params.file instanceof Blob) {
+    formData.append('file', params.file, 'audio.mp3');
+  }
+
+  if (params.language) formData.append('language', params.language);
+  if (params.prompt) formData.append('prompt', params.prompt as string);
+  if (params.response_format) formData.append('response_format', params.response_format as string);
+  if (params.temperature) formData.append('temperature', String(params.temperature));
+
+  return {
+    body: formData,
+    headers,
+    url: `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}/audio/transcriptions?api-version=${apiVersion}`,
+    isFormData: true,
+  };
+}
+
+function transformAzureSpeechRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['api-key'] = key;
+
+  const resourceName = (opts.azureResourceName as string) || '';
+  const deploymentId = (opts.azureDeploymentId as string) || 'tts';
+  const apiVersion = (opts.azureApiVersion as string) || '2024-02-15-preview';
+
+  const body: Record<string, unknown> = {
+    model: (params.model as string) || 'tts-1',
+    input: params.input as string,
+    voice: (params.voice as string) || 'alloy',
+  };
+
+  if (params.response_format) body.response_format = params.response_format;
+  if (params.speed) body.speed = params.speed;
+
+  return {
+    body,
+    headers,
+    url: `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}/audio/speech?api-version=${apiVersion}`,
+  };
+}
+
+function transformAzureTranslationRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'multipart/form-data',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['api-key'] = key;
+
+  const resourceName = (opts.azureResourceName as string) || '';
+  const deploymentId = (opts.azureDeploymentId as string) || 'whisper';
+  const apiVersion = (opts.azureApiVersion as string) || '2024-02-15-preview';
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file && params.file instanceof Blob) {
+    formData.append('file', params.file, 'audio.mp3');
+  }
+
+  if (params.prompt) formData.append('prompt', params.prompt as string);
+  if (params.response_format) formData.append('response_format', params.response_format as string);
+  if (params.temperature) formData.append('temperature', String(params.temperature));
+
+  return {
+    body: formData,
+    headers,
+    url: `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentId}/audio/translations?api-version=${apiVersion}`,
+    isFormData: true,
+  };
+}
+
+function transformGoogleEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  let instances;
+  if (Array.isArray(input)) {
+    instances = input.map(i => ({ parts: [{ text: typeof i === 'string' ? i : i.text }] }));
+  } else {
+    instances = [{ parts: [{ text: typeof input === 'string' ? input : input.text }] }];
+  }
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'embedding-001',
+    instances,
+  };
+
+  return {
+    body,
+    headers,
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/embedding-001:batchPredict',
+  };
+}
+
+function transformGoogleVertexEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const projectId = (opts.vertexProjectId as string) || '';
+  const location = (opts.vertexRegion as string) || 'us-central1';
+
+  const input = params.input;
+  let instances;
+  if (Array.isArray(input)) {
+    instances = input.map(i => ({ content: typeof i === 'string' ? i : i.text }));
+  } else {
+    instances = [{ content: typeof input === 'string' ? input : input.text }];
+  }
+
+  const body: Record<string, unknown> = {
+    instances,
+  };
+
+  if (params.model) body.model = params.model;
+
+  return {
+    body,
+    headers,
+    url: `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/embedding-004:predict`,
+  };
+}
+
+function transformGoogleImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const projectId = (opts.vertexProjectId as string) || '';
+  const location = (opts.vertexRegion as string) || 'us-central1';
+
+  const instances = Array.isArray(params.prompt)
+    ? params.prompt.map(text => ({ prompt }))
+    : [{ prompt: params.prompt }];
+
+  const parameters: Record<string, unknown> = {};
+  if (params.n) parameters.sampleCount = params.n;
+  if (params.quality) {
+    parameters.outputOptions = {
+      compressionQuality: params.quality === 'hd' ? 100 : 75,
+    };
+  }
+  if (params.aspectRatio) parameters.aspectRatio = params.aspectRatio;
+  if (params.seed) parameters.seed = params.seed;
+
+  const body: Record<string, unknown> = {
+    instances,
+    parameters,
+  };
+
+  return {
+    body,
+    headers,
+    url: `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate:predict`,
+  };
+}
+
+function transformBedrockEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'amazon-bedrock-embedding-provider': params.model || 'amazon.titan-embed-text-v1',
+  };
+
+  const input = params.input;
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    inputText: Array.isArray(texts) ? texts[0] : texts,
+  };
+
+  if (params.model) body.model = params.model;
+
+  return {
+    body,
+    headers,
+    url: 'https://bedrock.us-east-1.amazonaws.com/embeddings',
+  };
 }

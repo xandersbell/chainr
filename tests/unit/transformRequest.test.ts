@@ -1635,6 +1635,146 @@ describe('transformLeptonRequest', () => {
   });
 });
 
+describe('Azure OpenAI Audio Transcription', () => {
+  it('should transform Azure Whisper request', () => {
+    const params: Params = {
+      model: 'whisper-1',
+      file: new Blob(['audio data'], { type: 'audio/mp3' }),
+      language: 'en',
+    };
+    const result = transformAudioRequest(params, 'azure-openai' as any, {
+      apiKey: 'test-key',
+      azureResourceName: 'my-resource',
+      azureDeploymentId: 'whisper',
+      azureApiVersion: '2024-02-15-preview',
+    });
+
+    expect(result.url).toContain('https://my-resource.openai.azure.com/');
+    expect(result.url).toContain('/audio/transcriptions');
+    expect(result.isFormData).toBe(true);
+    expect(result.headers['api-key']).toBe('test-key');
+  });
+});
+
+describe('Azure OpenAI Speech Synthesis', () => {
+  it('should transform Azure TTS request', () => {
+    const params: Params = {
+      model: 'tts-1',
+      input: 'Hello world',
+      voice: 'alloy',
+    };
+    const result = transformSpeechRequest(params, 'azure-openai' as any, {
+      apiKey: 'test-key',
+      azureResourceName: 'my-resource',
+      azureDeploymentId: 'tts',
+      azureApiVersion: '2024-02-15-preview',
+    });
+
+    expect(result.url).toContain('https://my-resource.openai.azure.com/');
+    expect(result.url).toContain('/audio/speech');
+    expect(result.headers['api-key']).toBe('test-key');
+    expect(result.body).toHaveProperty('model', 'tts-1');
+    expect(result.body).toHaveProperty('input', 'Hello world');
+  });
+});
+
+describe('Azure OpenAI Translation', () => {
+  it('should transform Azure translation request', () => {
+    const params: Params = {
+      model: 'whisper-1',
+      file: new Blob(['audio data'], { type: 'audio/mp3' }),
+    };
+    const result = transformTranslationRequest(params, 'azure-openai' as any, {
+      apiKey: 'test-key',
+      azureResourceName: 'my-resource',
+      azureDeploymentId: 'whisper',
+      azureApiVersion: '2024-02-15-preview',
+    });
+
+    expect(result.url).toContain('https://my-resource.openai.azure.com/');
+    expect(result.url).toContain('/audio/translations');
+    expect(result.isFormData).toBe(true);
+  });
+});
+
+describe('Google Embeddings', () => {
+  it('should transform Google AI embeddings request', () => {
+    const params: Params = {
+      model: 'embedding-001',
+      input: 'Hello world',
+    };
+    const result = transformEmbedRequest(params, 'google' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toContain('generativelanguage.googleapis.com');
+    expect(result.body).toHaveProperty('instances');
+    expect(result.body.instances[0]).toHaveProperty('parts');
+    expect(result.body.instances[0].parts[0]).toHaveProperty('text', 'Hello world');
+  });
+
+  it('should handle array input', () => {
+    const params: Params = {
+      input: ['Hello', 'World'],
+    };
+    const result = transformEmbedRequest(params, 'google' as any, { apiKey: 'test-key' });
+
+    expect(result.body.instances).toHaveLength(2);
+    expect(result.body.instances[0].parts[0].text).toBe('Hello');
+    expect(result.body.instances[1].parts[0].text).toBe('World');
+  });
+});
+
+describe('Google Vertex AI Embeddings', () => {
+  it('should transform Vertex AI embeddings request', () => {
+    const params: Params = {
+      model: 'embedding-004',
+      input: 'Hello world',
+    };
+    const result = transformEmbedRequest(params, 'vertex-ai' as any, {
+      apiKey: 'test-key',
+      vertexProjectId: 'my-project',
+      vertexRegion: 'us-central1',
+    });
+
+    expect(result.url).toContain('us-central1-aiplatform.googleapis.com');
+    expect(result.url).toContain('my-project');
+    expect(result.body).toHaveProperty('instances');
+  });
+});
+
+describe('Google Vertex AI Image Generation', () => {
+  it('should transform Vertex AI image request', () => {
+    const params: Params = {
+      model: 'imagen-3.0',
+      prompt: 'A beautiful sunset',
+      n: 2,
+    };
+    const result = transformImageRequest(params, 'vertex-ai' as any, {
+      apiKey: 'test-key',
+      vertexProjectId: 'my-project',
+      vertexRegion: 'us-central1',
+    });
+
+    expect(result.url).toContain('us-central1-aiplatform.googleapis.com');
+    expect(result.body).toHaveProperty('instances');
+    expect(result.body.instances[0]).toHaveProperty('prompt', 'A beautiful sunset');
+    expect(result.body.parameters).toHaveProperty('sampleCount', 2);
+  });
+});
+
+describe('AWS Bedrock Embeddings', () => {
+  it('should transform Bedrock embeddings request', () => {
+    const params: Params = {
+      model: 'amazon.titan-embed-text-v1',
+      input: 'Hello world',
+    };
+    const result = transformEmbedRequest(params, 'bedrock' as any, { apiKey: 'test-key' });
+
+    expect(result.url).toContain('bedrock');
+    expect(result.body).toHaveProperty('inputText', 'Hello world');
+    expect(result.headers['amazon-bedrock-embedding-provider']).toBe('amazon.titan-embed-text-v1');
+  });
+});
+
 describe('AI21 Embeddings', () => {
   it('should transform AI21 embeddings request with texts array', () => {
     const params: Params = {
