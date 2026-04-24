@@ -36,6 +36,62 @@ export interface Options {
   anthropicBeta?: string;
   anthropicVersion?: string;
   anthropicApiKey?: string;
+  // AWS Bedrock / SageMaker
+  awsRegion?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
+  awsAuthType?: string;
+  awsService?: string;
+  awsRoleArn?: string;
+  awsExternalId?: string;
+  awsS3Bucket?: string;
+  awsServerSideEncryption?: string;
+  awsServerSideEncryptionKMSKeyId?: string;
+  foundationModel?: string;
+  amznSagemakerCustomAttributes?: string;
+  amznSagemakerEnableExplanations?: string;
+  amznSagemakerInferenceComponent?: string;
+  amznSagemakerInferenceId?: string;
+  amznSagemakerSessionId?: string;
+  amznSagemakerTargetContainerHostname?: string;
+  amznSagemakerTargetModel?: string;
+  amznSagemakerTargetVariant?: string;
+  // Azure OpenAI
+  resourceName?: string;
+  deploymentId?: string;
+  apiVersion?: string;
+  azureAdToken?: string;
+  azureAuthMode?: string;
+  azureEntraTenantId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraScope?: string;
+  azureManagedClientId?: string;
+  azureWorkloadClientId?: string;
+  // Azure AI Inference
+  azureFoundryUrl?: string;
+  azureDeploymentName?: string;
+  azureApiVersion?: string;
+  azureExtraParameters?: string;
+  // Fireworks AI
+  fireworksAccountId?: string;
+  // Hugging Face
+  huggingfaceBaseUrl?: string;
+  // Workers AI
+  workersAiAccountId?: string;
+  // Mistral
+  mistralFimCompletion?: string;
+  // Oracle
+  oracleApiVersion?: string;
+  oracleCompartmentId?: string;
+  oracleFingerprint?: string;
+  oracleKeyPassphrase?: string;
+  oraclePrivateKey?: string;
+  oracleRegion?: string;
+  oracleServingMode?: string;
+  oracleTenancy?: string;
+  oracleUser?: string;
 }
 
 export interface Targets {
@@ -215,6 +271,26 @@ export interface Params {
   };
   dimensions?: number;
   parameters?: unknown;
+  // 图片生成
+  size?: string;
+  quality?: string;
+  style?: string;
+  // 音频转录/翻译
+  file?: File | Blob | string;
+  language?: string;
+  // TTS
+  voice?: string;
+  speed?: number;
+  // Embeddings
+  encoding_format?: string;
+  // SiliconFlow 图片
+  num_steps?: number;
+  guidance?: number;
+  // Google Imagen
+  aspectRatio?: string;
+  // 其他
+  version?: string;
+  examples?: unknown[];
 }
 
 export interface ShortConfig {
@@ -381,3 +457,24 @@ export interface Model3DGenerateResponse {
   model_url?: string;
   provider?: string;
 }
+
+// Provider 需要的类型常量和别名
+export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'] as const;
+export const MESSAGE_ROLES = ['system', 'user', 'assistant', 'function', 'tool', 'developer'] as const;
+export type OpenAIMessageRole = (typeof MESSAGE_ROLES)[number];
+
+export interface ContentBlockChunk {
+  type: string;
+  index?: number;
+  delta?: {
+    type?: string;
+    text?: string;
+    partial_json?: string;
+  };
+}
+
+export interface PromptCache {
+  type: 'ephemeral';
+}
+
+export type JsonSchema = Record<string, unknown>;

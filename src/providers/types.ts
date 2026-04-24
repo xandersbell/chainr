@@ -103,7 +103,21 @@ export type endpointStrings =
   | 'deleteModelResponse'
   | 'listResponseInputItems'
   | 'messages'
-  | 'messagesCountTokens';
+  | 'messagesCountTokens'
+  | 'uploadFile'
+  | 'retrieveFile'
+  | 'listFiles'
+  | 'deleteFile'
+  | 'retrieveFileContent'
+  | 'createFinetune'
+  | 'retrieveFinetune'
+  | 'listFinetunes'
+  | 'cancelFinetune'
+  | 'createBatch'
+  | 'retrieveBatch'
+  | 'listBatches'
+  | 'cancelBatch'
+  | 'getBatchOutput';
 
 /**
  * Provider API 配置集合
