@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟡 In Development — **370 tests passing**, 1279 TS errors (1151 in `src/providers/` dead code, 128 in core) (2026-04-24)
+**Status**: 🟡 In Development — **384 tests passing**, 647 TS errors (519 in `src/providers/`, 128 in core) (2026-04-24)
 
-**Last Updated**: 2026-04-24 12:40 EEST — 文档修正：TS 编译状态、providers 目录实际状态
+**Last Updated**: 2026-04-24 13:53 EEST — Phase 1-4 重构完成，Provider 注册表已创建
 
 ---
 
@@ -341,10 +341,19 @@ Uses a single provider without fallback.
 - [x] 3D generation transforms (2 providers)
 - [x] Streaming transforms (8 providers)
 - [x] All 370 tests pass
-- [ ] ~~TypeScript 0 errors~~ — **实际 1279 TS errors**（1151 in `src/providers/` dead code, 128 in core）
+- [ ] ~~TypeScript 0 errors~~ — **647 TS errors**（519 in `src/providers/`, 128 in core）
 - [x] Build succeeds (tsup bundles only active code, `src/providers/` not imported)
 
-> **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 70 个 provider 目录（260 个 .ts 文件），但缺少 `index.ts`、`types.ts`、`errors.ts` 三个核心注册文件，且未被任何代码 import。这些是死代码，不参与构建和测试。
+> **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 70 个 provider 目录。桥接文件（types.ts、utils.ts）和注册表（index.ts）已创建。Hono 依赖已全部剥离。67 个 provider 已注册到静态注册表。
+
+### Phase 2.5: Provider Integration 🟢 COMPLETE
+
+**Completed** (2026-04-24):
+- [x] Phase 1：桥接文件（types.ts、utils.ts、finishReasonMap.ts、embedRequestBody.ts、GatewayError.ts、env.ts）
+- [x] Phase 2：Hono 依赖全部剥离，awsSigV4.ts 删除，改用 @smithy/signature-v4
+- [x] Phase 3：17 个 provider 的 75 个无效 import 清理
+- [x] Phase 4：Provider 注册表（67 个 provider）+ providerRequest.ts 集成层
+- [x] 384 tests passing (370 + 14 new)
 
 ### Phase 3: Advanced Features ⬜ TODO
 
@@ -470,7 +479,7 @@ Google-specific:
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (370 tests ✅)
+### Current Test Coverage (384 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
