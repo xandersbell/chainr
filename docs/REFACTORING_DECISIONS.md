@@ -1,293 +1,207 @@
-# Chainr 重构：决策与思路记录
+# Chainr 重构：架构决策与实施方案
 
-> 本文档记录 Portkey 风格 per-provider 目录结构重构过程中的思考、决策和问题。
+> 核心策略：直接采用 Portkey 的文件结构和代码，仅剥离外部依赖（Hono、@smithy）。
+> 不做不必要的创新，不重新发明轮子。
 
 **创建时间**: 2026-04-24
-**最后更新**: 2026-04-24
+**最后更新**: 2026-04-24 13:08 EEST
+**状态**: 📋 方案已确定，待实施
 
 ---
 
-## 1. 为什么要重构
+## 1. 核心原则
 
-### 1.1 原始问题
+**一句话总结**：Portkey 能用的结构和文件，我们直接用。只做依赖剥离，不做架构重设计。
 
-| 问题 | 说明 |
+| 原则 | 说明 |
 |------|------|
-| 单一巨型 switch 文件 | `transformRequest.ts` 1717 行，难以维护 |
-| 添加 provider 繁琐 | 需要修改核心文件，违反开闭原则 |
-| Portkey 代码无法复用 | 每次同步 Portkey 改动需要大量重写 |
-| 52 个 provider 实际大部分是 passthrough | 声称支持很多 provider，实际很多没有完整实现 |
-
-### 1.2 重构目标
-
-1. **完全对齐 Portkey 结构** - 每个 provider 独立目录 + 独立文件
-2. **直接复用 Portkey 代码** - 用 `cp` 命令直接从 Portkey 复制文件
-3. **保持 API 兼容** - 对外接口不变，用户无感知
-4. **最小改造** - 只改必要的适配代码，不重写
+| **直接复用** | Portkey 的 provider 文件直接使用，不重写 |
+| **最小改造** | 只改必须改的：剥离 Hono Context、替换 @smithy |
+| **结构对齐** | 目录结构、文件命名、导出模式完全对齐 Portkey |
+| **桥接文件** | 创建 `types.ts`、`utils.ts`、`index.ts` 三个桥接文件，提供 Portkey providers 所需的类型和工具函数 |
 
 ---
 
-## 2. Portkey 的架构分析
+## 2. 当前状态
 
-### 2.1 Portkey 的 per-provider 结构
+### 2.1 已完成
 
-```
-src/providers/{provider}/
-├── api.ts              # baseURL、auth 方式、endpoint 构建
-├── chatComplete.ts     # 请求/响应转换逻辑
-├── complete.ts         # completions 端点（部分 provider 有）
-├── embed.ts           # embeddings（如果有）
-├── index.ts           # 配置导出
-├── types.ts           # 类型定义
-├── utils.ts           # 工具函数（部分 provider 有）
-└── [其他].ts          # provider 特有功能
-```
+- 70 个 provider 目录已从 Portkey 复制到 `src/providers/`
+- 排除了不需要的文件（Batch、Finetune、File、upload 等）
+- 核心代码（`src/core/`）正常工作，370 个测试通过
+- Build 通过（tsup 只打包 `src/index.ts` 引用链）
 
-### 2.2 Portkey 的 Provider 注册表
+### 2.2 未完成（providers 是死代码）
 
-```typescript
-// src/providers/index.ts
-import OpenAIConfig from './openai';
-import AnthropicConfig from './anthropic';
-// ...
-
-const Providers: Record<string, ProviderConfig> = {
-  openai: OpenAIConfig,
-  anthropic: AnthropicConfig,
-  // ...
-};
-
-export default Providers;
-```
-
-### 2.3 Chainr 当前的问题
-
-Chainr 当前使用巨型 switch 语句：
-- `transformRequest.ts` - 1700+ 行，包含所有 provider 的请求转换
-- `transformResponse.ts` - 包含所有 provider 的响应转换
-- 添加新 provider 需要修改核心文件
-
-### 2.4 决策：为什么不直接用 Portkey 的 Router
-
-Portkey 的 Router 使用动态导入：
-```typescript
-const { default: Provider } = await import(`../providers/${provider}/index.js`);
-```
-
-Chainr 的问题是这个动态导入是异步的，而 Chainr 的 Router 架构是同步的。
-
-**替代方案**：使用静态导入 + 注册表
+| 缺失项 | 说明 |
+|--------|------|
+| `src/providers/types.ts` | 不存在。70 个 provider 都 import 它 |
+| `src/providers/utils.ts` | 不存在。多个 provider 依赖 `generateErrorResponse` 等函数 |
+| `src/providers/index.ts` | 不存在。Provider 注册表，连接 providers 和 Router |
+| Hono 依赖 | 3 个文件仍 import `Context from 'hono'` |
+| @smithy 依赖 | 1 个文件（bedrock/utils.ts）依赖 `@smithy/signature-v4` |
+| Provider index.ts 清理 | 部分 provider 的 index.ts 引用了被排除的文件（imageGenerate、createSpeech 等） |
+| Router 集成 | Strategy 文件仍使用 `transformRequest.ts` 的 switch，未接入 providers |
 
 ---
 
-## 3. 核心决策
+## 3. 差距分析
 
-### 3.1 静态导入 vs 动态导入
+### 3.1 需要创建的桥接文件（3 个）
 
-| 方案 | 优点 | 缺点 |
-|------|------|------|
-| 动态 import | 懒加载，按需加载 | 异步，需要 async/await |
-| 静态 import | 同步，立即可用 | 打包体积大 |
+#### `src/providers/types.ts`
 
-**决策**: 使用静态导入 + 注册表
+Providers 实际 import 的类型（从代码中提取）：
 
-**理由**:
-1. Chainr Router 架构是同步的，改造为异步成本高
-2. Chainr 目标是零外部依赖，动态 import 的额外复杂度不必要
-3. Portkey 的静态导入方案可用：`Providers[provider]`
+```
+ProviderAPIConfig    — api.ts 使用，定义 getBaseURL/headers/getEndpoint
+ProviderConfig       — index.ts 使用，单个功能的参数映射配置
+ProviderConfigs      — index.ts 使用，provider 的完整配置导出
+ChatCompletionResponse — chatComplete.ts 使用，响应类型
+CompletionResponse   — complete.ts 使用
+ErrorResponse        — 错误响应类型
+endpointStrings      — endpoint 路径字符串类型
+ParameterConfig      — 参数映射配置
+```
 
-### 3.2 目录结构 vs 单文件注册表
+**策略**：直接从 Portkey 的 `src/providers/types.ts` 复制，删除 Chainr 不需要的类型（FinetuneRequest、Logprobs、BedrockMessagesParams 等可按需保留）。
 
-| 方案 | 优点 | 缺点 |
-|------|------|------|
-| 每 provider 一个目录 | 与 Portkey 一致性好，便于同步 | 文件数量多 |
-| 单一 index.ts 放所有配置 | 文件少 | 与 Portkey 偏离 |
+#### `src/providers/utils.ts`
 
-**决策**: 保持 Portkey 的 per-provider 目录结构
+Providers 实际 import 的函数：
 
-**理由**: 用户要求与 Portkey 对齐，cp 命令可直接复用
+```
+generateErrorResponse              — 生成标准错误响应
+generateInvalidProviderResponseError — 生成无效响应错误
+splitString                        — 字符串分割工具
+```
 
-### 3.3 transformRequest.ts 的去留
+**策略**：直接从 Portkey 的 `src/providers/utils.ts` 复制对应函数。
 
-| 选项 | 处理方式 |
-|------|----------|
-| 完全移除 | Provider 配置接管一切 |
-| 保留作为 fallback | 某些简单 provider 仍走 switch |
-| 完全保留 | 新结构作为补充 |
+#### `src/providers/index.ts`
 
-**决策**: Provider 结构成熟后，移除 transformRequest.ts 中的重复 case
+静态导入所有 provider 配置，导出注册表 `Record<string, ProviderConfigs>`。
 
-**当前状态**: transformRequest.ts 仍在使用，providers 目录未被接入
+**策略**：参考 Portkey 的 `src/providers/index.ts`，静态导入 70 个 provider。
+
+### 3.2 需要剥离的外部依赖（4 个文件）
+
+| 文件 | 依赖 | 处理方式 |
+|------|------|----------|
+| `src/providers/bedrock/api.ts` | `import { Context } from 'hono'` | 移除 Context 参数，改用 providerOptions 传入 |
+| `src/providers/bedrock/utils.ts` | `@smithy/signature-v4` | 替换为 `src/core/awsSigV4.ts` |
+| `src/providers/google-vertex-ai/utils.ts` | `import { Context } from 'hono'` | 移除 Context 参数 |
+
+> 注意：Hono 的 `Context` 在 Portkey 中用于读取环境变量和请求头。
+> Chainr 中这些信息通过 `providerOptions` 对象传入，不需要 Hono。
+
+### 3.3 需要清理的无效 import
+
+部分 provider 的 `index.ts` 引用了被 rsync --exclude 排除的文件：
+
+```typescript
+// 典型的无效引用（文件不存在）
+import { OpenAIImageGenerateConfig } from './imageGenerate';
+import { OpenAICreateSpeechConfig } from './createSpeech';
+import { OpenAICreateTranscriptionConfig } from './createTranscription';
+```
+
+**策略**：逐个 provider 检查 index.ts，删除引用不存在文件的 import 和对应的配置项。不用脚本批量改，逐个审查。
 
 ---
 
-## 4. 实施过程中的问题
+## 4. 实施计划
 
-### 4.1 复制 providers 时的问题
+### Phase 1：创建桥接文件（types.ts + utils.ts）
 
-**问题**: Portkey 的 provider/index.ts 引用了大量被排除的文件
+从 Portkey 复制 `src/providers/types.ts` 和 `src/providers/utils.ts`，做最小修改：
+- 删除 Chainr 不需要的类型定义
+- 确保导出的类型覆盖所有 provider 的 import 需求
+- `utils.ts` 中如有 Hono 依赖也需剥离
 
-```typescript
-// openai/index.ts 引用了这些（被 rsync --exclude 排除的）：
-import { OpenAIImageGenerateConfig } from './imageGenerate';       // ❌ 不存在
-import { OpenAICreateSpeechConfig } from './createSpeech';           // ❌ 不存在
-import { OpenAICreateTranscriptionResponseTransform } from './createTranscription';  // ❌ 不存在
-// ... 更多
-```
+**验证**：`npx tsc --noEmit` 错误数应大幅下降（当前 1151 个 provider 错误中大部分是缺少 types/utils 导致的）。
 
-**解决方案**: 需要清理每个 provider/index.ts 中的无效 import
+### Phase 2：剥离 Hono 和 @smithy
 
-### 4.2 Hono Context 依赖
+逐个修改 4 个文件：
+1. `bedrock/api.ts` — 移除 `Context` 参数，从 providerOptions 读取 AWS 配置
+2. `bedrock/utils.ts` — 替换 `@smithy/signature-v4` 为 `src/core/awsSigV4.ts`
+3. `google-vertex-ai/utils.ts` — 移除 `Context` 参数
 
-Portkey 使用 Hono 框架，其 Context 对象贯穿整个请求流程。Chainr 是纯 fetch 实现。
+**验证**：`grep -r "from 'hono'" src/providers/` 和 `grep -r "@smithy" src/providers/` 均无结果。
 
-**需要移除的 import**:
-```typescript
-import { Context } from 'hono';
-import { Environment } from 'hono';
-```
+### Phase 3：清理 provider index.ts 无效引用
 
-**替代方案**: 使用 `process.env` 或传入的配置对象
+逐个检查每个 provider 的 `index.ts`，删除引用不存在文件的 import 行和对应配置。
 
-### 4.3 Bedrock 的 @smithy/signature-v4
+**验证**：`npx tsc --noEmit` 在 `src/providers/` 中的错误数应接近 0。
 
-Bedrock 使用 AWS 签名，Portkey 用 `@smithy/signature-v4`。Chainr 已有 `src/core/awsSigV4.ts`。
+### Phase 4：创建注册表（index.ts）+ Router 集成
 
-**决策**: 重写 Bedrock 相关文件，使用现有的 awsSigV4.ts
+1. 创建 `src/providers/index.ts`，静态导入所有 provider
+2. 修改 Strategy 文件，通过注册表获取 provider 配置
+3. 逐步替换 `transformRequest.ts` 中的 switch case
 
----
+**验证**：370 个现有测试仍然通过 + 新增 provider 注册表测试。
 
-## 5. 架构设计决策
+### Phase 5：清理旧代码
 
-### 5.1 Provider 配置接口
-
-```typescript
-// src/providers/types.ts
-export interface ProviderAPIConfig {
-  getBaseURL: (params: {
-    providerOptions: Record<string, unknown>;
-    gatewayRequestBody?: Params;
-  }) => string;
-
-  headers: (args: {
-    providerOptions: Record<string, unknown>;
-    transformedRequestBody: Record<string, unknown>;
-    transformedRequestUrl: string;
-    gatewayRequestBody?: Params;
-  }) => Record<string, string>;
-
-  getEndpoint: (args: {
-    fn: string;
-    gatewayRequestBodyJSON: Params;
-    gatewayRequestURL: string;
-  }) => string;
-}
-
-export interface ProviderConfig {
-  chatComplete: Record<string, any>;
-  api: ProviderAPIConfig;
-  responseTransforms?: {
-    chatComplete?: (response: any, status: number, headers: Headers) => any;
-    'stream-chatComplete'?: (chunk: string, ...args: any[]) => string;
-  };
-}
-```
-
-### 5.2 注册表设计
-
-```typescript
-// src/providers/index.ts
-import OpenAIConfig from './openai';
-import AnthropicConfig from './anthropic';
-// ... 静态导入所有 provider
-
-const Providers: Record<string, ProviderConfig> = {
-  openai: OpenAIConfig,
-  anthropic: AnthropicConfig,
-  // ...
-};
-
-export default Providers;
-
-export function getProviderConfig(provider: string): ProviderConfig {
-  const config = Providers[provider];
-  if (!config) {
-    throw new Error(`Unknown provider: ${provider}`);
-  }
-  return config;
-}
-```
-
-### 5.3 Router 集成方式
-
-策略文件（FallbackStrategy 等）通过 `getProviderConfig(provider)` 获取 provider 配置，而不是直接调用 transformRequest.ts 的 switch。
+当所有 provider 通过新结构工作后：
+- 删除 `transformRequest.ts` 中已被 provider 配置替代的 case
+- 删除 `transformResponse.ts` 中已被 provider 配置替代的函数
+- 保留 default case 作为 OpenAI-compatible fallback
 
 ---
 
-## 6. 已知问题与后续工作
+## 5. 关键决策
 
-### 6.1 当前阻塞项
+### 5.1 静态导入 vs 动态导入
 
-1. **Provider index.ts 清理** - 移除对不存在文件的引用
-2. **types.ts / errors.ts / index.ts** - 三个核心文件不存在
-3. **Bedrock 适配** - 移除 @smithy，改用 awsSigV4.ts
-4. **Hono 依赖清理** - 移除所有 Context import
-5. **Router 集成** - 策略文件需要使用新的 providers 结构
+**决策**：静态导入 + 注册表
 
-### 6.2 风险
+Portkey 使用 `await import(\`../providers/${provider}/index.js\`)` 动态导入。
+Chainr 的 Router 架构是同步的，改造为异步成本高且不必要。
+使用静态导入注册表 `Providers[provider]` 即可。
 
-| 风险 | 评估 |
+### 5.2 transformRequest.ts 的去留
+
+**决策**：渐进替换
+
+Phase 4 完成后，provider 配置接管请求/响应转换。
+`transformRequest.ts` 中被替代的 case 逐步删除。
+保留 default case 处理 OpenAI-compatible providers（52 个 passthrough provider）。
+
+### 5.3 为什么不自己设计抽象层
+
+**决策**：不设计，直接用 Portkey 的
+
+Portkey 的 `ProviderAPIConfig`/`ProviderConfig`/`ProviderConfigs` 类型体系已经被 70+ provider 验证过。
+自己设计新的抽象层 = 重新发明轮子 + 无法直接 cp Portkey 更新。
+唯一的适配点是剥离 Hono Context（用 providerOptions 替代）。
+
+---
+
+## 6. 风险与缓解
+
+| 风险 | 缓解 |
 |------|------|
-| 文档失实 | 高 - 多个 Phase 标记完成但实际未完成 |
-| 构建假象 | 高 - build 通过但 providers 未被导入 |
-| 迁移复杂度 | 高 - 需要重写 Router 和所有 Strategy 文件的请求转换逻辑 |
-
-### 6.3 建议的后续步骤
-
-1. **Phase 3-8 并行化**: 创建 types.ts, errors.ts, index.ts 并行进行
-2. **批量清理**: 使用 sed/grep 批量清理无效 import
-3. **增量验证**: 每清理一个 provider 就验证一次 build
+| 清理 index.ts 无效引用工作量大 | 逐个 provider 审查，不用脚本批量改 |
+| Bedrock @smithy 替换可能影响签名 | Chainr 已有经过测试的 `awsSigV4.ts` |
+| 注册表导入 70 个 provider 影响打包体积 | tsup tree-shaking 会处理；或后续按需改为动态导入 |
+| 现有 370 测试可能因 Router 改造失败 | Phase 4 分步进行，每步验证测试 |
 
 ---
 
-## 7. 关键洞察
-
-### 7.1 为什么之前的重构失败了
-
-1. **虚假进度**: 文档标记完成但实际未做
-2. **Build 假象**: providers 目录存在但未被导入，build 总是通过
-3. **缺少集成**: 复制 providers 和实际使用是两回事
-
-### 7.2 正确的重构姿势
-
-1. **先验证再标记完成**: 每个 phase 完成后立即测试
-2. **集成优先**: 先让一个 provider 工作，再批量复制
-3. **保持工作状态**: 不允许"部分完成"状态存在太久
-
-### 7.3 Portkey 架构的教训
-
-Portkey 使用动态导入是因为其 Router 本身就是异步的。Chainr 的同步架构决定了我们必须使用静态导入注册表方案。
-
-这不是"简化"，而是"适配"。
-
----
-
-## 8. 文件清单
+## 7. 文件清单
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `src/providers/` | 已创建 | 70 个 provider 目录已复制 |
-| `src/providers/types.ts` | 不存在 | 需要创建 |
-| `src/providers/errors.ts` | 不存在 | 需要创建 |
-| `src/providers/index.ts` | 不存在 | 需要创建 |
-| `src/core/transformRequest.ts` | 存在 | 仍在使用，未改造 |
-| `src/core/transformResponse.ts` | 存在 | 仍在使用，未改造 |
-
----
-
-## 9. 参考资料
-
-- [Portkey AI Gateway](https://github.com/portkey-ai/gateway) - 源项目
-- [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) - 实施计划文档
-- `src/core/transformRequest.ts` - 当前实现（待替换）
-- `src/core/transformResponse.ts` - 当前实现（待替换）
+| `src/providers/types.ts` | ⬜ 待创建 | 从 Portkey 复制 + 最小修改 |
+| `src/providers/utils.ts` | ⬜ 待创建 | 从 Portkey 复制 + 最小修改 |
+| `src/providers/index.ts` | ⬜ 待创建 | 静态注册表 |
+| `src/providers/bedrock/api.ts` | ⬜ 待修改 | 剥离 Hono Context |
+| `src/providers/bedrock/utils.ts` | ⬜ 待修改 | 替换 @smithy → awsSigV4.ts |
+| `src/providers/google-vertex-ai/utils.ts` | ⬜ 待修改 | 剥离 Hono Context |
+| `src/providers/*/index.ts` | ⬜ 待清理 | 删除无效 import |
+| `src/core/transformRequest.ts` | ⬜ 待精简 | Phase 5 渐进替换 |
+| `src/core/transformResponse.ts` | ⬜ 待精简 | Phase 5 渐进替换 |
