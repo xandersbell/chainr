@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟡 In Development — **384 tests passing**, 553 TS errors (2026-04-24)
+**Status**: 🟢 TypeScript Zero Errors — **384 tests passing**, 0 TS errors (2026-04-24)
 
-**Last Updated**: 2026-04-24 14:33 EEST — globals.ts 对齐 Portkey，TS 错误 647→553，google provider 已注册
+**Last Updated**: 2026-04-24 15:52 EEST — TS 错误清零，所有 provider 文件类型安全
 
 ---
 
@@ -341,7 +341,7 @@ Uses a single provider without fallback.
 - [x] 3D generation transforms (2 providers)
 - [x] Streaming transforms (8 providers)
 - [x] All 370 tests pass
-- [ ] ~~TypeScript 0 errors~~ — **647 TS errors**（519 in `src/providers/`, 128 in core）
+- [ ] ~~TypeScript 0 errors~~ — **✅ 0 TS errors** (2026-04-24 15:52 EEST)
 - [x] Build succeeds (tsup bundles only active code, `src/providers/` not imported)
 
 > **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 70 个 provider 目录。桥接文件（types.ts、utils.ts）和注册表（index.ts）已创建。Hono 依赖已全部剥离。67 个 provider 已注册到静态注册表。
