@@ -97,7 +97,17 @@ export async function retryRequest(
         await sleep(delay);
       }
     } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
+      // ConnectTimeoutError → 当 host 不可达时，包装为 503 让 fallback/retry 正常处理
+      if (
+        error instanceof TypeError &&
+        error.cause instanceof Error &&
+        (error.cause as Error).name === 'ConnectTimeoutError'
+      ) {
+        lastResponse = { status: 503, data: { error: { message: error.message, type: 'connect_timeout' } } };
+        lastError = `ConnectTimeoutError: ${error.message}`;
+      } else {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
       if (attempt < attempts - 1) {
         const delay = getRetryDelay(attempt);
         await sleep(delay);
@@ -148,7 +158,16 @@ export async function retryRequestForStream(
         await sleep(delay);
       }
     } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
+      // ConnectTimeoutError → 当 host 不可达时，包装为 503 让 fallback/retry 正常处理
+      if (
+        error instanceof TypeError &&
+        error.cause instanceof Error &&
+        (error.cause as Error).name === 'ConnectTimeoutError'
+      ) {
+        lastError = `ConnectTimeoutError: ${error.message}`;
+      } else {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
       if (attempt < attempts - 1) {
         const delay = getRetryDelay(attempt);
         await sleep(delay);
