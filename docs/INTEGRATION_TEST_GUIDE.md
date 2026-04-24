@@ -321,7 +321,7 @@ Error: OpenAI API returned 429
 
 ## 9. 下一步
 
-1. ✅ Unit tests 已完成（vi.mock() 模式，184 tests）
+1. ✅ Unit tests 已完成（vi.mock() 模式，370 tests）
 2. ✅ real-http.test.ts 已实现（12 tests，自动 skip 无 key）
 3. 🔲 当需要时，添加真实 API keys 到 `.env.test.local`
 4. 🔲 运行真实 HTTP 测试验证端到端流程

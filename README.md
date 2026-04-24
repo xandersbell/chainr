@@ -2,7 +2,9 @@
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟢 Production Ready — 370 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
+**Status**: 🟡 In Development — 370 tests passing, 16 dedicated transforms + 52 OpenAI-compatible URL mappings
+
+> **Note**: Core code (`src/core/`) has 128 TypeScript strict-mode errors; `src/providers/` (copied from Portkey, not yet integrated) has 1151 TS errors. Build succeeds because `tsup` bundles only the active code path. The `src/providers/` directory is dead code — not imported anywhere.
 
 ## Features
 

@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟡 In Development — **370 tests passing** (2026-04-24)
+**Status**: 🟡 In Development — **370 tests passing**, 1279 TS errors (1151 in `src/providers/` dead code, 128 in core) (2026-04-24)
 
-**Last Updated**: 2026-04-24 - AWS Bedrock complete support added
+**Last Updated**: 2026-04-24 12:40 EEST — 文档修正：TS 编译状态、providers 目录实际状态
 
 ---
 
@@ -89,8 +89,8 @@ chainr/
 │   └── core/
 │       ├── Router.ts               # Main Chainr class
 │       ├── types.ts                # Core types
-│       ├── transformRequest.ts     # Provider request transform (1650+ lines)
-│       ├── transformResponse.ts    # Provider response transform (400+ lines)
+│       ├── transformRequest.ts     # Provider request transform (1717 lines)
+│       ├── transformResponse.ts    # Provider response transform (397 lines)
 │       ├── RetryHandler.ts         # Exponential backoff retry
 │       ├── awsSigV4.ts             # AWS SigV4 signing (NEW)
 │       ├── transformBedrockStream.ts # Bedrock streaming
@@ -341,8 +341,10 @@ Uses a single provider without fallback.
 - [x] 3D generation transforms (2 providers)
 - [x] Streaming transforms (8 providers)
 - [x] All 370 tests pass
-- [x] TypeScript 0 errors
-- [x] Build succeeds
+- [ ] ~~TypeScript 0 errors~~ — **实际 1279 TS errors**（1151 in `src/providers/` dead code, 128 in core）
+- [x] Build succeeds (tsup bundles only active code, `src/providers/` not imported)
+
+> **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 70 个 provider 目录（260 个 .ts 文件），但缺少 `index.ts`、`types.ts`、`errors.ts` 三个核心注册文件，且未被任何代码 import。这些是死代码，不参与构建和测试。
 
 ### Phase 3: Advanced Features ⬜ TODO
 

@@ -13,7 +13,7 @@
 
 | 问题 | 说明 |
 |------|------|
-| 单一巨型 switch 文件 | `transformRequest.ts` 1650+ 行，难以维护 |
+| 单一巨型 switch 文件 | `transformRequest.ts` 1717 行，难以维护 |
 | 添加 provider 繁琐 | 需要修改核心文件，违反开闭原则 |
 | Portkey 代码无法复用 | 每次同步 Portkey 改动需要大量重写 |
 | 52 个 provider 实际大部分是 passthrough | 声称支持很多 provider，实际很多没有完整实现 |
@@ -276,7 +276,7 @@ Portkey 使用动态导入是因为其 Router 本身就是异步的。Chainr 的
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `src/providers/` | 已创建 | 67 个 provider 目录已复制 |
+| `src/providers/` | 已创建 | 70 个 provider 目录已复制 |
 | `src/providers/types.ts` | 不存在 | 需要创建 |
 | `src/providers/errors.ts` | 不存在 | 需要创建 |
 | `src/providers/index.ts` | 不存在 | 需要创建 |

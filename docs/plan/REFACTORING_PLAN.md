@@ -13,7 +13,7 @@
 
 | 问题 | 说明 |
 |------|------|
-| Phase 2 | 文档说 78 个，实际复制了 67 个 provider 目录 |
+| Phase 2 | 文档说 78 个，实际复制了 70 个 provider 目录 |
 | Phase 3 | 文档说"路径兼容无需修改"，**实际**大量 provider/index.ts 引用不存在的文件 |
 | Phase 4 | 文档说 `chainrTypes.ts` 已创建，**实际**不存在 |
 | Phase 5 | 文档说 Bedrock 已适配，**实际**未做任何修改 |
@@ -23,14 +23,14 @@
 | Phase 9-10 | 文档标记"可选"，**实际**是阻塞项（Router 完全没有引用 providers） |
 | Phase 11 | Build 通过是因为 providers 目录**未被任何代码导入**，非真正完成 |
 
-**当前状态**：providers 目录已复制（67 个），但结构不完整（缺 types.ts/errors.ts/index.ts），且未被 Chainr 接入。
+**当前状态**：providers 目录已复制（70 个），但结构不完整（缺 types.ts/errors.ts/index.ts），且未被 Chainr 接入。8 个文件仍引用 Hono 框架。1151 个 TS 编译错误。
 
 ## 执行进度
 
 | Phase | Status | 说明 |
 |-------|--------|------|
 | Phase 1: 创建目录 | ✅ 完成 | `src/providers/` 已创建 |
-| Phase 2: 复制 providers | ✅ 完成 | 67 个目录已复制 (rsync with exclusions) |
+| Phase 2: 复制 providers | ✅ 完成 | 70 个目录已复制 (rsync with exclusions) |
 | Phase 3: 路径检查 | 🔄 进行中 | 大部分 provider/index.ts 引用了不存在的文件（batch/finetune/file 等被排除的） |
 | Phase 4: Provider types | ⬜ 待开始 | `src/providers/types.ts` 不存在，需创建 |
 | Phase 5: Bedrock 处理 | ⬜ 待开始 | 需移除 @smithy，使用 awsSigV4.ts |
@@ -74,7 +74,7 @@
 
 | 问题 | 说明 |
 |------|------|
-| **单文件过大** | `transformRequest.ts` 1650+ 行，难以维护 |
+| **单文件过大** | `transformRequest.ts` 1717 行，难以维护 |
 | **添加 provider 繁琐** | 需要修改核心文件，违反开闭原则 |
 | **Portkey 代码无法直接复用** | 需要大量重写才能同步 Portkey 的改动 |
 | **35 个 provider 只是 passthrough** | 声称 52 个，实际很多没有完整实现 |
@@ -509,7 +509,7 @@ npm run build
 
 | 指标 | 重构前 | 重构后 |
 |------|--------|--------|
-| 最大文件行数 | 1650+ (transformRequest.ts) | ~200 (per file) |
+| 最大文件行数 | 1717 (transformRequest.ts) | ~200 (per file) |
 | Provider 实现 | 16 专用 + 35 passthrough | 75+ 全部专用 |
 | 添加新 provider | 修改核心文件 | 新建目录 + cp |
 | Portkey 代码复用 | 需要重写 | 直接 cp |
