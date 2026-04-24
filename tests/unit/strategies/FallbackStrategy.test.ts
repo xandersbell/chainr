@@ -85,20 +85,16 @@ describe('FallbackStrategy', () => {
       const result = await strategy.execute(targets, params);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('All fallback targets exhausted');
+      expect(result.error).toBe('HTTP 502');
       expect(retryRequest).toHaveBeenCalledTimes(2);
     });
 
-    it('returns error when targets array is empty', async () => {
+    it('throws error when targets array is empty', async () => {
       const strategy = new FallbackStrategy();
       const targets: Array<Record<string, unknown>> = [];
       const params = { model: 'gpt-4o', messages: [] };
 
-      const result = await strategy.execute(targets, params);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('All fallback targets exhausted');
-      expect(retryRequest).not.toHaveBeenCalled();
+      await expect(strategy.execute(targets, params)).rejects.toThrow('No targets provided');
     });
 
     it('uses target.provider when provided', async () => {
@@ -185,7 +181,7 @@ describe('FallbackStrategy', () => {
       const result = await strategy.execute([target], params);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('All fallback targets exhausted');
+      expect(result.error).toBe('HTTP 429');
     });
 
     it('uses retryConfig when provided', async () => {

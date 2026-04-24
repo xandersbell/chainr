@@ -348,7 +348,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('retryConfig 应优先于 target.retry', async () => {
+      it('target.retry 应优先于全局 retryConfig（子级覆盖父级）', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'openai', apiKey: 'test-key', retry: { attempts: 2 } }];
         const params = { messages: [] };
@@ -366,10 +366,11 @@ describe('SingleStrategy', () => {
 
         await strategy.execute(targets, params, retryConfig);
 
+        // 嵌套策略模型：target 级别的 retry 比全局 retryConfig 更具体，应优先
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          retryConfig,
+          { attempts: 2 },
           undefined
         );
       });

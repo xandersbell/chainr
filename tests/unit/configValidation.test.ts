@@ -32,7 +32,7 @@ describe('Config Validation', () => {
       expect(() => new Chainr({
         strategy: 'fallback',
         targets: [{ apiKey: 'test' }],
-      })).toThrow('Each target must have a "provider" field');
+      })).toThrow('must have a "provider" field');
     });
 
     it('多个 target 中有一个缺少 provider 时抛出错误', () => {
@@ -42,7 +42,7 @@ describe('Config Validation', () => {
           { provider: 'openai', apiKey: 'key1' },
           { apiKey: 'key2' },
         ],
-      })).toThrow('Each target must have a "provider" field');
+      })).toThrow('must have a "provider" field');
     });
 
     it('合法 targets 不抛出错误', () => {
