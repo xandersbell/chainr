@@ -25,10 +25,10 @@ export function createMockRetryRequest(
   return vi.fn().mockResolvedValue(result) as unknown as typeof import('../src/core/RetryHandler').retryRequest;
 }
 
-export function createMockTransformRequest(
+export function createMockBuildProviderRequest(
   result: TransformResult
-): typeof import('../src/core/transformRequest').transformRequest {
-  return vi.fn().mockReturnValue(result) as unknown as typeof import('../src/core/transformRequest').transformRequest;
+): typeof import('../src/core/providerRequest').buildProviderRequest {
+  return vi.fn().mockResolvedValue(result) as unknown as typeof import('../src/core/providerRequest').buildProviderRequest;
 }
 
 export function mockMathRandom(value: number): () => void {

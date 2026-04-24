@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChainrConfig, StrategyResult } from '../../src/core/types';
 import type { Params } from '../../src/types/requestBody';
 
-// Router.createStrategy() 直接 new 策略类，需通过模块 mock 拦截实例化
 const mockFallbackExecute = vi.fn();
 const mockLoadBalanceExecute = vi.fn();
 const mockSingleExecute = vi.fn();
@@ -19,14 +18,17 @@ vi.mock('../../src/core/strategies', () => ({
   },
 }));
 
-// 隔离响应转换逻辑，确保测试聚焦于 Router 管道行为
-const mockTransformResponse = vi.fn();
+const mockTransformProviderResponse = vi.fn();
 
-vi.mock('../../src/core/transformResponse', () => ({
-  transformResponse: (...args: unknown[]) => mockTransformResponse(...args),
+vi.mock('../../src/core/providerRequest', () => ({
+  buildProviderRequest: vi.fn().mockResolvedValue({
+    body: {},
+    headers: {},
+    url: 'https://api.openai.com/v1/chat/completions',
+  }),
+  transformProviderResponse: (...args: unknown[]) => mockTransformProviderResponse(...args),
 }));
 
-// mock 声明之后导入被测模块，确保 mock 生效
 import { Chainr } from '../../src/core/Router';
 
 const mockChatCompletionResponse = {
@@ -115,7 +117,7 @@ describe('Chainr (Router) 集成测试', () => {
   });
 
   describe('chat.completions.create()', () => {
-    it('策略返回成功响应时，通过 transformResponse 转换后返回', async () => {
+    it('策略返回成功响应时，通过 transformProviderResponse 转换后返回', async () => {
       const config: ChainrConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -128,16 +130,16 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       const result = await chainr.chat.completions.create(baseParams);
 
-      expect(mockTransformResponse).toHaveBeenCalledOnce();
+      expect(mockTransformProviderResponse).toHaveBeenCalledOnce();
       expect(result).toEqual(mockChatCompletionResponse);
     });
 
-    it('策略返回错误响应时，仍通过 transformResponse 转换后返回', async () => {
+    it('策略返回错误响应时，仍通过 transformProviderResponse 转换后返回', async () => {
       const config: ChainrConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -153,16 +155,16 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockErrorResponse);
+      mockTransformProviderResponse.mockReturnValue(mockErrorResponse);
 
       const chainr = new Chainr(config);
       const result = await chainr.chat.completions.create(baseParams);
 
-      expect(mockTransformResponse).toHaveBeenCalledOnce();
+      expect(mockTransformProviderResponse).toHaveBeenCalledOnce();
       expect(result).toEqual(mockErrorResponse);
     });
 
-    it('使用 result.provider 传递给 transformResponse', async () => {
+    it('使用 result.provider 传递给 transformProviderResponse', async () => {
       const config: ChainrConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', api_key: 'key-1' }],
@@ -175,15 +177,19 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
 
-      expect(mockTransformResponse).toHaveBeenCalledWith(expect.anything(), 'anthropic');
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        expect.anything(),
+        'anthropic',
+        'chatComplete'
+      );
     });
 
-    it('result.provider 缺失时，默认使用 "openai" 传递给 transformResponse', async () => {
+    it('result.provider 缺失时，默认使用 "openai" 传递给 transformProviderResponse', async () => {
       const config: ChainrConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -195,17 +201,21 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
 
-      expect(mockTransformResponse).toHaveBeenCalledWith(expect.anything(), 'openai');
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        expect.anything(),
+        'openai',
+        'chatComplete'
+      );
     });
   });
 
   describe('executeChatCompletions() - 完整管道', () => {
-    it('完整管道：config → strategy.execute() → transformResponse()', async () => {
+    it('完整管道：config → strategy.execute() → transformProviderResponse()', async () => {
       const targets = [
         { provider: 'openai', api_key: 'key-1' },
         { provider: 'anthropic', api_key: 'key-2' },
@@ -225,15 +235,16 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       const result = await chainr.chat.completions.create(baseParams);
 
       expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig);
-      expect(mockTransformResponse).toHaveBeenCalledWith(
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         strategyResult.response as unknown as Record<string, unknown>,
-        'openai'
+        'openai',
+        'chatComplete'
       );
       expect(result).toEqual(mockChatCompletionResponse);
     });
@@ -256,7 +267,7 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockLoadBalanceExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
@@ -279,7 +290,7 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockSingleExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
@@ -304,7 +315,7 @@ describe('Chainr (Router) 集成测试', () => {
       };
 
       mockSingleExecute.mockResolvedValue(strategyResult);
-      mockTransformResponse.mockReturnValue(mockChatCompletionResponse);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);

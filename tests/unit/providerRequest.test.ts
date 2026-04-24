@@ -161,14 +161,14 @@ describe('buildProviderRequest', () => {
     expect(result!.headers['Authorization']).toBe('Bearer ds-test-key');
   });
 
-  it('should return null for unknown provider', async () => {
-    const result = await buildProviderRequest(
-      { model: 'test', messages: [] },
-      'nonexistent-provider',
-      { provider: 'nonexistent' }
-    );
-
-    expect(result).toBeNull();
+  it('should throw for unknown provider', async () => {
+    await expect(
+      buildProviderRequest(
+        { model: 'test', messages: [] },
+        'nonexistent-provider',
+        { provider: 'nonexistent' }
+      )
+    ).rejects.toThrow('Provider "nonexistent-provider" not found in registry');
   });
 
   it('should build Mistral AI request correctly', async () => {

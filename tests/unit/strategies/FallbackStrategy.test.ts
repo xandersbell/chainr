@@ -5,12 +5,12 @@ vi.mock('../../../src/core/RetryHandler', () => ({
   retryRequest: vi.fn(),
 }));
 
-vi.mock('../../../src/core/transformRequest', () => ({
-  transformRequest: vi.fn(),
+vi.mock('../../../src/core/providerRequest', () => ({
+  buildProviderRequest: vi.fn(),
 }));
 
 import { retryRequest } from '../../../src/core/RetryHandler';
-import { transformRequest } from '../../../src/core/transformRequest';
+import { buildProviderRequest } from '../../../src/core/providerRequest';
 
 const mockRetryResult = (overrides = {}) => ({
   success: false,
@@ -22,7 +22,7 @@ const mockRetryResult = (overrides = {}) => ({
 describe('FallbackStrategy', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(transformRequest).mockReturnValue({
+    vi.mocked(buildProviderRequest).mockResolvedValue({
       body: { model: 'gpt-4o', messages: [] },
       headers: { 'Content-Type': 'application/json' },
       url: 'https://api.openai.com/v1/chat/completions',
@@ -70,7 +70,7 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledTimes(2);
     });
 
-    it('returns failure when all targets fail (result.error not captured as lastError since no exception thrown)', async () => {
+    it('returns failure when all targets fail', async () => {
       vi.mocked(retryRequest)
         .mockResolvedValueOnce(mockRetryResult({ success: false, error: 'HTTP 500' }))
         .mockResolvedValueOnce(mockRetryResult({ success: false, error: 'HTTP 502' }));
@@ -91,7 +91,7 @@ describe('FallbackStrategy', () => {
 
     it('returns error when targets array is empty', async () => {
       const strategy = new FallbackStrategy();
-      const targets = [];
+      const targets: Array<Record<string, unknown>> = [];
       const params = { model: 'gpt-4o', messages: [] };
 
       const result = await strategy.execute(targets, params);
@@ -110,7 +110,7 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(transformRequest).toHaveBeenCalledWith(expect.anything(), 'anthropic', expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'anthropic', expect.anything());
     });
 
     it('defaults to openai when no provider specified', async () => {
@@ -122,7 +122,7 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(transformRequest).toHaveBeenCalledWith(expect.anything(), 'openai', expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'openai', expect.anything());
     });
 
     it('merges params with target.overrideParams', async () => {
@@ -138,7 +138,7 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(transformRequest).toHaveBeenCalledWith(
+      expect(buildProviderRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4o-mini',
           temperature: 0.7,
@@ -169,7 +169,7 @@ describe('FallbackStrategy', () => {
       expect(result.response).toEqual({ status: 200, data: { id: 'chat-123' } });
     });
 
-    it('returns failure when retryRequest returns error result (no exception thrown)', async () => {
+    it('returns failure when retryRequest returns error result', async () => {
       vi.mocked(retryRequest).mockResolvedValue(
         mockRetryResult({
           success: false,

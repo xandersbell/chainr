@@ -5,12 +5,12 @@ vi.mock('../../../src/core/RetryHandler', () => ({
   retryRequest: vi.fn(),
 }));
 
-vi.mock('../../../src/core/transformRequest', () => ({
-  transformRequest: vi.fn(),
+vi.mock('../../../src/core/providerRequest', () => ({
+  buildProviderRequest: vi.fn(),
 }));
 
 import { retryRequest } from '../../../src/core/RetryHandler';
-import { transformRequest } from '../../../src/core/transformRequest';
+import { buildProviderRequest } from '../../../src/core/providerRequest';
 
 describe('LoadBalanceStrategy', () => {
   let strategy: LoadBalanceStrategy;
@@ -41,7 +41,7 @@ describe('LoadBalanceStrategy', () => {
         success: true,
         response: { status: 200, data: {} },
       });
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.openai.com/v1/chat/completions',
@@ -58,7 +58,7 @@ describe('LoadBalanceStrategy', () => {
       ];
       vi.spyOn(Math, 'random').mockReturnValue(0.4);
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.openai.com/v1/chat/completions',
@@ -79,7 +79,7 @@ describe('LoadBalanceStrategy', () => {
       ];
       vi.spyOn(Math, 'random').mockReturnValue(0.6);
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.anthropic.com/v1/messages',
@@ -100,7 +100,7 @@ describe('LoadBalanceStrategy', () => {
       ];
       vi.spyOn(Math, 'random').mockReturnValue(0.4);
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.openai.com/v1/chat/completions',
@@ -121,7 +121,7 @@ describe('LoadBalanceStrategy', () => {
       ];
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.openai.com/v1/chat/completions',
@@ -142,7 +142,7 @@ describe('LoadBalanceStrategy', () => {
       ];
       vi.spyOn(Math, 'random').mockReturnValue(0.8);
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: {},
         headers: {},
         url: 'https://api.anthropic.com/v1/messages',
@@ -162,7 +162,7 @@ describe('LoadBalanceStrategy', () => {
       const target = { provider: 'openai', weight: 1 };
       const params = { messages: [], model: 'test' };
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: { model: 'test', messages: [] },
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test' },
         url: 'https://api.openai.com/v1/chat/completions',
@@ -186,7 +186,7 @@ describe('LoadBalanceStrategy', () => {
       const target = { provider: 'openai', weight: 1 };
       const params = { messages: [], model: 'test' };
 
-      (transformRequest as ReturnType<typeof vi.fn>).mockReturnValue({
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
         body: { model: 'test', messages: [] },
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test' },
         url: 'https://api.openai.com/v1/chat/completions',
