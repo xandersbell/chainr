@@ -1,7 +1,7 @@
-import type { Params, Message } from '../types/requestBody';
+import type { Params, Message, ContentType, EmbedInput } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE, NSCALE_URL, LEPTON } from '../globals';
-import { generateAWSHeaders, getBedrockModelWithoutRegion } from '../providers/bedrock/utils';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, NSCALE, NSCALE_URL, LEPTON } from '../globals';
+import { getBedrockModelWithoutRegion } from '../providers/bedrock/utils';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -184,7 +184,7 @@ function transformAnthropicRequest(params: Params, opts: Record<string, unknown>
   }
 
   return {
-    body,
+    body: body as unknown as Record<string, unknown>,
     headers,
     url: 'https://api.anthropic.com/v1/messages',
   };
@@ -786,7 +786,7 @@ function transformCohereEmbeddingsRequest(params: Params, opts: Record<string, u
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     model: params.model || 'embed-english-v3.0',
@@ -813,7 +813,7 @@ function transformWorkersAIEmbedRequest(params: Params, opts: Record<string, unk
 
   const accountId = (opts.workersAiAccountId as string) || '';
   const input = params.input;
-  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     text: texts,
@@ -837,7 +837,7 @@ function transformSiliconFlowEmbedRequest(params: Params, opts: Record<string, u
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     model: params.model || 'BAAI/bge-base-zh-v1.5',
@@ -1162,7 +1162,7 @@ function transformAI21EmbedRequest(params: Params, opts: Record<string, unknown>
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     texts,
@@ -1186,7 +1186,7 @@ function transformMistralAIEmbedRequest(params: Params, opts: Record<string, unk
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     model: params.model || 'mistral-embed',
@@ -1209,7 +1209,7 @@ function transformTogetherAIEmbedRequest(params: Params, opts: Record<string, un
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     model: params.model || 'mistral-embed',
@@ -1254,7 +1254,7 @@ function transformFireworksAIEmbedRequest(params: Params, opts: Record<string, u
   headers['Authorization'] = `Bearer ${key}`;
 
   const input = params.input;
-  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const inputArray = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     model: params.model || 'nomic-ai/nomic-embed-text-v1.5',
@@ -1345,7 +1345,7 @@ export function transformTranslationRequest(
 
 export function transformLeptonRequest(
   params: Params,
-  provider: string,
+  _provider: string,
   providerOptions: unknown
 ): TransformResult {
   const opts = providerOptions as Record<string, unknown>;
@@ -1456,7 +1456,7 @@ function transformGoogleEmbedRequest(params: Params, opts: Record<string, unknow
   if (Array.isArray(input)) {
     instances = input.map(i => ({ parts: [{ text: typeof i === 'string' ? i : i.text }] }));
   } else {
-    instances = [{ parts: [{ text: typeof input === 'string' ? input : input.text }] }];
+    instances = [{ parts: [{ text: typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? '' }] }];
   }
 
   const body: Record<string, unknown> = {
@@ -1484,7 +1484,7 @@ function transformGoogleVertexEmbedRequest(params: Params, opts: Record<string, 
   if (Array.isArray(input)) {
     instances = input.map(i => ({ content: typeof i === 'string' ? i : i.text }));
   } else {
-    instances = [{ content: typeof input === 'string' ? input : input.text }];
+    instances = [{ content: typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? '' }];
   }
 
   const body: Record<string, unknown> = {
@@ -1509,7 +1509,7 @@ function transformGoogleImageRequest(params: Params, opts: Record<string, unknow
   const location = (opts.vertexRegion as string) || 'us-central1';
 
   const instances = Array.isArray(params.prompt)
-    ? params.prompt.map(text => ({ prompt }))
+    ? params.prompt.map(text => ({ prompt: text }))
     : [{ prompt: params.prompt }];
 
   const parameters: Record<string, unknown> = {};
@@ -1534,14 +1534,14 @@ function transformGoogleImageRequest(params: Params, opts: Record<string, unknow
   };
 }
 
-function transformBedrockEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+function transformBedrockEmbedRequest(params: Params, _opts: Record<string, unknown>): TransformResult {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'amazon-bedrock-embedding-provider': params.model || 'amazon.titan-embed-text-v1',
   };
 
   const input = params.input;
-  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : (input as unknown as EmbedInput)?.text ?? ''];
 
   const body: Record<string, unknown> = {
     inputText: Array.isArray(texts) ? texts[0] : texts,
@@ -1597,7 +1597,7 @@ function transformBedrockChatRequest(params: Params, opts: Record<string, unknow
   if (systemMessages && systemMessages.length > 0) {
     (body as any).system = systemMessages.map((msg) => {
       const content = Array.isArray(msg.content) ? msg.content : [{ text: msg.content || '' }];
-      return content.filter((c) => c.type === 'text').map((c) => ({ text: c.text || '' }));
+      return content.filter((c) => (c as ContentType).type === 'text').map((c) => ({ text: (c as ContentType).text || '' }));
     }).flat();
   }
 

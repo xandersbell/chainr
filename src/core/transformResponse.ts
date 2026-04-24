@@ -3,8 +3,6 @@ import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXI
 
 export type { ChatCompletionResponse, ErrorResponse, EmbedResponse, ImageGenerateResponse, Model3DGenerateResponse };
 
-export type { ChatCompletionResponse, ErrorResponse };
-
 export function transformResponse(
   rawResponse: unknown,
   provider: string
@@ -292,7 +290,7 @@ export function transformTripo3DResponse(json: unknown): Model3DGenerateResponse
   };
 }
 
-function transformRekaAIResponse(json: unknown): ChatCompletionResponse {
+function transformRekaAIResponse(json: unknown): ChatCompletionResponse | ErrorResponse {
   const data = json as Record<string, unknown>;
 
   if ('detail' in data) {
@@ -335,7 +333,7 @@ function transformRekaAIResponse(json: unknown): ChatCompletionResponse {
   );
 }
 
-function transformBedrockResponse(json: unknown): ChatCompletionResponse {
+function transformBedrockResponse(json: unknown): ChatCompletionResponse | ErrorResponse {
   const data = json as Record<string, unknown>;
 
   if ('message' in data) {

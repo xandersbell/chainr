@@ -19,12 +19,17 @@ export interface ChatCompletionChoice {
   index: number;
   message: ChatCompletionMessage;
   finish_reason: string;
+  logprobs?: unknown;
 }
 
 export interface UsageStats {
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
+  prompt_tokens_details?: {
+    audio_tokens?: number;
+    cached_tokens?: number;
+  };
 }
 
 export interface ChatCompletionResponse {
@@ -34,6 +39,7 @@ export interface ChatCompletionResponse {
   model: string;
   choices: ChatCompletionChoice[];
   usage: UsageStats;
+  provider?: string;
 }
 
 export interface ProviderError {
