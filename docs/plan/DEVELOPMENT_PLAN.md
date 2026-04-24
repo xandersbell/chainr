@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 4 Complete — **205 tests passing**, 0 TS errors, 所有核心功能已对齐 (2026-04-24)
+**Status**: 🟢 All Phases Complete — **221 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-24)
 
-**Last Updated**: 2026-04-24 20:57 EEST — Phase 5 不需要（SDK 嵌入式调用，Firebase 无需额外适配）
+**Last Updated**: 2026-04-24 22:03 EEST — P2 功能全部完成（conditional routing、complete、imageEdit、files、batch、finetune、Azure chunk delay、ConnectTimeout）
 
 ---
 
@@ -575,9 +575,17 @@ const chainr = new Chainr({
 - [x] messagesTargets / responsesTargets 专用 target 池
 - [x] 8 个新测试覆盖两个 API 的路由、target 选择、默认 provider、retry/timeout 传递
 
-### Remaining (P2 可选)
+### Remaining (P2 可选) ✅ 全部完成
 - [x] ~~Phase 5: Firebase Functions example~~ — 不需要，SDK 嵌入式调用在任何 Node.js 环境中用法一致
-- [ ] Phase 3E: Conditional routing（P2 低优先级，有需求再做）
+- [x] Conditional routing — MongoDB 风格条件路由，16 个测试
+- [x] ConnectTimeoutError → 503 错误区分
+- [x] Azure 1ms chunk 间隔
+- [x] complete (legacy) 端点
+- [x] imageEdit 端点
+- [x] 文件操作端点（upload/list/delete/retrieve/content）
+- [x] Batch API（create/retrieve/list/cancel）
+- [x] Fine-tune API（create/list/cancel/retrieve）
+- [x] rerank — 跳过（Portkey 也仅有类型占位，未实现）
 
 ---
 

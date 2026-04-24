@@ -1,9 +1,9 @@
 # Chainr vs Portkey 差异报告
 
-**生成时间**: 2026-04-24 20:44 EEST（Phase 4 完成后更新）
+**生成时间**: 2026-04-24 22:03 EEST（P2 功能全部完成后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Chainr 版本**: Phase 4 Complete, 205 tests, main branch
+**Chainr 版本**: All Phases Complete, 221 tests, main branch
 
 ---
 
@@ -51,15 +51,16 @@
 | `single` | ✅ | ✅ | ✅ 已对齐 |
 | `fallback` | ✅ | ✅ | ✅ 已对齐 |
 | `loadbalance` | ✅ | ✅ | ✅ 已对齐 |
-| `conditional` | ✅ MongoDB 风格查询路由 | ❌ | 🟢 P2 低优先级（SDK 场景下调用方可用代码实现） |
+| `conditional` | ✅ MongoDB 风格查询路由 | ✅ | ✅ 已对齐 |
 | 嵌套策略 | ✅ 完全递归 | ✅ 完全递归 + 配置继承 | ✅ 已对齐 |
 | 熔断器 (Circuit Breaker) | ⚠️ 钩子扩展点 | ❌ | 🟡 低优先级 |
 
-### 3.1 `conditional` 策略详情（Portkey 实现，Chainr P2 低优先级）
+### 3.1 `conditional` 策略详情
 
-Portkey 的 conditional 路由是独立网关场景下的运行时分流策略。在 Chainr 嵌入式 SDK 场景下，调用方可直接用代码实现等效逻辑，因此降为 P2 低优先级，有需求时再实现。
+Chainr 已实现完整的 MongoDB 风格条件路由，与 Portkey 对齐：
 - 操作符：`$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$regex`, `$and`, `$or`
 - 上下文键：`params.*`（请求 body 字段）、`metadata.*`（调用方传入的元数据）
+- 支持 default target 兜底
 
 ### 3.2 嵌套策略详情
 
@@ -79,7 +80,7 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | `retry-after` header 支持 | ✅ 读取 retry-after-ms / x-ms-retry-after-ms / retry-after | ✅ 同 Portkey 优先级 + 60s 预算 | ✅ 已对齐 |
 | 最大重试等待 60s 上限 | ✅ MAX_RETRY_LIMIT_MS | ✅ 60s cap | ✅ 已对齐 |
 | fetchWithTimeout | ✅ AbortController | ✅ AbortController | ✅ 已对齐 |
-| ConnectTimeoutError → 503 | ✅ | ❌ 未区分 | 🟡 小差异 |
+| ConnectTimeoutError → 503 | ✅ | ✅ | ✅ 已对齐 |
 
 ---
 
@@ -91,7 +92,7 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | AWS EventStream 二进制帧解析 | ✅ readAWSStream() | ✅ transformBedrockStream | ✅ 已对齐 |
 | Provider 分隔符映射 | ✅ | ✅ | ✅ 已对齐 |
 | 首 chunk 延迟 (25ms) | ✅ | ✅ | ✅ 已对齐 |
-| Azure 1ms chunk 间隔 | ✅ isSleepTimeRequired | ❌ | 🟡 小差异 |
+| Azure 1ms chunk 间隔 | ✅ isSleepTimeRequired | ✅ | ✅ 已对齐 |
 | JSON → SSE 转换（缓存命中） | ✅ | ❌ | ❌ 无缓存所以不需要 |
 | Hook 结果注入流 | ✅ | ❌ | ❌ 无 Hook 所以不需要 |
 | 流式重试 | ✅ retryRequestForStream | ✅ retryRequestForStream | ✅ 已对齐 |
@@ -107,8 +108,7 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | transform 函数 | ✅ | ✅ | ✅ 已对齐 |
 | 点号嵌套路径 (setNestedProperty) | ✅ | ✅ | ✅ 已对齐 |
 | responseTransforms | ✅ | ✅ | ✅ 已对齐 |
-| FormData 转换 | ✅ transformToFormData() | ❌ 未确认 | ⚠️ 需核实 |
-| 文件上传 (uploadFile) | ✅ ReadableStream 转换 | ❌ | ❌ 缺失 |
+| FormData 转换 | ✅ transformToFormData() | ✅ executeSimpleEndpoint 支持 | ✅ 已对齐 |
 | proxy 模式（原样透传） | ✅ | ❌ | 🟡 低优先级 |
 
 ---
@@ -118,22 +118,22 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | 端点类型 | Portkey | Chainr | 状态 |
 |----------|---------|--------|------|
 | chatComplete | ✅ | ✅ | ✅ |
-| complete (legacy) | ✅ | ❌ | 🟡 低优先级 |
+| complete (legacy) | ✅ | ✅ | ✅ |
 | embed | ✅ | ✅ | ✅ |
 | imageGenerate | ✅ | ✅ | ✅ |
-| imageEdit | ✅ | ❌ | 🟡 |
+| imageEdit | ✅ | ✅ | ✅ |
 | createSpeech | ✅ | ✅ | ✅ |
 | createTranscription | ✅ | ✅ | ✅ |
 | createTranslation | ✅ | ✅ | ✅ |
-| rerank | ✅ | ❌ | 🟡 |
+| rerank | ⚠️ 仅类型占位 | ❌ | ❌ Portkey 也未实现 |
 | moderate | ✅ | ❌ | 🔴 低 |
 | realtime (WebSocket) | ✅ | ❌ | 🟡 |
-| uploadFile / listFiles / deleteFile | ✅ | ❌ | 🟡 |
-| createBatch / retrieveBatch | ✅ | ❌ | 🟡 |
-| createFinetune / listFinetunes | ✅ | ❌ | 🟡 |
-| messages (Anthropic native) | ✅ | ✅ | ✅ Phase 4 |
+| uploadFile / listFiles / deleteFile | ✅ | ✅ | ✅ |
+| createBatch / retrieveBatch / listBatches / cancelBatch | ✅ | ✅ | ✅ |
+| createFinetune / listFinetunes / cancelFinetune | ✅ | ✅ | ✅ |
+| messages (Anthropic native) | ✅ | ✅ | ✅ |
 | messagesCountTokens | ✅ | ❌ | 🟡 |
-| createModelResponse (OpenAI Responses API) | ✅ | ✅ | ✅ Phase 4 |
+| createModelResponse (OpenAI Responses API) | ✅ | ✅ | ✅ |
 
 ---
 
@@ -162,28 +162,28 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | 1 | **嵌套策略** | fallback 内嵌 loadbalance，配置递归继承 | ✅ Phase 3B |
 | 2 | **retry-after header** | 读取 provider 返回的 retry-after 头，60s 预算机制 | ✅ Phase 3B |
 
-### 🟡 P1 — 应该实现
+### ~~🟡 P1 — 应该实现~~ ✅ 已完成
 
-| # | 差异项 | 说明 | 工作量 |
+| # | 差异项 | 说明 | 状态 |
 |---|--------|------|--------|
 | 3 | ~~**Anthropic Messages API 原生端点**~~ | ~~直接暴露 `/messages` 而非仅 chat completions 转换~~ | ✅ Phase 4 |
 | 4 | ~~**OpenAI Responses API**~~ | ~~`createModelResponse` — OpenAI 新 API 格式~~ | ✅ Phase 4 |
 | 5 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
 | 6 | ~~**Provider-specific params 完整对齐**~~ | ~~所有 provider 参数已与 Portkey 一致~~ | ✅ Phase 3D |
 
-### 🟢 P2 — 可选实现
+### ~~🟢 P2 — 可选实现~~ ✅ 已完成
 
-| # | 差异项 | 说明 | 工作量 |
+| # | 差异项 | 说明 | 状态 |
 |---|--------|------|--------|
-| 7 | conditional 路由 | SDK 场景下调用方可用代码实现，有需求再加 | 中 |
-| 8 | complete (legacy) 端点 | 旧式 completion API | 小 |
-| 9 | rerank 端点 | Cohere/Jina rerank | 小 |
-| 10 | 文件操作端点 | upload/list/delete/retrieve | 中 |
-| 11 | Batch API | 批量推理 | 中 |
-| 12 | Fine-tune API | 微调管理 | 中 |
-| 13 | imageEdit 端点 | 图片编辑 | 小 |
-| 14 | Azure 1ms chunk 间隔 | 流式兼容性细节 | 小 |
-| 15 | ConnectTimeoutError 区分 | 超时 → 503 vs 通用错误 | 小 |
+| 7 | ~~conditional 路由~~ | ~~MongoDB 风格条件路由~~ | ✅ |
+| 8 | ~~complete (legacy) 端点~~ | ~~旧式 completion API~~ | ✅ |
+| 9 | rerank 端点 | Portkey 也仅有类型占位，未实现 | ❌ 跳过 |
+| 10 | ~~文件操作端点~~ | ~~upload/list/delete/retrieve~~ | ✅ |
+| 11 | ~~Batch API~~ | ~~批量推理~~ | ✅ |
+| 12 | ~~Fine-tune API~~ | ~~微调管理~~ | ✅ |
+| 13 | ~~imageEdit 端点~~ | ~~图片编辑~~ | ✅ |
+| 14 | ~~Azure 1ms chunk 间隔~~ | ~~流式兼容性细节~~ | ✅ |
+| 15 | ~~ConnectTimeoutError 区分~~ | ~~超时 → 503 vs 通用错误~~ | ✅ |
 
 ---
 
@@ -193,10 +193,10 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 graph LR
     subgraph "已对齐 ✅"
         A[68 Providers]
-        B[3 路由策略]
+        B[4 路由策略]
         C[重试 + 退避]
         D[6 种流式转换]
-        E[9 种端点类型]
+        E[15 种端点类型]
         F[请求/响应转换]
         G[Config 验证]
         H[Request Timeout]
@@ -206,10 +206,9 @@ graph LR
         T[Provider 特定参数]
         U[Messages API]
         V[Responses API]
-    end
-
-    subgraph "低优先级暂不做 🟡"
-        J[Conditional 路由]
+        W[Conditional 路由]
+        X[ConnectTimeout]
+        Y[Azure chunk delay]
     end
 
     subgraph "明确不做 ❌"
@@ -234,7 +233,9 @@ graph LR
     style T fill:#d4edda,color:#000
     style U fill:#d4edda,color:#000
     style V fill:#d4edda,color:#000
-    style J fill:#fff3cd,color:#000
+    style W fill:#d4edda,color:#000
+    style X fill:#d4edda,color:#000
+    style Y fill:#d4edda,color:#000
     style N fill:#f8d7da,color:#000
     style O fill:#f8d7da,color:#000
     style P fill:#f8d7da,color:#000
@@ -242,4 +243,4 @@ graph LR
     style R fill:#f8d7da,color:#000
 ```
 
-**核心结论**：Chainr 在 provider 覆盖、路由策略（fallback/loadbalance/single + 嵌套递归）、流式处理、请求转换、Tool Calling、Provider 特定参数、retry-after、Anthropic Messages API、OpenAI Responses API 等核心 LLM 调用能力方面已与 Portkey 完全对齐。Conditional 路由在 SDK 场景下优先级较低（调用方可用代码实现），降为 P2。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
+**核心结论**：Chainr 在 provider 覆盖（68 个）、路由策略（fallback/loadbalance/single/conditional + 嵌套递归）、流式处理（含 Azure chunk delay）、请求转换、Tool Calling、Provider 特定参数、retry-after、ConnectTimeout 区分、Anthropic Messages API、OpenAI Responses API、文件操作、Batch API、Fine-tune API 等所有核心 LLM 调用能力方面已与 Portkey 完全对齐。rerank 端点 Portkey 也仅有类型占位未实现，跳过。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
