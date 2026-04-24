@@ -3,7 +3,7 @@ import type { ChainrConfig, StrategyResult, EmbedResponse, ImageGenerateResponse
 import type { ChatCompletionChunk } from './types/streaming';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
 import { transformResponse } from './transformResponse';
-import { transformAudioRequest, transformSpeechRequest, transformTranslationRequest } from './transformRequest';
+import { transformAudioRequest, transformSpeechRequest, transformTranslationRequest, transformEmbedRequest, transformImageRequest } from './transformRequest';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
@@ -46,24 +46,14 @@ export class Chainr {
   embeddings = {
     create: async (params: EmbedParams): Promise<EmbedResponse> => {
       const targets = this.config.embedTargets || this.config.targets;
-      const result = await this.strategy.execute(targets, params as unknown as Params, this.config.retry);
-      const transformed = transformResponse(
-        result.response as unknown as Record<string, unknown>,
-        result.provider || 'openai'
-      );
-      return transformed as unknown as EmbedResponse;
+      return this.executeEmbeddings(targets, params);
     },
   };
 
   images = {
     generate: async (params: ImageGenerateParams): Promise<ImageGenerateResponse> => {
       const targets = this.config.imageTargets || this.config.targets;
-      const result = await this.strategy.execute(targets, params as unknown as Params, this.config.retry);
-      const transformed = transformResponse(
-        result.response as unknown as Record<string, unknown>,
-        result.provider || 'openai'
-      );
-      return transformed as unknown as ImageGenerateResponse;
+      return this.executeImageGeneration(targets, params);
     },
   };
 
@@ -99,6 +89,70 @@ export class Chainr {
 
   private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
     return this.strategy.executeStream(this.config.targets, params, this.config.retry);
+  }
+
+  private async executeEmbeddings(
+    targets: Array<Record<string, unknown>>,
+    params: EmbedParams
+  ): Promise<EmbedResponse> {
+    let lastError: string | undefined;
+
+    for (const target of targets) {
+      try {
+        const provider = (target['provider'] as string) || 'openai';
+        const { body, headers, url } = transformEmbedRequest(params as unknown as Params, provider, target);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const transformed = transformResponse(data, provider);
+        return transformed as unknown as EmbedResponse;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new Error(lastError || 'All embedding targets exhausted');
+  }
+
+  private async executeImageGeneration(
+    targets: Array<Record<string, unknown>>,
+    params: ImageGenerateParams
+  ): Promise<ImageGenerateResponse> {
+    let lastError: string | undefined;
+
+    for (const target of targets) {
+      try {
+        const provider = (target['provider'] as string) || 'openai';
+        const { body, headers, url } = transformImageRequest(params as unknown as Params, provider, target);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const transformed = transformResponse(data, provider);
+        return transformed as unknown as ImageGenerateResponse;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new Error(lastError || 'All image generation targets exhausted');
   }
 
   private async executeAudioTranscription(

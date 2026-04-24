@@ -5,6 +5,10 @@ import { retryRequest, retryRequestForStream } from '../RetryHandler';
 import { transformRequest } from '../transformRequest';
 import { createOpenAIStream, isOpenAICompatibleProvider } from '../transformOpenAIStream';
 import { createAnthropicStream, isAnthropicProvider } from '../transformAnthropicStream';
+import { createGoogleStream, isGoogleProvider } from '../transformGoogleStream';
+import { createCohereStream, isCohereProvider } from '../transformCohereStream';
+import { createBedrockStream, isBedrockProvider } from '../transformBedrockStream';
+import { createBytezStream, isBytezProvider } from '../transformBytezStream';
 
 export class FallbackStrategy {
   async execute(
@@ -108,6 +112,22 @@ export class FallbackStrategy {
 
     if (isAnthropicProvider(provider)) {
       return createAnthropicStream(retryResult.response, provider);
+    }
+
+    if (isGoogleProvider(provider)) {
+      return createGoogleStream(retryResult.response, provider);
+    }
+
+    if (isCohereProvider(provider)) {
+      return createCohereStream(retryResult.response, provider);
+    }
+
+    if (isBedrockProvider(provider)) {
+      return createBedrockStream(retryResult.response, provider);
+    }
+
+    if (isBytezProvider(provider)) {
+      return createBytezStream(retryResult.response, provider);
     }
 
     if (isOpenAICompatibleProvider(provider)) {
