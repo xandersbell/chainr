@@ -1,9 +1,9 @@
 # Chainr vs Portkey 差异报告
 
-**生成时间**: 2026-04-24 18:21 EEST（Phase 3B 完成后更新）
+**生成时间**: 2026-04-24 19:07 EEST（Phase 3C 完成后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Chainr 版本**: Phase 3A Complete, 195 tests, main branch
+**Chainr 版本**: Phase 3C Complete, 205 tests, main branch
 
 ---
 
@@ -170,7 +170,7 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | 3 | **conditional 路由** | MongoDB 风格条件路由（按 metadata/params 分发） | 中 |
 | 4 | **Anthropic Messages API 原生端点** | 直接暴露 `/messages` 而非仅 chat completions 转换 | 中 |
 | 5 | **OpenAI Responses API** | `createModelResponse` — OpenAI 新 API 格式 | 中 |
-| 6 | **Tool/Function Calling 完整对齐** | 各 provider 的 tool 参数转换（已在 TODO 中） | 大 |
+| 6 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
 | 7 | **Provider-specific params 完整对齐** | Anthropic beta、Bedrock guardrail 等（已在 TODO 中） | 大 |
 
 ### 🟢 P2 — 可选实现
@@ -201,13 +201,13 @@ graph LR
         F[请求/响应转换]
         G[Config 验证]
         H[Request Timeout]
+        S[Tool Calling]
     end
 
     subgraph "核心差距 ⚠️"
         I[嵌套策略]
         J[Conditional 路由]
         K[retry-after header]
-        L[Tool Calling 完整对齐]
         M[Provider 特定参数]
     end
 
@@ -227,10 +227,10 @@ graph LR
     style F fill:#d4edda,color:#000
     style G fill:#d4edda,color:#000
     style H fill:#d4edda,color:#000
+    style S fill:#d4edda,color:#000
     style I fill:#fff3cd,color:#000
     style J fill:#fff3cd,color:#000
     style K fill:#fff3cd,color:#000
-    style L fill:#fff3cd,color:#000
     style M fill:#fff3cd,color:#000
     style N fill:#f8d7da,color:#000
     style O fill:#f8d7da,color:#000
@@ -239,4 +239,4 @@ graph LR
     style R fill:#f8d7da,color:#000
 ```
 
-**核心结论**：Chainr 在 provider 覆盖、基础路由、流式处理、请求转换方面已经与 Portkey 高度对齐。主要差距集中在嵌套策略、conditional 路由、retry-after 支持，以及 tool calling / provider 特定参数的完整性上。Portkey 的面板管理、缓存、Guardrails 等功能按设计不在 Chainr 范围内。
+**核心结论**：Chainr 在 provider 覆盖、基础路由、流式处理、请求转换、Tool Calling 方面已经与 Portkey 高度对齐。主要差距集中在嵌套策略、conditional 路由、retry-after 支持，以及 provider 特定参数的完整性上。Portkey 的面板管理、缓存、Guardrails 等功能按设计不在 Chainr 范围内。
