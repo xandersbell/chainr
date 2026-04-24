@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 3A Complete — **195 tests passing**, 0 TS errors, config validation + request timeout (2026-04-24)
+**Status**: 🟢 Phase 3B Complete — **209 tests passing**, 0 TS errors, nested strategies + retry-after (2026-04-24)
 
-**Last Updated**: 2026-04-24 16:49 EEST — Phase 3A 完成，Config Validation + Request Timeout
+**Last Updated**: 2026-04-24 18:21 EEST — Phase 3B 完成，嵌套策略 + retry-after header 支持
 
 ---
 
@@ -95,7 +95,8 @@ chainr/
 │       ├── Router.ts               # Main Chainr class + validateConfig
 │       ├── types.ts                # Core types (ChainrConfig, StrategyResult)
 │       ├── providerRequest.ts     # buildProviderRequest + transformProviderResponse
-│       ├── RetryHandler.ts         # Exponential backoff retry + fetchWithTimeout
+│       ├── tryTarget.ts              # 核心递归调度（嵌套策略 + 配置继承）
+│       ├── RetryHandler.ts         # Exponential backoff retry + fetchWithTimeout + retry-after
 │       ├── transformBedrockStream.ts # Bedrock streaming
 │       ├── transformOpenAIStream.ts # OpenAI streaming
 │       ├── transformAnthropicStream.ts
@@ -148,6 +149,14 @@ Uses a single provider without fallback.
 - Max retry timeout: 60 seconds
 - Retryable status codes: [429, 500, 502, 503, 504]
 - Non-retryable: 400, 401, 404 (fail immediately)
+- **retry-after header 支持**: 429 响应时优先读取 `retry-after-ms` > `x-ms-retry-after-ms` > `retry-after`
+- **预算机制**: 累计 retry-after 超过 60s 时放弃重试
+
+#### F5: Nested Strategies ✅
+
+- 策略可递归嵌套（fallback 内嵌 loadbalance，loadbalance 内嵌 fallback 等）
+- 配置继承：overrideParams 合并（父级铺底，子级覆盖），retry/timeout 子级优先
+- 通过 `tryTarget.ts` 统一调度，消除策略类间的代码重复
 
 ---
 
@@ -308,7 +317,8 @@ Uses a single provider without fallback.
 | **Streaming: Cohere** | ✅ | ✅ | ✅ | 已实现 |
 | **Streaming: Bedrock** | ✅ | ✅ | ✅ | 已实现 |
 | **Streaming: Bytez** | ✅ | ✅ | ✅ | 已实现 |
-| **Nested Strategies** | ✅ | ❌ | 缺失 | Phase 3 未开始 |
+| **Nested Strategies** | ✅ | ✅ | ✅ | Phase 3B 完成，完全递归 + 配置继承 |
+| **retry-after header** | ✅ | ✅ | ✅ | retry-after-ms / x-ms-retry-after-ms / retry-after |
 | **Request Timeout** | ✅ | ✅ | ✅ | config.timeout 传入所有路径 |
 | **Config Validation** | ✅ | ✅ | ✅ | targets/provider/timeout/retry 验证 |
 
@@ -366,13 +376,17 @@ Uses a single provider without fallback.
 **Completed** (2026-04-24):
 - [x] Request timeout handling (config.timeout → Strategy → fetchWithTimeout)
 - [x] Configuration validation (targets/provider/timeout/retry)
+- [x] Nested strategy support (fallback + loadbalance 递归嵌套，配置继承)
+- [x] retry-after header 支持 (retry-after-ms / x-ms-retry-after-ms / retry-after + 60s 预算)
 
 **Deliverables**:
 - [x] Request timeout handling
 - [x] Configuration validation
-- [ ] Nested strategy support (fallback + loadbalance combined)
+- [x] Nested strategy support (fallback + loadbalance combined)
+- [x] retry-after header support
 - [ ] **Tool support (function calling) - 完整实现**
 - [ ] **Provider-specific params - 完整对齐**
+- [ ] Conditional routing (MongoDB-style query routing)
 
 ### Phase 4: Firebase Integration ⬜ TODO
 
@@ -469,8 +483,9 @@ Google-specific:
 - [ ] Retry config validation
 
 #### Nested Strategies
-- [ ] Fallback + LoadBalance 组合
-- [ ] Conditional routing rules
+- [x] Fallback + LoadBalance 组合（递归嵌套）
+- [x] 配置继承（overrideParams 合并，retry/timeout 子级优先）
+- [ ] Conditional routing rules (MongoDB-style query routing)
 
 ### 5.3 低优先级 (生态集成)
 
@@ -487,7 +502,7 @@ Google-specific:
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (195 tests ✅)
+### Current Test Coverage (209 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -500,10 +515,12 @@ Google-specific:
 | streaming/sseParser.test.ts | 14 | SSE parsing |
 | strategies/SingleStrategy.test.ts | 13 | single strategy |
 | strategies/FallbackStrategy.test.ts | 12 | fallback strategy |
+| strategies/nestedStrategy.test.ts | 12 | 嵌套策略 + 配置继承 |
 | Router.test.ts | 12 | Router 集成 |
 | real-http.test.ts | 12 | real HTTP 集成 |
 | streaming/transformAnthropicStream.test.ts | 11 | Anthropic streaming |
 | strategies/LoadBalanceStrategy.test.ts | 9 | load balance strategy |
+| retryAfter.test.ts | 8 | retry-after header 解析 + 预算 |
 | timeout.test.ts | 3 | timeout 传递 |
 
 ### Missing Tests
@@ -585,11 +602,17 @@ const chainr = new Chainr({
 - [x] Config validation (targets/provider/timeout/retry)
 - [x] Request timeout (config.timeout → all fetch paths)
 
+### Phase 3B Complete ✅ (2026-04-24)
+- [x] 209 tests passing
+- [x] Nested strategies (recursive fallback + loadbalance + config inheritance)
+- [x] retry-after header support (retry-after-ms / x-ms-retry-after-ms / retry-after + 60s budget)
+
 ### Remaining
-- [ ] Phase 3: Tool support (function calling) complete
-- [ ] Phase 3: Provider-specific params alignment
-- [ ] Phase 3: Nested strategies
-- [ ] Phase 4: Firebase Functions example
+- [ ] Phase 3C: Tool support (function calling) complete
+- [ ] Phase 3D: Provider-specific params alignment
+- [ ] Phase 3E: Conditional routing
+- [ ] Phase 4: Anthropic Messages API + OpenAI Responses API
+- [ ] Phase 5: Firebase Functions example
 
 ---
 
