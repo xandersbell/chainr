@@ -48,6 +48,8 @@ export function transformRequest(
       return transformGithubModelsRequest(params, opts);
     case 'azure-ai':
       return transformAzureAIRequest(params, opts);
+    case 'reka-ai':
+      return transformRekaAIRequest(params, opts);
     case NOMIC:
       return transformNomicEmbedRequest(params, opts);
     case JINA:
@@ -1546,5 +1548,95 @@ function transformBedrockEmbedRequest(params: Params, opts: Record<string, unkno
     body,
     headers,
     url: 'https://bedrock.us-east-1.amazonaws.com/embeddings',
+  };
+}
+
+function transformRekaAIRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const key = (opts.apiKey as string) || '';
+
+  interface RekaMessageItem {
+    text: string;
+    media_url?: string;
+    type: 'human' | 'model';
+  }
+
+  const messages: RekaMessageItem[] = [];
+  let lastType: 'human' | 'model' | undefined;
+
+  const addMessage = ({
+    type,
+    text,
+    media_url,
+  }: {
+    type: 'human' | 'model';
+    text: string;
+    media_url?: string;
+  }) => {
+    if (media_url && messages[0]?.media_url) {
+      return;
+    }
+
+    const newMessage: RekaMessageItem = { type, text, media_url };
+
+    if (lastType === type) {
+      const placeholder: RekaMessageItem = {
+        type: type === 'human' ? 'model' : 'human',
+        text: 'Placeholder for alternation',
+      };
+      media_url
+        ? messages.unshift(placeholder)
+        : messages.push(placeholder);
+    }
+
+    media_url ? messages.unshift(newMessage) : messages.push(newMessage);
+    lastType = type;
+  };
+
+  params.messages?.forEach((message) => {
+    const currentType: 'human' | 'model' = message.role === 'user' ? 'human' : 'model';
+
+    if (!Array.isArray(message.content)) {
+      addMessage({ type: currentType, text: message.content || '' });
+    } else {
+      message.content.forEach((item) => {
+        addMessage({
+          type: currentType,
+          text: item.text || '',
+          media_url: item.image_url?.url,
+        });
+      });
+    }
+  });
+
+  if (messages[0]?.type !== 'human') {
+    messages.unshift({
+      type: 'human',
+      text: 'Placeholder for alternation',
+    });
+  }
+
+  const body: Record<string, unknown> = {
+    model_name: params.model || 'reka-flash',
+    conversation_history: messages,
+  };
+
+  if (params.max_tokens) body.request_output_len = params.max_tokens;
+  if (params.max_completion_tokens) body.request_output_len = params.max_completion_tokens;
+  if (params.temperature) body.temperature = params.temperature;
+  if (params.top_p) body.runtime_top_p = params.top_p;
+  if (params.seed) body.random_seed = params.seed;
+  if (params.frequency_penalty) body.frequency_penalty = params.frequency_penalty;
+  if (params.presence_penalty) body.presence_penalty = params.presence_penalty;
+  if (params.stop) {
+    body.stop_words = Array.isArray(params.stop) ? params.stop : [params.stop];
+  }
+
+  return {
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+    },
+    url: 'https://api.reka.ai/chat',
   };
 }

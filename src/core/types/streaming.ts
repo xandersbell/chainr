@@ -159,6 +159,7 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
   'matterai': '\n\n',
   'nextbit': '\n\n',
   'sagemaker': '\n\n',
+  'z-ai': '\n\n',
 };
 
 /**
@@ -217,6 +218,7 @@ export const OPENAI_COMPATIBLE_PROVIDERS = [
   'matterai',
   'nextbit',
   'sagemaker',
+  'z-ai',
 ];
 
 export function isOpenAICompatibleProvider(provider: string): boolean {

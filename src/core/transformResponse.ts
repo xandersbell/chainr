@@ -28,15 +28,17 @@ export function transformResponse(
         case PERPLEXITY:
         case GROQ:
         case DEEPSEEK:
-        case MISTRAL_AI:
-        case COHERE:
-          return transformOpenAIError(status, json);
-        case ANTHROPIC:
-          return transformAnthropicError(status, json);
-        case GOOGLE_VERTEX_AI:
-          return transformVertexAIError(status, json);
-        default:
-          return generateErrorResponse({ message: 'Unknown error', type: 'provider_error', param: null, code: null }, provider);
+case MISTRAL_AI:
+      case COHERE:
+        return transformOpenAIError(status, json);
+      case ANTHROPIC:
+        return transformAnthropicError(status, json);
+      case GOOGLE_VERTEX_AI:
+        return transformVertexAIError(status, json);
+      case 'reka-ai':
+        return transformRekaAIResponse(json);
+      default:
+        return generateErrorResponse({ message: 'Unknown error', type: 'provider_error', param: null, code: null }, provider);
       }
     }
     switch (provider) {
@@ -49,6 +51,8 @@ export function transformResponse(
       case MISTRAL_AI:
       case COHERE:
         return json as ChatCompletionResponse;
+      case 'reka-ai':
+        return transformRekaAIResponse(json);
       case ANTHROPIC:
         return transformAnthropicResponse(json);
       case GOOGLE_VERTEX_AI:
@@ -282,4 +286,47 @@ export function transformTripo3DResponse(json: unknown): Model3DGenerateResponse
     model_url: (data.result as Record<string, unknown>)?.model_url as string | undefined,
     provider: TRIPO3D,
   };
+}
+
+function transformRekaAIResponse(json: unknown): ChatCompletionResponse {
+  const data = json as Record<string, unknown>;
+
+  if ('detail' in data) {
+    return generateErrorResponse(
+      { message: JSON.stringify(data.detail), type: 'provider_error', param: null, code: null },
+      'reka-ai'
+    );
+  }
+
+  if ('text' in data) {
+    const metadata = data.metadata as Record<string, number> || {};
+    return {
+      id: crypto.randomUUID(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: (data.model as string) || 'reka-flash',
+      provider: 'reka-ai',
+      choices: [
+        {
+          message: {
+            role: 'assistant' as const,
+            content: data.text as string,
+          },
+          index: 0,
+          logprobs: null,
+          finish_reason: (data.finish_reason as string) || 'stop',
+        },
+      ],
+      usage: {
+        prompt_tokens: metadata.input_tokens || 0,
+        completion_tokens: metadata.generated_tokens || 0,
+        total_tokens: (metadata.input_tokens || 0) + (metadata.generated_tokens || 0),
+      },
+    };
+  }
+
+  return generateErrorResponse(
+    { message: 'Invalid Reka AI response format', type: 'provider_error', param: null, code: null },
+    'reka-ai'
+  );
 }

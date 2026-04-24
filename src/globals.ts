@@ -133,6 +133,8 @@ export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'deepbricks-image': 'https://api.deepbricks.io/v1/images/generations',
   'hyperbolic-image': 'https://api.hyperbolic.ai/v1/images/generations',
   'lepton-transcribe': 'https://api.lepton.ai/v1/audio/transcriptions',
+  'z-ai': 'https://api.z.ai/api/paas/v4/chat/completions',
+  'reka-ai': 'https://api.reka.ai/chat',
 };
 
 // 支持的 Provider 列表
@@ -142,5 +144,6 @@ export const VALID_PROVIDERS = [
   NOMIC, JINA, VOYAGE,
   SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D,
   LEMONFOX, NSCALE,
-  'monsterapi', 'ai21', 'anyscale', 'fireworks-ai', 'deepbricks', 'hyperbolic', 'lepton'
+  'monsterapi', 'ai21', 'anyscale', 'fireworks-ai', 'deepbricks', 'hyperbolic', 'lepton',
+  'reka-ai', 'z-ai'
 ];

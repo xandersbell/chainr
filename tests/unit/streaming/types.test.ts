@@ -205,8 +205,8 @@ describe('Streaming Constants', () => {
       expect(OPENAI_COMPATIBLE_PROVIDERS).toContain('cerebras');
     });
 
-    it('contains 51 total providers', () => {
-      expect(OPENAI_COMPATIBLE_PROVIDERS.length).toBe(51);
+    it('contains 52 total providers', () => {
+      expect(OPENAI_COMPATIBLE_PROVIDERS.length).toBe(52);
     });
   });
 
