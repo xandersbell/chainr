@@ -4,7 +4,7 @@
 
 ## 参考项目 PortKey
 
-- portkey 的本地路径在 `~/codebase/repos/portkey-ai-gateway`
+- portkey 的本地路径在 `./portkey`
 - 我们将其面板、管理等等功能全都彻底剥离掉
 - 只保留核心的 LLM 调用和转接能力
 - 需要同一模型不同 provider 的按优先级 fallback 能力
