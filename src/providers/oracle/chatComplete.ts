@@ -1,5 +1,5 @@
 import { ORACLE } from '../../globals';
-import { transformUsingProviderConfig } from '../../services/transformToProviderRequest';
+import { transformUsingProviderConfig } from '../../core/providerRequest';
 import type {
   CustomToolChoice,
   Options,
