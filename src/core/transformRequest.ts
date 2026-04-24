@@ -8,6 +8,8 @@ const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertex-ai': GOOGLE_VERTEX_AI,
   'vertexai': GOOGLE_VERTEX_AI,
   'gcp-vertex': GOOGLE_VERTEX_AI,
+  'perplexity': PERPLEXITY,
+  'lemonfox': LEMONFOX,
 };
 
 function normalizeProvider(provider: string): string {

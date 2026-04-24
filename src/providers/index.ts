@@ -22,6 +22,7 @@ import DeepInfraConfig from './deepinfra';
 import DeepSeekConfig from './deepseek';
 import { FeatherlessAIConfig } from './featherless-ai';
 import FireworksAIConfig from './fireworks-ai';
+import GoogleConfig from './google';
 import VertexConfig from './google-vertex-ai';
 import GroqConfig from './groq';
 import HuggingfaceConfig from './huggingface';
@@ -81,6 +82,7 @@ const Providers: { [key: string]: ProviderConfigs } = {
   'azure-ai': AzureAIInferenceAPIConfig,
   github: GithubModelAPiConfig,
   'vertex-ai': VertexConfig,
+  google: GoogleConfig,
   'together-ai': TogetherAIConfig,
   'perplexity-ai': PerplexityAIConfig,
   'mistral-ai': MistralAIConfig,
