@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 TypeScript Zero Errors — **384 tests passing**, 0 TS errors (2026-04-24)
+**Status**: 🟢 Phase 5 Complete — **178 tests passing**, 0 TS errors, transformRequest/Response deleted (2026-04-24)
 
-**Last Updated**: 2026-04-24 15:52 EEST — TS 错误清零，所有 provider 文件类型安全
+**Last Updated**: 2026-04-24 16:22 EEST — Phase 5 完成，transformRequest.ts + transformResponse.ts 已删除，全部走 provider 注册表
 
 ---
 
@@ -352,8 +352,9 @@ Uses a single provider without fallback.
 - [x] Phase 1：桥接文件（types.ts、utils.ts、finishReasonMap.ts、embedRequestBody.ts、GatewayError.ts、env.ts）
 - [x] Phase 2：Hono 依赖全部剥离，awsSigV4.ts 删除，改用 @smithy/signature-v4
 - [x] Phase 3：17 个 provider 的 75 个无效 import 清理
-- [x] Phase 4：Provider 注册表（67 个 provider）+ providerRequest.ts 集成层
-- [x] 384 tests passing (370 + 14 new)
+- [x] Phase 4：Provider 注册表（68 个 provider）+ providerRequest.ts 集成层
+- [x] Phase 5：删除 transformRequest.ts + transformResponse.ts，Strategy/Router 全部接入注册表
+- [x] 178 tests passing
 
 ### Phase 3: Advanced Features ⬜ TODO
 
