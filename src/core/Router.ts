@@ -1,6 +1,7 @@
 import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams, TranslationParams } from '../types/requestBody';
 import type { ChainrConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
+import type { MessagesResponse } from '../types/messagesResponse';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
 import { fetchWithTimeout } from './RetryHandler';
@@ -32,7 +33,7 @@ export class Chainr {
         throw new Error('retry.attempts must be a positive integer');
       }
     }
-    for (const key of ['embedTargets', 'imageTargets', 'audioTargets', 'speechTargets'] as const) {
+    for (const key of ['embedTargets', 'imageTargets', 'audioTargets', 'speechTargets', 'messagesTargets', 'responsesTargets'] as const) {
       const targets = config[key];
       if (targets) {
         for (const target of targets) {
@@ -136,8 +137,40 @@ export class Chainr {
     },
   };
 
+  /**
+   * Anthropic Messages API — 原生格式透传
+   * 请求/响应都是 Anthropic 原生格式，不做 OpenAI 兼容转换
+   * 支持 fallback/loadbalance/single 路由策略
+   */
+  messages = {
+    create: (
+      params: Params
+    ): Promise<MessagesResponse | ErrorResponse | ReadableStream> => {
+      if (params.stream === true) {
+        return this.executeMessagesStreaming(params);
+      }
+      return this.executeMessages(params);
+    },
+  };
+
+  /**
+   * OpenAI Responses API — /v1/responses 端点
+   * 使用 input/instructions 替代 messages/system，支持 tool calling、reasoning 等
+   * 支持 fallback/loadbalance/single 路由策略
+   */
+  responses = {
+    create: (
+      params: Params
+    ): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
+      if (params.stream === true) {
+        return this.executeResponsesStreaming(params);
+      }
+      return this.executeResponses(params);
+    },
+  };
+
   private async executeChatCompletions(params: Params): Promise<ChatCompletionResponse | ErrorResponse> {
-    const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry, this.config.timeout);
+    const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry, this.config.timeout, 'chatComplete');
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
@@ -147,7 +180,56 @@ export class Chainr {
   }
 
   private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
-    return this.strategy.executeStream(this.config.targets, params, this.config.retry, this.config.timeout);
+    return this.strategy.executeStream(this.config.targets, params, this.config.retry, this.config.timeout, 'chatComplete');
+  }
+
+  /**
+   * Anthropic Messages API — 非流式
+   * 通过策略系统路由，使用 'messages' endpoint 配置
+   * 响应经过 provider 的 responseTransforms.messages 转换
+   */
+  private async executeMessages(params: Params): Promise<MessagesResponse | ErrorResponse> {
+    const targets = this.config.messagesTargets || this.config.targets;
+    const result: StrategyResult = await this.strategy.execute(targets, params, this.config.retry, this.config.timeout, 'messages');
+    const transformed = transformProviderResponse(
+      result.response,
+      result.provider || 'anthropic',
+      'messages'
+    );
+    return transformed as MessagesResponse | ErrorResponse;
+  }
+
+  /**
+   * Anthropic Messages API — 流式
+   * 通过策略系统路由，使用 'messages' endpoint 配置
+   */
+  private async executeMessagesStreaming(params: Params): Promise<ReadableStream> {
+    const targets = this.config.messagesTargets || this.config.targets;
+    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, 'messages');
+  }
+
+  /**
+   * OpenAI Responses API — 非流式
+   * 通过策略系统路由，使用 'createModelResponse' endpoint 配置
+   */
+  private async executeResponses(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
+    const targets = this.config.responsesTargets || this.config.targets;
+    const result: StrategyResult = await this.strategy.execute(targets, params, this.config.retry, this.config.timeout, 'createModelResponse');
+    const transformed = transformProviderResponse(
+      result.response,
+      result.provider || 'openai',
+      'createModelResponse'
+    );
+    return transformed as Record<string, unknown> | ErrorResponse;
+  }
+
+  /**
+   * OpenAI Responses API — 流式
+   * 通过策略系统路由，使用 'createModelResponse' endpoint 配置
+   */
+  private async executeResponsesStreaming(params: Params): Promise<ReadableStream> {
+    const targets = this.config.responsesTargets || this.config.targets;
+    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, 'createModelResponse');
   }
 
   private async executeEmbeddings(

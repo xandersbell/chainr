@@ -118,6 +118,10 @@ export interface ChainrConfig {
   imageTargets?: TargetConfig[];
   audioTargets?: TargetConfig[];
   speechTargets?: TargetConfig[];
+  // Anthropic Messages API 专用 targets（可选，默认复用 targets）
+  messagesTargets?: TargetConfig[];
+  // OpenAI Responses API 专用 targets（可选，默认复用 targets）
+  responsesTargets?: TargetConfig[];
   retry?: {
     attempts: number;
     onStatusCodes: number[];

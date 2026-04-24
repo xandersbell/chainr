@@ -3,6 +3,7 @@
  * 支持嵌套：选中的 target 可以是叶节点或子策略组
  */
 import type { Params } from '../../types/requestBody';
+import type { endpointStrings } from '../../providers/types';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
 import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
@@ -12,13 +13,14 @@ export class LoadBalanceStrategy {
     targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-    timeoutMs?: number
+    timeoutMs?: number,
+    endpoint?: endpointStrings
   ): Promise<StrategyResult> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
     }
 
-    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
     const selected = this.selectByWeight(targets);
     return executeTarget(selected, params, inherited);
   }
@@ -27,13 +29,14 @@ export class LoadBalanceStrategy {
     targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-    timeoutMs?: number
+    timeoutMs?: number,
+    endpoint?: endpointStrings
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
     }
 
-    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
     const selected = this.selectByWeight(targets);
     return executeTargetStream(selected, params, inherited);
   }

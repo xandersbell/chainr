@@ -17,11 +17,13 @@ import { createBytezStream, isBytezProvider } from './transformBytezStream';
 
 /**
  * 继承配置 — 从父级向下传递的配置
+ * endpoint: 指定当前请求的端点类型，决定使用哪个 ProviderConfig 映射
  */
 export interface InheritedConfig {
   overrideParams?: Record<string, unknown>;
   retry?: { attempts?: number; onStatusCodes?: number[] };
   timeout?: number;
+  endpoint?: import('../providers/types').endpointStrings;
 }
 
 /**
@@ -50,6 +52,8 @@ export function buildInheritedConfig(
         ? { ...parentConfig.retry }
         : undefined,
     timeout: target.timeout ?? parentConfig.timeout,
+    // endpoint 从父级继承，不被子 target 覆盖（由顶层 Router 决定）
+    endpoint: parentConfig.endpoint,
   };
 }
 
@@ -64,7 +68,8 @@ export async function tryLeafTarget(
   const provider = (target.provider as string) || 'openai';
   const mergedParams = { ...params, ...(inherited.overrideParams || {}) };
 
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
+  const endpoint = inherited.endpoint || 'chatComplete';
+  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
 
   const retryResult = await retryRequest(
     url,
@@ -96,7 +101,8 @@ export async function tryLeafTargetStream(
     ...(inherited.overrideParams || {}),
   };
 
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
+  const endpoint = inherited.endpoint || 'chatComplete';
+  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
 
   const retryResult = await retryRequestForStream(
     url,
