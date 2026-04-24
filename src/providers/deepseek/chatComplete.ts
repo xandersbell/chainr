@@ -85,6 +85,13 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 20,
   },
+  // DeepSeek 兼容 OpenAI 格式，tools 和 tool_choice 直接透传
+  tools: {
+    param: 'tools',
+  },
+  tool_choice: {
+    param: 'tool_choice',
+  },
 };
 
 interface DeepSeekChatCompleteResponse extends ChatCompletionResponse {
@@ -121,6 +128,13 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
+      // tool calling 流式响应
+      tool_calls?: {
+        index: number;
+        id?: string;
+        type?: string;
+        function?: { name?: string; arguments?: string };
+      }[];
     };
     index: number;
     finish_reason: string | null;
@@ -162,6 +176,8 @@ export const DeepSeekChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
+          // tool calling 响应透传
+          ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
         },
         finish_reason: transformFinishReason(
           c.finish_reason as DEEPSEEK_STOP_REASON,
