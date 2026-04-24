@@ -187,7 +187,7 @@ export interface Params {
   response_format?: {
     type: 'json_object' | 'text' | 'json_schema';
     json_schema?: unknown;
-  };
+  } | string;
   seed?: number;
   store?: boolean;
   metadata?: object;
@@ -309,6 +309,59 @@ export interface ImageGenerateResponse {
   created: number;
   data: ImageGenerateResponseData[];
   provider?: string;
+}
+
+// ============================================================================
+// Audio Transcription Types
+// ============================================================================
+
+export interface TranscriptionParams {
+  file: File | Blob | string;  // Audio file or base64
+  model?: string;
+  language?: string;
+  prompt?: string;
+  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';
+  temperature?: number;
+  timeout?: number;
+}
+
+export interface TranslationParams {
+  file: File | Blob | string;
+  model?: string;
+  prompt?: string;
+  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';
+  temperature?: number;
+}
+
+export interface TranscriptionResponse {
+  text: string;
+  language?: string;
+  duration?: number;
+  segments?: TranscriptionSegment[];
+}
+
+export interface TranscriptionSegment {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
+// ============================================================================
+// Speech Synthesis Types
+// ============================================================================
+
+export interface SpeechParams {
+  model?: string;
+  input: string;
+  voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+  response_format?: 'mp3' | 'opus' | 'aac' | 'flac';
+  speed?: number;
+}
+
+export interface SpeechResponse {
+  audio_data: Buffer | Uint8Array;
+  content_type: string;
 }
 
 // ============================================================================

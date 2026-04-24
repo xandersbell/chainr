@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { transformRequest } from '../../src/core/transformRequest';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, NOMIC, JINA, VOYAGE, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D } from '../../src/globals';
+import { transformRequest, transformEmbedRequest, transformImageRequest, transformAudioRequest, transformSpeechRequest } from '../../src/core/transformRequest';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, NOMIC, JINA, VOYAGE, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, COHERE, NSCALE, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE_URL } from '../../src/globals';
 import type { Params, Message, Tool, ToolChoice } from '../../src/types/requestBody';
 
 function createMessages(content: string): Message[] {
@@ -1305,6 +1305,286 @@ describe('transformRequest', () => {
       });
 
       expect(result.url).toBe('https://urltopick.example.com/chat');
+    });
+  });
+});
+
+describe('transformEmbedRequest', () => {
+  describe('OpenAI Embeddings', () => {
+    it('should transform OpenAI embeddings request', () => {
+      const params: Params = {
+        model: 'text-embedding-3-small',
+        input: 'Hello world',
+      };
+      const result = transformEmbedRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(OPENAI_EMBED_URL);
+      expect(result.body).toHaveProperty('model', 'text-embedding-3-small');
+      expect(result.body).toHaveProperty('input', 'Hello world');
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+
+    it('should use default model when none provided', () => {
+      const params: Params = { input: 'Test' };
+      const result = transformEmbedRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'text-embedding-3-small');
+    });
+
+    it('should handle array input', () => {
+      const params: Params = {
+        input: ['Hello', 'World'],
+      };
+      const result = transformEmbedRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body.input).toEqual(['Hello', 'World']);
+    });
+
+    it('should include optional params', () => {
+      const params: Params = {
+        input: 'Test',
+        user: 'user123',
+        dimensions: 512,
+        encoding_format: 'float',
+      };
+      const result = transformEmbedRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('user', 'user123');
+      expect(result.body).toHaveProperty('dimensions', 512);
+      expect(result.body).toHaveProperty('encoding_format', 'float');
+    });
+  });
+
+  describe('Cohere Embeddings', () => {
+    it('should transform Cohere embeddings request with texts array', () => {
+      const params: Params = {
+        model: 'embed-english-v3.0',
+        input: ['Hello', 'World'],
+      };
+      const result = transformEmbedRequest(params, COHERE, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.cohere.ai/v2/embed');
+      expect(result.body).toHaveProperty('model', 'embed-english-v3.0');
+      expect(result.body).toHaveProperty('texts', ['Hello', 'World']);
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+
+    it('should transform string input to array', () => {
+      const params: Params = { input: 'Single text' };
+      const result = transformEmbedRequest(params, COHERE, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('texts', ['Single text']);
+    });
+  });
+
+  describe('Workers AI Embeddings', () => {
+    it('should transform Workers AI embeddings request', () => {
+      const params: Params = {
+        input: ['Hello world'],
+      };
+      const result = transformEmbedRequest(params, 'workers-ai' as any, { apiKey: 'test-key', workersAiAccountId: 'account123' });
+
+      expect(result.url).toContain(WORKERS_AI_EMBED_URL);
+      expect(result.url).toContain('account123');
+      expect(result.body).toHaveProperty('text', ['Hello world']);
+    });
+  });
+
+  describe('SiliconFlow Embeddings', () => {
+    it('should transform SiliconFlow embeddings request', () => {
+      const params: Params = {
+        model: 'BAAI/bge-base-zh-v1.5',
+        input: ['Hello'],
+      };
+      const result = transformEmbedRequest(params, 'siliconflow' as any, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(SILICONFLOW_EMBED_URL);
+      expect(result.body).toHaveProperty('model', 'BAAI/bge-base-zh-v1.5');
+      expect(result.body).toHaveProperty('input', ['Hello']);
+    });
+  });
+});
+
+describe('transformImageRequest', () => {
+  describe('OpenAI DALL-E', () => {
+    it('should transform OpenAI DALL-E request', () => {
+      const params: Params = {
+        model: 'dall-e-3',
+        prompt: 'A beautiful sunset',
+      };
+      const result = transformImageRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.url).toBe('https://api.openai.com/v1/images/generations');
+      expect(result.body).toHaveProperty('model', 'dall-e-3');
+      expect(result.body).toHaveProperty('prompt', 'A beautiful sunset');
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+
+    it('should use default model when none provided', () => {
+      const params: Params = { prompt: 'Test' };
+      const result = transformImageRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'dall-e-3');
+    });
+
+    it('should include optional params', () => {
+      const params: Params = {
+        prompt: 'Test',
+        n: 2,
+        size: '1024x1024',
+        quality: 'hd',
+        style: 'vivid',
+        response_format: 'b64_json',
+      };
+      const result = transformImageRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('n', 2);
+      expect(result.body).toHaveProperty('size', '1024x1024');
+      expect(result.body).toHaveProperty('quality', 'hd');
+      expect(result.body).toHaveProperty('style', 'vivid');
+      expect(result.body).toHaveProperty('response_format', 'b64_json');
+    });
+  });
+
+  describe('LemonFox Image', () => {
+    it('should transform LemonFox image request', () => {
+      const params: Params = {
+        prompt: 'A cat',
+      };
+      const result = transformImageRequest(params, LEMONFOX, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(LEMONFOX_IMAGE_URL);
+      expect(result.body).toHaveProperty('prompt', 'A cat');
+    });
+  });
+
+  describe('Workers AI Image', () => {
+    it('should transform Workers AI image request', () => {
+      const params: Params = {
+        prompt: 'A beautiful landscape',
+      };
+      const result = transformImageRequest(params, 'workers-ai' as any, { apiKey: 'test-key', workersAiAccountId: 'account123' });
+
+      expect(result.url).toContain(WORKERS_AI_IMAGE_URL);
+      expect(result.url).toContain('account123');
+      expect(result.body).toHaveProperty('prompt', 'A beautiful landscape');
+    });
+  });
+
+  describe('nscale Image', () => {
+    it('should transform nscale image request', () => {
+      const params: Params = {
+        prompt: 'Futuristic city',
+      };
+      const result = transformImageRequest(params, NSCALE, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(NSCALE_URL);
+      expect(result.body).toHaveProperty('prompt', 'Futuristic city');
+    });
+  });
+});
+
+describe('transformAudioRequest', () => {
+  describe('OpenAI Whisper', () => {
+    it('should transform OpenAI Whisper request with FormData', () => {
+      const params: Params = {
+        model: 'whisper-1',
+        file: new Blob(['audio data'], { type: 'audio/mp3' }),
+        language: 'en',
+      };
+      const result = transformAudioRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(OPENAI_WHISPER_URL);
+      expect(result.isFormData).toBe(true);
+      expect(result.body instanceof FormData).toBe(true);
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+
+    it('should use default model when none provided', () => {
+      const params: Params = {
+        file: new Blob(['audio'], { type: 'audio/mp3' }),
+      };
+      const result = transformAudioRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.isFormData).toBe(true);
+    });
+
+    it('should include optional params', () => {
+      const params: Params = {
+        file: new Blob(['audio'], { type: 'audio/mp3' }),
+        language: 'zh',
+        prompt: 'Transcribe this',
+        response_format: 'verbose_json',
+        temperature: 0.5,
+      };
+      const result = transformAudioRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.isFormData).toBe(true);
+    });
+  });
+
+  describe('LemonFox Transcription', () => {
+    it('should transform LemonFox transcription request', () => {
+      const params: Params = {
+        model: 'whisper-1',
+        file: new Blob(['audio data'], { type: 'audio/mp3' }),
+      };
+      const result = transformAudioRequest(params, LEMONFOX, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(LEMONFOX_TRANSCRIBE_URL);
+      expect(result.isFormData).toBe(true);
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+  });
+});
+
+describe('transformSpeechRequest', () => {
+  describe('OpenAI TTS', () => {
+    it('should transform OpenAI TTS request', () => {
+      const params: Params = {
+        model: 'tts-1',
+        input: 'Hello, world!',
+        voice: 'alloy',
+      };
+      const result = transformSpeechRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.url).toBe(OPENAI_TTS_URL);
+      expect(result.body).toHaveProperty('model', 'tts-1');
+      expect(result.body).toHaveProperty('input', 'Hello, world!');
+      expect(result.body).toHaveProperty('voice', 'alloy');
+      expect(result.headers['Authorization']).toBe('Bearer test-key');
+    });
+
+    it('should use default model and voice when none provided', () => {
+      const params: Params = {
+        input: 'Test speech',
+      };
+      const result = transformSpeechRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('model', 'tts-1');
+      expect(result.body).toHaveProperty('voice', 'alloy');
+    });
+
+    it('should include optional params', () => {
+      const params: Params = {
+        input: 'Test',
+        response_format: 'mp3',
+        speed: 1.5,
+      };
+      const result = transformSpeechRequest(params, OPEN_AI, { apiKey: 'test-key' });
+
+      expect(result.body).toHaveProperty('response_format', 'mp3');
+      expect(result.body).toHaveProperty('speed', 1.5);
+    });
+
+    it('should support all voice options', () => {
+      const voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+
+      voices.forEach(voice => {
+        const params: Params = { input: 'Test', voice: voice as any };
+        const result = transformSpeechRequest(params, OPEN_AI, { apiKey: 'test-key' });
+        expect(result.body).toHaveProperty('voice', voice);
+      });
     });
   });
 });

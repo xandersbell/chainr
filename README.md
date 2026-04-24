@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟢 Production Ready — 325 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
+**Status**: 🟢 Production Ready — 347 tests passing, 16 dedicated transforms + 52 OpenAI-compatible providers
 
 ## Features
 
@@ -11,7 +11,8 @@
 - **Zero External Dependencies**: Pure fetch-based, no runtime deps
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode enabled
-- **325 Unit Tests**: Comprehensive coverage of core functionality
+- **347 Unit Tests**: Comprehensive coverage of core functionality
+- **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis
 
 ## Supported Providers
 
@@ -123,6 +124,37 @@ These providers have custom request/response transforms:
 | Meshy | ✅ | `api.meshy.ai/v1/text-to-3d` or `/image-to-3d` |
 | Tripo 3D | ✅ | `api.tripo3d.ai/v1/tasks` |
 
+### Audio Transcription Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| OpenAI Whisper | ✅ | `api.openai.com/v1/audio/transcriptions` |
+| LemonFox AI | ✅ | `api.lemonfox.ai/v1/audio/transcriptions` |
+
+### Speech Synthesis Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| OpenAI TTS | ✅ | `api.openai.com/v1/audio/speech` |
+
+### Additional Embeddings Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| OpenAI Embeddings | ✅ | `api.openai.com/v1/embeddings` |
+| Cohere | ✅ | `api.cohere.ai/v2/embed` |
+| Workers AI | ✅ | Cloudflare Workers AI |
+| SiliconFlow | ✅ | `api.siliconflow.cn/v1/embeddings` |
+
+### Additional Image Generation Providers
+
+| Provider | Status | API |
+|----------|--------|-----|
+| OpenAI DALL-E | ✅ | `api.openai.com/v1/images/generations` |
+| LemonFox AI | ✅ | `api.lemonfox.ai/v1/images/generations` |
+| Workers AI | ✅ | Cloudflare Workers AI |
+| nscale | ✅ | `api.nscale.io` |
+
 ## Installation
 
 ```bash
@@ -153,6 +185,74 @@ const chainr = new Chainr({
 const response = await chainr.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello!' }]
+});
+```
+
+### Embeddings
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback',
+  embedTargets: [
+    { provider: 'openai', apiKey: 'primary-key' },
+    { provider: 'cohere', apiKey: 'fallback-key' }
+  ]
+});
+
+const embedding = await chainr.embeddings.create({
+  model: 'text-embedding-3-small',
+  input: 'Hello, world!'
+});
+```
+
+### Image Generation
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback',
+  imageTargets: [
+    { provider: 'openai', apiKey: 'primary-key' },
+    { provider: 'lemonfox-ai', apiKey: 'fallback-key' }
+  ]
+});
+
+const image = await chainr.images.generate({
+  model: 'dall-e-3',
+  prompt: 'A beautiful sunset over the ocean'
+});
+```
+
+### Audio Transcription
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'single',
+  audioTargets: [
+    { provider: 'openai', apiKey: 'my-key' }
+  ]
+});
+
+const transcription = await chainr.audio.transcribe({
+  file: fs.readFileSync('audio.mp3'),
+  model: 'whisper-1',
+  language: 'en'
+});
+```
+
+### Speech Synthesis
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'single',
+  speechTargets: [
+    { provider: 'openai', apiKey: 'my-key' }
+  ]
+});
+
+const speech = await chainr.speech.create({
+  model: 'tts-1',
+  input: 'Hello, world!',
+  voice: 'alloy'
 });
 ```
 
@@ -356,11 +456,11 @@ npm test          # Run all tests
 npm run test:watch # Watch mode
 ```
 
-**Test Coverage**: 325 tests across 13 test files
+**Test Coverage**: 347 tests across 13 test files
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 126 | 16 dedicated + default case |
+| transformRequest.test.ts | 148 | 16 dedicated + audio/speech/embed/image transforms |
 | transformResponse.test.ts | 35 | success/error + embeddings/image/3D |
 | streaming/types.test.ts | 26 | OPENAI_COMPATIBLE_PROVIDERS |
 | streaming/streamUtils.test.ts | 16 | split patterns |

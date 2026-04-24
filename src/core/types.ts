@@ -49,9 +49,10 @@ export interface ErrorResponse {
 }
 
 export interface TransformResult {
-  body: Record<string, unknown>;
+  body: Record<string, unknown> | FormData;
   headers: Record<string, string>;
   url: string;
+  isFormData?: boolean;
 }
 
 export interface RetryResult {
@@ -73,9 +74,20 @@ export interface StrategyResult {
   error?: string;
 }
 
+export interface BinaryResult {
+  success: boolean;
+  data?: ArrayBuffer;
+  contentType?: string;
+  error?: string;
+}
+
 export interface ChainrConfig {
   strategy: 'fallback' | 'loadbalance' | 'single';
   targets: Array<Record<string, unknown>>;
+  embedTargets?: Array<Record<string, unknown>>;
+  imageTargets?: Array<Record<string, unknown>>;
+  audioTargets?: Array<Record<string, unknown>>;
+  speechTargets?: Array<Record<string, unknown>>;
   retry?: {
     attempts: number;
     onStatusCodes: number[];
@@ -114,4 +126,21 @@ export interface Model3DGenerateResponse {
   status: string;
   model_url?: string;
   provider?: string;
+}
+
+export interface TranscriptionResponse {
+  text: string;
+  language?: string;
+  duration?: number;
+  segments?: Array<{
+    id: number;
+    start: number;
+    end: number;
+    text: string;
+  }>;
+}
+
+export interface SpeechResponse {
+  audio_data: ArrayBuffer;
+  contentType: string;
 }

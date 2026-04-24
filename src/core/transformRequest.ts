@@ -1,6 +1,6 @@
 import type { Params, Message } from '../types/requestBody';
 import type { TransformResult } from './types';
-import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS } from '../globals';
+import { OPEN_AI, ANTHROPIC, GOOGLE_VERTEX_AI, OPENROUTER, TOGETHER_AI, PERPLEXITY, GROQ, DEEPSEEK, MISTRAL_AI, COHERE, POWERED_BY, NOMIC, JINA, VOYAGE, JINA_URL, NOMIC_URL, VOYAGE_URL, SEGMIND, RECRAFT_AI, STABILITY_AI, MESHY, TRIPO3D, SEGMIND_URL, RECRAFT_AI_URL, STABILITY_AI_URL, MESHY_URL, TRIPO3D_URL, OPENAI_COMPATIBLE_URLS, OPENAI_WHISPER_URL, OPENAI_TTS_URL, OPENAI_EMBED_URL, LEMONFOX, LEMONFOX_TRANSCRIBE_URL, LEMONFOX_IMAGE_URL, WORKERS_AI_EMBED_URL, WORKERS_AI_IMAGE_URL, SILICONFLOW_EMBED_URL, SILICONFLOW_IMAGE_URL, NSCALE, NSCALE_URL } from '../globals';
 
 const PROVIDER_ALIASES: Record<string, string> = {
   'google-vertexai': GOOGLE_VERTEX_AI,
@@ -665,4 +665,360 @@ function transformTripo3DRequest(params: Params, opts: Record<string, unknown>):
     headers,
     url: `${TRIPO3D_URL}/v1/tasks`,
   };
+}
+
+function transformOpenAIWhisperRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {};
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file) {
+    if (params.file instanceof Blob) {
+      formData.append('file', params.file, 'audio.mp3');
+    }
+  }
+
+  if (params.language) formData.append('language', params.language);
+  if (params.prompt) formData.append('prompt', params.prompt as string);
+  if (params.response_format) formData.append('response_format', params.response_format as string);
+  if (params.temperature) formData.append('temperature', String(params.temperature));
+
+  return {
+    body: formData,
+    headers,
+    url: OPENAI_WHISPER_URL,
+    isFormData: true,
+  };
+}
+
+function transformLemonFoxTranscribeRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {};
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const formData = new FormData();
+  formData.append('model', (params.model as string) || 'whisper-1');
+
+  if (params.file) {
+    if (params.file instanceof Blob) {
+      formData.append('file', params.file, 'audio.mp3');
+    }
+  }
+
+  if (params.language) formData.append('language', params.language);
+  if (params.prompt) formData.append('prompt', params.prompt as string);
+  if (params.response_format) formData.append('response_format', params.response_format as string);
+
+  return {
+    body: formData,
+    headers,
+    url: LEMONFOX_TRANSCRIBE_URL,
+    isFormData: true,
+  };
+}
+
+function transformOpenAISpeechRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: (params.model as string) || 'tts-1',
+    input: params.input as string,
+    voice: (params.voice as string) || 'alloy',
+  };
+
+  if (params.response_format) body.response_format = params.response_format;
+  if (params.speed) body.speed = params.speed;
+
+  return {
+    body,
+    headers,
+    url: OPENAI_TTS_URL,
+  };
+}
+
+function transformOpenAIEmbeddingsRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'text-embedding-3-small',
+    input: params.input,
+  };
+
+  if (params.user) body.user = params.user;
+  if (params.dimensions) body.dimensions = params.dimensions;
+  if (params.encoding_format) body.encoding_format = params.encoding_format;
+
+  return {
+    body,
+    headers,
+    url: OPENAI_EMBED_URL,
+  };
+}
+
+function transformCohereEmbeddingsRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'embed-english-v3.0',
+    texts,
+  };
+
+  if (params.encoding_format) body.input_type = 'search_document';
+  if (params.dimensions) body.truncate = 'END';
+
+  return {
+    body,
+    headers,
+    url: 'https://api.cohere.ai/v2/embed',
+  };
+}
+
+function transformWorkersAIEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const accountId = (opts.workersAiAccountId as string) || '';
+  const input = params.input;
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    text: texts,
+  };
+
+  const model = params.model || '@cf/baai/bge-base-en-v1.5';
+
+  return {
+    body,
+    headers,
+    url: `${WORKERS_AI_EMBED_URL}/${accountId}/${model}`,
+  };
+}
+
+function transformSiliconFlowEmbedRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const input = params.input;
+  const texts = Array.isArray(input) ? input.map(i => typeof i === 'string' ? i : i.text) : [typeof input === 'string' ? input : input.text];
+
+  const body: Record<string, unknown> = {
+    model: params.model || 'BAAI/bge-base-zh-v1.5',
+    input: texts,
+  };
+
+  if (params.user) body.user = params.user;
+
+  return {
+    body,
+    headers,
+    url: SILICONFLOW_EMBED_URL,
+  };
+}
+
+function transformOpenAIDALLERequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+    model: params.model || 'dall-e-3',
+  };
+
+  if (params.n) body.n = params.n;
+  if (params.quality) body.quality = params.quality;
+  if (params.size) body.size = params.size;
+  if (params.style) body.style = params.style;
+  if (params.response_format) body.response_format = params.response_format;
+
+  return {
+    body,
+    headers,
+    url: 'https://api.openai.com/v1/images/generations',
+  };
+}
+
+function transformLemonFoxImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+    model: params.model || 'dall-e-3',
+  };
+
+  if (params.n) body.n = params.n;
+  if (params.size) body.size = params.size;
+  if (params.response_format) body.response_format = params.response_format;
+
+  return {
+    body,
+    headers,
+    url: LEMONFOX_IMAGE_URL,
+  };
+}
+
+function transformWorkersAIImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const accountId = (opts.workersAiAccountId as string) || '';
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+  };
+
+  if (params.model) body.model = params.model;
+  if (params.num_steps) body.num_steps = params.num_steps;
+
+  return {
+    body,
+    headers,
+    url: `${WORKERS_AI_IMAGE_URL}/${accountId}/@cf/l stabilityai/stable-diffusion-xl-base-1.0`,
+  };
+}
+
+function transformNScaleImageRequest(params: Params, opts: Record<string, unknown>): TransformResult {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const key = (opts.apiKey as string) || '';
+  headers['Authorization'] = `Bearer ${key}`;
+
+  const body: Record<string, unknown> = {
+    prompt: params.prompt,
+  };
+
+  if (params.model) body.model = params.model;
+  if (params.num_steps) body.num_inference_steps = params.num_steps;
+  if (params.guidance) body.guidance_scale = params.guidance;
+
+  return {
+    body,
+    headers,
+    url: NSCALE_URL,
+  };
+}
+
+export function transformEmbedRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
+
+  switch (normalizedProvider) {
+    case OPEN_AI:
+    case 'openai-embeddings':
+      return transformOpenAIEmbeddingsRequest(params, opts);
+    case COHERE:
+      return transformCohereEmbeddingsRequest(params, opts);
+    case 'workers-ai':
+      return transformWorkersAIEmbedRequest(params, opts);
+    case 'siliconflow':
+      return transformSiliconFlowEmbedRequest(params, opts);
+    default:
+      return transformOpenAIEmbeddingsRequest(params, opts);
+  }
+}
+
+export function transformImageRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
+
+  switch (normalizedProvider) {
+    case OPEN_AI:
+    case 'openai-dalle':
+      return transformOpenAIDALLERequest(params, opts);
+    case LEMONFOX:
+      return transformLemonFoxImageRequest(params, opts);
+    case 'workers-ai':
+      return transformWorkersAIImageRequest(params, opts);
+    case NSCALE:
+      return transformNScaleImageRequest(params, opts);
+    default:
+      return transformOpenAIDALLERequest(params, opts);
+  }
+}
+
+export function transformAudioRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
+
+  switch (normalizedProvider) {
+    case OPEN_AI:
+      return transformOpenAIWhisperRequest(params, opts);
+    case LEMONFOX:
+      return transformLemonFoxTranscribeRequest(params, opts);
+    default:
+      return transformOpenAIWhisperRequest(params, opts);
+  }
+}
+
+export function transformSpeechRequest(
+  params: Params,
+  provider: string,
+  providerOptions: unknown
+): TransformResult {
+  const opts = providerOptions as Record<string, unknown>;
+  const normalizedProvider = normalizeProvider(provider);
+
+  switch (normalizedProvider) {
+    case OPEN_AI:
+      return transformOpenAISpeechRequest(params, opts);
+    default:
+      return transformOpenAISpeechRequest(params, opts);
+  }
 }
