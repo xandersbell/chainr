@@ -240,7 +240,7 @@ describe('Chainr (Router) 集成测试', () => {
       const chainr = new Chainr(config);
       const result = await chainr.chat.completions.create(baseParams);
 
-      expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig);
+      expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig, undefined);
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         strategyResult.response as unknown as Record<string, unknown>,
         'openai',
@@ -272,7 +272,7 @@ describe('Chainr (Router) 集成测试', () => {
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
 
-      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined);
+      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined);
     });
 
     it('config.retry 正确传递给 strategy.execute() 作为 retryConfig', async () => {
@@ -298,7 +298,8 @@ describe('Chainr (Router) 集成测试', () => {
       expect(mockSingleExecute).toHaveBeenCalledWith(
         expect.any(Array),
         baseParams,
-        retryConfig
+        retryConfig,
+        undefined
       );
     });
 
@@ -323,6 +324,7 @@ describe('Chainr (Router) 集成测试', () => {
       expect(mockSingleExecute).toHaveBeenCalledWith(
         expect.any(Array),
         baseParams,
+        undefined,
         undefined
       );
     });

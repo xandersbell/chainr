@@ -201,7 +201,8 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
-        retryConfig
+        retryConfig,
+        undefined
       );
     });
 
@@ -221,7 +222,8 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
-        { attempts: 2, onStatusCodes: [429] }
+        { attempts: 2, onStatusCodes: [429] },
+        undefined
       );
     });
 
@@ -237,6 +239,7 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
+        undefined,
         undefined
       );
     });

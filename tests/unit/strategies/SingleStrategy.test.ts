@@ -292,7 +292,8 @@ describe('SingleStrategy', () => {
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          retryConfig
+          retryConfig,
+          undefined
         );
       });
 
@@ -317,7 +318,8 @@ describe('SingleStrategy', () => {
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          targetRetry
+          targetRetry,
+          undefined
         );
       });
 
@@ -341,6 +343,7 @@ describe('SingleStrategy', () => {
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
+          undefined,
           undefined
         );
       });
@@ -366,7 +369,8 @@ describe('SingleStrategy', () => {
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          retryConfig
+          retryConfig,
+          undefined
         );
       });
     });
