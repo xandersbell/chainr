@@ -1,7 +1,6 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
 import { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
-import { BedrockCancelBatchResponseTransform } from './cancelBatch';
 import {
   BedrockConverseChatCompleteConfig,
   BedrockChatCompleteStreamChunkTransform,
@@ -34,15 +33,6 @@ import {
   BedrockTitanCompleteResponseTransform,
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
-import { BEDROCK_STABILITY_V1_MODELS } from './constants';
-import {
-  BedrockCreateBatchConfig,
-  BedrockCreateBatchResponseTransform,
-} from './createBatch';
-import {
-  BedrockCreateFinetuneConfig,
-  BedrockCreateFinetuneResponseTransform,
-} from './createFinetune';
 import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
@@ -50,53 +40,17 @@ import {
   BedrockTitanEmbedResponseTransform,
 } from './embed';
 import {
-  BedrockGetBatchOutputRequestHandler,
-  BedrockGetBatchOutputResponseTransform,
-} from './getBatchOutput';
-import {
-  BedrockStabilityAIImageGenerateV1Config,
-  BedrockStabilityAIImageGenerateV1ResponseTransform,
-  BedrockStabilityAIImageGenerateV2Config,
-  BedrockStabilityAIImageGenerateV2ResponseTransform,
-} from './imageGenerate';
-import { BedrockListBatchesResponseTransform } from './listBatches';
-import { BedrockListFinetuneResponseTransform } from './listFinetunes';
-import { BedrockRetrieveBatchResponseTransform } from './retrieveBatch';
-import { BedrockRetrieveFileRequestHandler } from './retrieveFile';
-import {
-  BedrockRetrieveFileContentRequestHandler,
-  BedrockRetrieveFileContentResponseTransform,
-} from './retrieveFileContent';
-import { BedrockFinetuneResponseTransform } from './retrieveFinetune';
-import {
-  BedrockUploadFileRequestHandler,
-  BedrockUploadFileResponseTransform,
-} from './uploadFile';
-import { BedrockListFilesResponseTransform } from './listfiles';
-import { BedrockDeleteFileResponseTransform } from './deleteFile';
-import {
   AnthropicBedrockConverseMessagesConfig as BedrockAnthropicConverseMessagesConfig,
   BedrockConverseMessagesConfig,
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
 } from './messages';
-import {
-  BedrockAnthropicMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensResponseTransform,
-} from './countTokens';
 import { getBedrockModelWithoutRegion } from './utils';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
-  requestHandlers: {
-    uploadFile: BedrockUploadFileRequestHandler,
-    retrieveFile: BedrockRetrieveFileRequestHandler,
-    getBatchOutput: BedrockGetBatchOutputRequestHandler,
-    retrieveFileContent: BedrockRetrieveFileContentRequestHandler,
-  },
   getConfig: ({ params, providerOptions }) => {
-    // To remove the region in case its a cross-region inference profile ID
+    // 移除跨区域推理配置 ID 中的区域前缀
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
@@ -112,7 +66,6 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
             messages: BedrockAnthropicConverseMessagesConfig,
-            messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
@@ -188,26 +141,13 @@ const BedrockConfig: ProviderConfigs = {
           }
           break;
         case 'stability':
-          if (model && BEDROCK_STABILITY_V1_MODELS.includes(model)) {
-            return {
-              imageGenerate: BedrockStabilityAIImageGenerateV1Config,
-              api: BedrockAPIConfig,
-              responseTransforms: {
-                imageGenerate:
-                  BedrockStabilityAIImageGenerateV1ResponseTransform,
-              },
-            };
-          }
+          // stability 模型暂不支持（imageGenerate 文件已移除）
           return {
-            imageGenerate: BedrockStabilityAIImageGenerateV2Config,
             api: BedrockAPIConfig,
-            responseTransforms: {
-              imageGenerate: BedrockStabilityAIImageGenerateV2ResponseTransform,
-            },
           };
       }
 
-      // defaults
+      // 默认配置合并
       config = {
         ...config,
         ...(!config.chatComplete && {
@@ -215,9 +155,6 @@ const BedrockConfig: ProviderConfigs = {
         }),
         ...(!config.messages && {
           messages: BedrockConverseMessagesConfig,
-        }),
-        ...(!config.messagesCountTokens && {
-          messagesCountTokens: BedrockConverseMessageCountTokensConfig,
         }),
       };
 
@@ -235,37 +172,9 @@ const BedrockConfig: ProviderConfigs = {
         ...(!config.responseTransforms?.['stream-messages'] && {
           'stream-messages': BedrockConverseMessagesStreamChunkTransform,
         }),
-        ...(!config.responseTransforms?.messagesCountTokens && {
-          messagesCountTokens:
-            BedrockConverseMessageCountTokensResponseTransform,
-        }),
       };
     }
 
-    const commonResponseTransforms = {
-      uploadFile: BedrockUploadFileResponseTransform,
-      createBatch: BedrockCreateBatchResponseTransform,
-      cancelBatch: BedrockCancelBatchResponseTransform,
-      retrieveBatch: BedrockRetrieveBatchResponseTransform,
-      listBatches: BedrockListBatchesResponseTransform,
-      getBatchOutput: BedrockGetBatchOutputResponseTransform,
-      retrieveFileContent: BedrockRetrieveFileContentResponseTransform,
-      createFinetune: BedrockCreateFinetuneResponseTransform,
-      retrieveFinetune: BedrockFinetuneResponseTransform,
-      listFinetunes: BedrockListFinetuneResponseTransform,
-      listFiles: BedrockListFilesResponseTransform,
-      deleteFile: BedrockDeleteFileResponseTransform,
-    };
-    if (!config.responseTransforms) {
-      config.responseTransforms = commonResponseTransforms;
-    } else {
-      config.responseTransforms = {
-        ...config.responseTransforms,
-        ...commonResponseTransforms,
-      };
-    }
-    config.createBatch = BedrockCreateBatchConfig;
-    config.createFinetune = BedrockCreateFinetuneConfig;
     config.cancelBatch = {};
     config.cancelFinetune = {};
     return config;

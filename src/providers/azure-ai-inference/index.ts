@@ -13,12 +13,6 @@ import {
   AzureAIInferenceChatCompleteResponseTransform,
 } from './chatComplete';
 import { AZURE_AI_INFERENCE, GITHUB } from '../../globals';
-import { AzureOpenAIImageGenerateConfig } from '../azure-openai/imageGenerate';
-import { AzureOpenAICreateSpeechConfig } from '../azure-openai/createSpeech';
-import { OpenAICreateFinetuneConfig } from '../openai/createFinetune';
-import { AzureOpenAICreateBatchConfig } from '../azure-openai/createBatch';
-import { AzureAIInferenceGetBatchOutputRequestHandler } from './getBatchOutput';
-import { OpenAIFileUploadRequestTransform } from '../openai/uploadFile';
 import {
   AzureAIInferenceCreateSpeechResponseTransform,
   AzureAIInferenceCreateTranscriptionResponseTransform,
@@ -51,22 +45,12 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       embed: AzureAIInferenceEmbedConfig,
       chatComplete: chatCompleteConfig,
       messages: AzureAIInferenceMessagesConfig,
-      imageGenerate: AzureOpenAIImageGenerateConfig,
       imageEdit: {},
-      createSpeech: AzureOpenAICreateSpeechConfig,
-      createFinetune: OpenAICreateFinetuneConfig,
       createTranscription: {},
       createTranslation: {},
       realtime: {},
       cancelBatch: {},
-      createBatch: AzureOpenAICreateBatchConfig,
       cancelFinetune: {},
-      requestHandlers: {
-        getBatchOutput: AzureAIInferenceGetBatchOutputRequestHandler,
-      },
-      requestTransforms: {
-        uploadFile: OpenAIFileUploadRequestTransform,
-      },
       responseTransforms: {
         complete: AzureAIInferenceCompleteResponseTransform(AZURE_AI_INFERENCE),
         ...(isAnthropicModel && {

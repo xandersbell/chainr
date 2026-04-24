@@ -2,15 +2,6 @@ import { ProviderConfigs } from '../types';
 import LemonfoxAIAPIConfig from './api';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { LemonfoxAIChatCompleteStreamChunkTransform } from './chatComplete';
-import {
-  LemonfoxAIImageGenerateConfig,
-  LemonfoxImageGenerateResponseTransform,
-} from './imageGenerate';
-
-import {
-  LemonfoxAICreateTranscriptionResponseTransform,
-  LemonfoxAIcreateTranscriptionConfig,
-} from './createTranscription';
 import { LEMONFOX_AI } from '../../globals';
 
 const LemonfoxAIConfig: ProviderConfigs = {
@@ -32,8 +23,6 @@ const LemonfoxAIConfig: ProviderConfigs = {
       model: 'zephyr-chat',
     }
   ),
-  imageGenerate: LemonfoxAIImageGenerateConfig,
-  createTranscription: LemonfoxAIcreateTranscriptionConfig,
   api: LemonfoxAIAPIConfig,
   responseTransforms: {
     ...responseTransformers(LEMONFOX_AI, {
@@ -59,8 +48,6 @@ const LemonfoxAIConfig: ProviderConfigs = {
       },
     }),
     'stream-chatComplete': LemonfoxAIChatCompleteStreamChunkTransform,
-    imageGenerate: LemonfoxImageGenerateResponseTransform,
-    createTranscription: LemonfoxAICreateTranscriptionResponseTransform,
   },
 };
 

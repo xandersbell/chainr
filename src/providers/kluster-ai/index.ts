@@ -7,8 +7,6 @@ import {
 } from '../open-ai-base';
 import KlusterAIAPIConfig from './api';
 import { KlusterAIResponseTransform } from './chatComplete';
-import { KlusterAIRequestTransform } from './uploadFile';
-
 const KlusterAIConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
     [],
@@ -33,9 +31,6 @@ const KlusterAIConfig: ProviderConfigs = {
       embed: true,
     }),
     uploadFile: KlusterAIResponseTransform,
-  },
-  requestTransforms: {
-    uploadFile: KlusterAIRequestTransform,
   },
 };
 
