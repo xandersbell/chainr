@@ -13,7 +13,7 @@ function getRetryDelay(attempt: number): number {
   return Math.min(BASE_DELAY_MS * Math.pow(2, attempt), MAX_RETRY_LIMIT_MS);
 }
 
-async function fetchWithTimeout(
+export async function fetchWithTimeout(
   url: string,
   options: RequestInit,
   timeoutMs: number

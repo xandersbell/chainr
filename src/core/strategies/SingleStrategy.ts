@@ -14,7 +14,8 @@ export class SingleStrategy {
   async execute(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<StrategyResult> {
     if (targets.length === 0) {
       throw new Error('No targets provided');
@@ -33,7 +34,8 @@ export class SingleStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     return {
@@ -47,7 +49,8 @@ export class SingleStrategy {
   async executeStream(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (targets.length === 0) {
       throw new Error('No targets provided');
@@ -70,7 +73,8 @@ export class SingleStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     if (!retryResult.success || !retryResult.response) {

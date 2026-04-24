@@ -14,13 +14,14 @@ export class FallbackStrategy {
   async execute(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<StrategyResult> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
-        const result = await this.tryTarget(target, params, retryConfig);
+        const result = await this.tryTarget(target, params, retryConfig, timeoutMs);
         if (result.success) {
           return result;
         }
@@ -38,13 +39,14 @@ export class FallbackStrategy {
   async executeStream(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
-        const stream = await this.tryTargetStream(target, params, retryConfig);
+        const stream = await this.tryTargetStream(target, params, retryConfig, timeoutMs);
         return stream;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -57,7 +59,8 @@ export class FallbackStrategy {
   private async tryTarget(
     target: Record<string, unknown>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<StrategyResult> {
     const provider = (target['provider'] as string) || 'openai';
     const mergedParams = { ...params, ...(target['overrideParams'] as Record<string, unknown>) };
@@ -71,7 +74,8 @@ export class FallbackStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     return {
@@ -85,7 +89,8 @@ export class FallbackStrategy {
   private async tryTargetStream(
     target: Record<string, unknown>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     const provider = (target['provider'] as string) || 'openai';
     const mergedParams = {
@@ -103,7 +108,8 @@ export class FallbackStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     if (!retryResult.success || !retryResult.response) {

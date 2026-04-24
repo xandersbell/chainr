@@ -3,6 +3,7 @@ import type { ChainrConfig, StrategyResult, EmbedResponse, ImageGenerateResponse
 import type { ChatCompletionChunk } from './types/streaming';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
+import { fetchWithTimeout } from './RetryHandler';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
@@ -12,8 +13,38 @@ export class Chainr {
   private strategy: FallbackStrategy | LoadBalanceStrategy | SingleStrategy;
 
   constructor(config: ChainrConfig) {
+    this.validateConfig(config);
     this.config = config;
     this.strategy = this.createStrategy(config.strategy);
+  }
+
+  private validateConfig(config: ChainrConfig): void {
+    if (!config.targets || config.targets.length === 0) {
+      throw new Error('At least one target is required');
+    }
+    for (const target of config.targets) {
+      if (!target['provider']) {
+        throw new Error('Each target must have a "provider" field');
+      }
+    }
+    if (config.timeout !== undefined && (typeof config.timeout !== 'number' || config.timeout <= 0)) {
+      throw new Error('timeout must be a positive number (milliseconds)');
+    }
+    if (config.retry) {
+      if (typeof config.retry.attempts !== 'number' || config.retry.attempts < 1) {
+        throw new Error('retry.attempts must be a positive integer');
+      }
+    }
+    for (const key of ['embedTargets', 'imageTargets', 'audioTargets', 'speechTargets'] as const) {
+      const targets = config[key];
+      if (targets) {
+        for (const target of targets) {
+          if (!target['provider']) {
+            throw new Error(`Each target in ${key} must have a "provider" field`);
+          }
+        }
+      }
+    }
   }
 
   private createStrategy(mode: string): FallbackStrategy | LoadBalanceStrategy | SingleStrategy {
@@ -78,7 +109,7 @@ export class Chainr {
   };
 
   private async executeChatCompletions(params: Params): Promise<ChatCompletionResponse | ErrorResponse> {
-    const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry);
+    const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry, this.config.timeout);
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
@@ -88,7 +119,7 @@ export class Chainr {
   }
 
   private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
-    return this.strategy.executeStream(this.config.targets, params, this.config.retry);
+    return this.strategy.executeStream(this.config.targets, params, this.config.retry, this.config.timeout);
   }
 
   private async executeEmbeddings(
@@ -102,11 +133,11 @@ export class Chainr {
         const provider = (target['provider'] as string) || 'openai';
         const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'embed');
 
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
-        });
+        }, this.config.timeout ?? 30000);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -134,11 +165,11 @@ export class Chainr {
         const provider = (target['provider'] as string) || 'openai';
         const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'imageGenerate');
 
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
-        });
+        }, this.config.timeout ?? 30000);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -166,11 +197,11 @@ export class Chainr {
         const provider = (target['provider'] as string) || 'openai';
         const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranscription');
 
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
-        });
+        }, this.config.timeout ?? 30000);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -197,11 +228,11 @@ export class Chainr {
         const provider = (target['provider'] as string) || 'openai';
         const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createSpeech');
 
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
-        });
+        }, this.config.timeout ?? 30000);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -233,11 +264,11 @@ export class Chainr {
         const provider = (target['provider'] as string) || 'openai';
         const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranslation');
 
-        const response = await fetch(url, {
+        const response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
-        });
+        }, this.config.timeout ?? 30000);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

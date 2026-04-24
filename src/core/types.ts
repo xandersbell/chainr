@@ -102,6 +102,7 @@ export interface ChainrConfig {
     attempts: number;
     onStatusCodes: number[];
   };
+  timeout?: number;
 }
 
 export interface EmbedResponseData {

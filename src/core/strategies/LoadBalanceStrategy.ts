@@ -14,27 +14,29 @@ export class LoadBalanceStrategy {
   async execute(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<StrategyResult> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
     }
 
     const selectedTarget = this.selectByWeight(targets);
-    return this.tryTarget(selectedTarget, params, retryConfig);
+    return this.tryTarget(selectedTarget, params, retryConfig, timeoutMs);
   }
 
   async executeStream(
     targets: Array<Record<string, unknown>>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
     }
 
     const selectedTarget = this.selectByWeight(targets);
-    return this.tryTargetStream(selectedTarget, params, retryConfig);
+    return this.tryTargetStream(selectedTarget, params, retryConfig, timeoutMs);
   }
 
   private selectByWeight(targets: Array<Record<string, unknown>>): Record<string, unknown> {
@@ -60,7 +62,8 @@ export class LoadBalanceStrategy {
   private async tryTarget(
     target: Record<string, unknown>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<StrategyResult> {
     const provider = (target['provider'] as string) || 'openai';
     const mergedParams = { ...params, ...(target['overrideParams'] as Record<string, unknown>) };
@@ -74,7 +77,8 @@ export class LoadBalanceStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     return {
@@ -88,7 +92,8 @@ export class LoadBalanceStrategy {
   private async tryTargetStream(
     target: Record<string, unknown>,
     params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] }
+    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
+    timeoutMs?: number
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     const provider = (target['provider'] as string) || 'openai';
     const mergedParams = {
@@ -106,7 +111,8 @@ export class LoadBalanceStrategy {
         headers,
         body: JSON.stringify(body),
       },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
+      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
+      timeoutMs
     );
 
     if (!retryResult.success || !retryResult.response) {
