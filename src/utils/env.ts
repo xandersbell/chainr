@@ -38,6 +38,8 @@ export const Environment = () => ({
   AWS_ASSUME_ROLE_ACCESS_KEY_ID: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_ACCESS_KEY_ID),
   AWS_ASSUME_ROLE_SECRET_ACCESS_KEY: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SECRET_ACCESS_KEY),
   AWS_ASSUME_ROLE_REGION: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_REGION),
+  AWS_ASSUME_ROLE_SOURCE_ARN: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SOURCE_ARN),
+  AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID),
   AWS_REGION: getValueOrFileContents(process.env.AWS_REGION),
   AWS_ENDPOINT_DOMAIN: getValueOrFileContents(process.env.AWS_ENDPOINT_DOMAIN),
   AWS_IMDS_V1: getValueOrFileContents(process.env.AWS_IMDS_V1),

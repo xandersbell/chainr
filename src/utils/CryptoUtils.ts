@@ -60,7 +60,7 @@ export class CryptoUtils {
 
   private static async importPrivateKey(
     pemKey: string,
-    passphrase?: string
+    _passphrase?: string
   ): Promise<CryptoKey> {
     // Normalize the key first
     const normalizedKey = this.normalizePemKey(pemKey);
