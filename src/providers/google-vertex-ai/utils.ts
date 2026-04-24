@@ -12,8 +12,6 @@ import {
   fileExtensionMimeTypeMap,
 } from '../../globals';
 import { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
-import { Context } from 'hono';
-import { env } from 'hono/adapter';
 import { ContentType, JsonSchema, Tool } from '../../types/requestBody';
 import { GoogleMessagePart } from '../google/chatComplete';
 
@@ -89,22 +87,9 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 }
 
 export const getAccessToken = async (
-  c: Context,
   serviceAccountInfo: Record<string, any>
 ): Promise<string> => {
   try {
-    let cacheKey = `${serviceAccountInfo.project_id}/${serviceAccountInfo.private_key_id}/${serviceAccountInfo.client_email}`;
-    // try to get from cache
-    try {
-      const getFromCacheByKey = c.get('getFromCacheByKey');
-      const resp = getFromCacheByKey
-        ? await getFromCacheByKey(env(c), cacheKey)
-        : null;
-      if (resp) {
-        return resp;
-      }
-    } catch (err) {}
-
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
     const exp = iat + 3600; // Token expiration time (1 hour)
@@ -144,10 +129,6 @@ export const getAccessToken = async (
     });
 
     const tokenJson: Record<string, any> = await tokenResponse.json();
-    const putInCacheWithValue = c.get('putInCacheWithValue');
-    if (putInCacheWithValue && cacheKey) {
-      await putInCacheWithValue(env(c), cacheKey, tokenJson.access_token, 3000); // 50 minutes
-    }
 
     return tokenJson.access_token;
   } catch (err) {

@@ -1,4 +1,3 @@
-import { getRuntimeKey } from 'hono/adapter';
 import { GITHUB } from '../../globals';
 import { Environment } from '../../utils/env';
 import {
@@ -21,8 +20,6 @@ const NON_INFERENCE_ENDPOINTS = [
   'retrieveFileContent',
 ];
 
-const runtime = getRuntimeKey();
-
 const AzureAIInferenceAPI: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions, fn }) => {
     const { provider, azureFoundryUrl } = providerOptions;
@@ -41,7 +38,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
 
     return '';
   },
-  headers: async ({ providerOptions, fn, c }) => {
+  headers: async ({ providerOptions, fn }) => {
     const {
       apiKey,
       azureExtraParameters,
@@ -128,13 +125,13 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       return headers;
     }
 
-    if (azureAuthMode === 'workload' && runtime === 'node') {
+    if (azureAuthMode === 'workload') {
       const { azureWorkloadClientId, azureEntraScope } = providerOptions;
 
-      const authorityHost = Environment(c).AZURE_AUTHORITY_HOST;
-      const tenantId = Environment(c).AZURE_TENANT_ID;
-      const clientId = azureWorkloadClientId || Environment(c).AZURE_CLIENT_ID;
-      const federatedTokenFile = Environment(c).AZURE_FEDERATED_TOKEN_FILE;
+      const authorityHost = Environment().AZURE_AUTHORITY_HOST;
+      const tenantId = Environment().AZURE_TENANT_ID;
+      const clientId = azureWorkloadClientId || Environment().AZURE_CLIENT_ID;
+      const federatedTokenFile = Environment().AZURE_FEDERATED_TOKEN_FILE;
 
       if (authorityHost && tenantId && clientId && federatedTokenFile) {
         const fs = await import('fs');

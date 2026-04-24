@@ -4,7 +4,7 @@ import {
   getAssumedRoleCredentials,
 } from '../bedrock/utils';
 import { ProviderAPIConfig } from '../types';
-import { env } from 'hono/adapter';
+
 const SagemakerAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     return `https://runtime.sagemaker.${providerOptions.awsRegion}.amazonaws.com`;
@@ -13,7 +13,6 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
-    c,
   }) => {
     const headers: Record<string, string> = {
       'content-type': 'application/json',
@@ -21,11 +20,11 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
 
     if (providerOptions.awsAuthType === 'assumedRole') {
       try {
-        // Assume the role in the source account
+        // 先在源账号中 assume role，获取临时凭证
         const sourceRoleCredentials = await getAssumedRoleCredentials(
-          c,
-          env(c).AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
-          env(c).AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+          null as any, // bedrock/utils 尚未完成 Hono 剥离，临时传 null
+          process.env.AWS_ASSUME_ROLE_SOURCE_ARN, // 源账号中的 Role ARN
+          process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // 源角色的外部 ID（如需要）
           providerOptions.awsRegion || ''
         );
 
@@ -33,10 +32,10 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
           throw new Error('Server Error while assuming internal role');
         }
 
-        // Assume role in destination account using temporary creds obtained in first step
+        // 使用第一步获取的临时凭证，在目标账号中 assume role
         const { accessKeyId, secretAccessKey, sessionToken } =
           (await getAssumedRoleCredentials(
-            c,
+            null as any, // bedrock/utils 尚未完成 Hono 剥离，临时传 null
             providerOptions.awsRoleArn || '',
             providerOptions.awsExternalId || '',
             providerOptions.awsRegion || '',

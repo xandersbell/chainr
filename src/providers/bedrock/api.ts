@@ -1,5 +1,4 @@
-import { Context } from 'hono';
-import { Options, Params } from '../../types/requestBody';
+import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
@@ -10,18 +9,6 @@ import {
   getBedrockModelWithoutRegion,
 } from './utils';
 import { GatewayError } from '../../errors/GatewayError';
-
-interface BedrockAPIConfigInterface extends Omit<ProviderAPIConfig, 'headers'> {
-  headers: (args: {
-    c: Context;
-    providerOptions: Options;
-    fn: string;
-    transformedRequestBody: Record<string, any> | string;
-    transformedRequestUrl: string;
-    gatewayRequestBody?: Params;
-    headers?: Record<string, string>;
-  }) => Promise<Record<string, any>> | Record<string, any>;
-}
 
 const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
   'createBatch',
@@ -68,13 +55,10 @@ const ENDPOINTS_TO_ROUTE_TO_S3 = [
   'initiateMultipartUpload',
 ];
 
-const getMethod = (
-  fn: endpointStrings,
-  transformedRequestUrl: string,
-  c: Context
-) => {
+const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
   if (fn === 'proxy') {
-    return c.req.method;
+    // proxy 模式默认使用 POST，不再依赖 Hono Context
+    return 'POST';
   }
   if (fn === 'uploadFile') {
     const url = new URL(transformedRequestUrl);
@@ -110,14 +94,13 @@ const setRouteSpecificHeaders = (
   }
 };
 
-const BedrockAPIConfig: BedrockAPIConfigInterface = {
-  getBaseURL: async ({ c, providerOptions, fn, gatewayRequestURL, params }) => {
+const BedrockAPIConfig: ProviderAPIConfig = {
+  getBaseURL: async ({ providerOptions, fn, gatewayRequestURL, params }) => {
     const model = decodeURIComponent(params?.model || '');
     if (model.includes('arn:aws') && params) {
       const foundationModel = model.includes('foundation-model/')
         ? model.split('/').pop()
         : await getFoundationModelFromInferenceProfile(
-            c,
             model,
             providerOptions
           );
@@ -130,34 +113,32 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
         gatewayRequestURL.split('/v1/files/')[1]
       );
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
-      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
     }
     if (fn === 'retrieveFileContent') {
       const s3URL = decodeURIComponent(
         gatewayRequestURL.split('/v1/files/')[1]
       );
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
-      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+      return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
     }
     if (fn === 'uploadFile')
-      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+      return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
     const isAWSControlPlaneEndpoint =
       fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
-    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain(c)}`;
+    return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
   },
   headers: async ({
-    c,
     fn,
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
-    gatewayRequestBody, // for proxy use the passed body blindly
+    gatewayRequestBody, // proxy 模式直接透传请求体
     headers: requestHeaders,
   }) => {
     const { awsAuthType, awsService } = providerOptions;
-    const method =
-      c.get('method') || // method set specifically into context
-      getMethod(fn as endpointStrings, transformedRequestUrl, c); // method calculated
+    // 直接通过 fn 计算 HTTP 方法，不再依赖 Hono Context
+    const method = getMethod(fn as endpointStrings, transformedRequestUrl);
     const service = awsService || getService(fn as endpointStrings);
 
     let headers: Record<string, string> = {};
@@ -177,7 +158,7 @@ const BedrockAPIConfig: BedrockAPIConfigInterface = {
     setRouteSpecificHeaders(fn, headers, providerOptions);
 
     if (awsAuthType === 'assumedRole') {
-      await providerAssumedRoleCredentials(c, providerOptions);
+      await providerAssumedRoleCredentials(providerOptions);
     }
 
     if (awsAuthType === 'apiKey') {

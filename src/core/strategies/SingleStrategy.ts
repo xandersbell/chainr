@@ -9,7 +9,7 @@ import { createGoogleStream, isGoogleProvider } from '../transformGoogleStream';
 import { createCohereStream, isCohereProvider } from '../transformCohereStream';
 import { createBedrockStream, isBedrockProvider } from '../transformBedrockStream';
 import { createBytezStream, isBytezProvider } from '../transformBytezStream';
-import { generateAWSHeaders } from '../awsSigV4';
+import { generateAWSHeaders } from '../../providers/bedrock/utils';
 
 export class SingleStrategy {
   async execute(
@@ -34,6 +34,7 @@ export class SingleStrategy {
         headers,
         url,
         'POST',
+        'bedrock',
         awsRegion,
         awsAccessKeyId,
         awsSecretAccessKey,
@@ -85,6 +86,7 @@ export class SingleStrategy {
         headers,
         url,
         'POST',
+        'bedrock',
         awsRegion,
         awsAccessKeyId,
         awsSecretAccessKey,
