@@ -1,5 +1,5 @@
 import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams, TranslationParams } from '../types/requestBody';
-import type { ChainrConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
+import type { ChainrConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
@@ -22,11 +22,8 @@ export class Chainr {
     if (!config.targets || config.targets.length === 0) {
       throw new Error('At least one target is required');
     }
-    for (const target of config.targets) {
-      if (!target['provider']) {
-        throw new Error('Each target must have a "provider" field');
-      }
-    }
+    // 递归验证所有 target
+    this.validateTargets(config.targets, 'targets');
     if (config.timeout !== undefined && (typeof config.timeout !== 'number' || config.timeout <= 0)) {
       throw new Error('timeout must be a positive number (milliseconds)');
     }
@@ -42,6 +39,37 @@ export class Chainr {
           if (!target['provider']) {
             throw new Error(`Each target in ${key} must have a "provider" field`);
           }
+        }
+      }
+    }
+  }
+
+  /**
+   * 递归验证 target 列表
+   * 叶节点必须有 provider，嵌套策略组必须有 strategy + 非空 targets
+   */
+  private validateTargets(targets: TargetConfig[], path: string): void {
+    for (let i = 0; i < targets.length; i++) {
+      const target = targets[i];
+      const targetPath = `${path}[${i}]`;
+
+      if (target.strategy || target.targets) {
+        // 嵌套策略组
+        if (!target.strategy) {
+          throw new Error(`${targetPath} has "targets" but missing "strategy" field`);
+        }
+        if (!['fallback', 'loadbalance', 'single'].includes(target.strategy)) {
+          throw new Error(`${targetPath} has unknown strategy: ${target.strategy}`);
+        }
+        if (!Array.isArray(target.targets) || target.targets.length === 0) {
+          throw new Error(`${targetPath} strategy "${target.strategy}" requires non-empty "targets" array`);
+        }
+        // 递归验证子 targets
+        this.validateTargets(target.targets, `${targetPath}.targets`);
+      } else {
+        // 叶节点
+        if (!target.provider) {
+          throw new Error(`${targetPath} must have a "provider" field`);
         }
       }
     }

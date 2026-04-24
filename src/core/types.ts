@@ -91,13 +91,33 @@ export interface BinaryResult {
   error?: string;
 }
 
+/**
+ * 目标配置 — 可以是叶节点（有 provider）或嵌套策略组（有 strategy + targets）
+ * 两者互斥：叶节点必须有 provider，策略组必须有 strategy + targets
+ */
+export interface TargetConfig {
+  // 叶节点字段
+  provider?: string;
+  apiKey?: string;
+  weight?: number;
+  retry?: { attempts?: number; onStatusCodes?: number[] };
+  overrideParams?: Record<string, unknown>;
+  // 嵌套策略字段
+  strategy?: 'fallback' | 'loadbalance' | 'single';
+  targets?: TargetConfig[];
+  // 超时（可在任意层级设置，子级覆盖父级）
+  timeout?: number;
+  // 其他 provider 特定字段透传
+  [key: string]: unknown;
+}
+
 export interface ChainrConfig {
   strategy: 'fallback' | 'loadbalance' | 'single';
-  targets: Array<Record<string, unknown>>;
-  embedTargets?: Array<Record<string, unknown>>;
-  imageTargets?: Array<Record<string, unknown>>;
-  audioTargets?: Array<Record<string, unknown>>;
-  speechTargets?: Array<Record<string, unknown>>;
+  targets: TargetConfig[];
+  embedTargets?: TargetConfig[];
+  imageTargets?: TargetConfig[];
+  audioTargets?: TargetConfig[];
+  speechTargets?: TargetConfig[];
   retry?: {
     attempts: number;
     onStatusCodes: number[];

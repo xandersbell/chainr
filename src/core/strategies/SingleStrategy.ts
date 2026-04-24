@@ -1,18 +1,15 @@
+/**
+ * Single 策略 — 始终使用第一个 target
+ * 支持嵌套：target 可以是叶节点或子策略组
+ */
 import type { Params } from '../../types/requestBody';
-import type { StrategyResult } from '../types';
+import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
-import { retryRequest, retryRequestForStream } from '../RetryHandler';
-import { buildProviderRequest } from '../providerRequest';
-import { createOpenAIStream, isOpenAICompatibleProvider } from '../transformOpenAIStream';
-import { createAnthropicStream, isAnthropicProvider } from '../transformAnthropicStream';
-import { createGoogleStream, isGoogleProvider } from '../transformGoogleStream';
-import { createCohereStream, isCohereProvider } from '../transformCohereStream';
-import { createBedrockStream, isBedrockProvider } from '../transformBedrockStream';
-import { createBytezStream, isBytezProvider } from '../transformBytezStream';
+import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
 export class SingleStrategy {
   async execute(
-    targets: Array<Record<string, unknown>>,
+    targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number
@@ -21,33 +18,12 @@ export class SingleStrategy {
       throw new Error('No targets provided');
     }
 
-    const target = targets[0];
-    const provider = (target['provider'] as string) || 'openai';
-    const mergedParams = { ...params, ...(target['overrideParams'] as Record<string, unknown>) };
-
-    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
-
-    const retryResult = await retryRequest(
-      url,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
-      timeoutMs
-    );
-
-    return {
-      success: retryResult.success,
-      response: retryResult.response,
-      provider,
-      error: retryResult.error,
-    };
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    return executeTarget(targets[0], params, inherited);
   }
 
   async executeStream(
-    targets: Array<Record<string, unknown>>,
+    targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number
@@ -56,55 +32,7 @@ export class SingleStrategy {
       throw new Error('No targets provided');
     }
 
-    const target = targets[0];
-    const provider = (target['provider'] as string) || 'openai';
-    const mergedParams = {
-      ...params,
-      stream: true,
-      ...(target['overrideParams'] as Record<string, unknown>),
-    };
-
-    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
-
-    const retryResult = await retryRequestForStream(
-      url,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
-      timeoutMs
-    );
-
-    if (!retryResult.success || !retryResult.response) {
-      throw new Error(retryResult.error || 'Stream request failed');
-    }
-
-    if (isAnthropicProvider(provider)) {
-      return createAnthropicStream(retryResult.response, provider);
-    }
-
-    if (isGoogleProvider(provider)) {
-      return createGoogleStream(retryResult.response, provider);
-    }
-
-    if (isCohereProvider(provider)) {
-      return createCohereStream(retryResult.response, provider);
-    }
-
-    if (isBedrockProvider(provider)) {
-      return createBedrockStream(retryResult.response, provider);
-    }
-
-    if (isBytezProvider(provider)) {
-      return createBytezStream(retryResult.response, provider);
-    }
-
-    if (isOpenAICompatibleProvider(provider)) {
-      return createOpenAIStream(retryResult.response, provider);
-    }
-
-    return createOpenAIStream(retryResult.response, provider);
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    return executeTargetStream(targets[0], params, inherited);
   }
 }

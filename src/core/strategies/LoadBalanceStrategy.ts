@@ -1,18 +1,15 @@
+/**
+ * LoadBalance 策略 — 按权重随机选择一个 target
+ * 支持嵌套：选中的 target 可以是叶节点或子策略组
+ */
 import type { Params } from '../../types/requestBody';
-import type { StrategyResult } from '../types';
+import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
-import { retryRequest, retryRequestForStream } from '../RetryHandler';
-import { buildProviderRequest } from '../providerRequest';
-import { createOpenAIStream, isOpenAICompatibleProvider } from '../transformOpenAIStream';
-import { createAnthropicStream, isAnthropicProvider } from '../transformAnthropicStream';
-import { createGoogleStream, isGoogleProvider } from '../transformGoogleStream';
-import { createCohereStream, isCohereProvider } from '../transformCohereStream';
-import { createBedrockStream, isBedrockProvider } from '../transformBedrockStream';
-import { createBytezStream, isBytezProvider } from '../transformBytezStream';
+import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
 export class LoadBalanceStrategy {
   async execute(
-    targets: Array<Record<string, unknown>>,
+    targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number
@@ -21,12 +18,13 @@ export class LoadBalanceStrategy {
       throw new Error('No targets provided for load balance');
     }
 
-    const selectedTarget = this.selectByWeight(targets);
-    return this.tryTarget(selectedTarget, params, retryConfig, timeoutMs);
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    const selected = this.selectByWeight(targets);
+    return executeTarget(selected, params, inherited);
   }
 
   async executeStream(
-    targets: Array<Record<string, unknown>>,
+    targets: TargetConfig[],
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number
@@ -35,114 +33,21 @@ export class LoadBalanceStrategy {
       throw new Error('No targets provided for load balance');
     }
 
-    const selectedTarget = this.selectByWeight(targets);
-    return this.tryTargetStream(selectedTarget, params, retryConfig, timeoutMs);
+    const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs };
+    const selected = this.selectByWeight(targets);
+    return executeTargetStream(selected, params, inherited);
   }
 
-  private selectByWeight(targets: Array<Record<string, unknown>>): Record<string, unknown> {
-    const normalizedTargets = targets.map(t => ({
-      ...t,
-      weight: (t['weight'] as number) ?? 1,
-    }));
-
-    const totalWeight = normalizedTargets.reduce((sum, t) => sum + (t['weight'] as number), 0);
-    const randomWeight = Math.random() * totalWeight;
-
-    let cumulativeWeight = 0;
-    for (const target of normalizedTargets) {
-      cumulativeWeight += target['weight'] as number;
-      if (randomWeight < cumulativeWeight) {
-        return target;
-      }
-    }
-
-    return normalizedTargets[normalizedTargets.length - 1];
-  }
-
-  private async tryTarget(
-    target: Record<string, unknown>,
-    params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-    timeoutMs?: number
-  ): Promise<StrategyResult> {
-    const provider = (target['provider'] as string) || 'openai';
-    const mergedParams = { ...params, ...(target['overrideParams'] as Record<string, unknown>) };
-
-    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
-
-    const retryResult = await retryRequest(
-      url,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
-      timeoutMs
+  private selectByWeight(targets: TargetConfig[]): TargetConfig {
+    const totalWeight = targets.reduce(
+      (sum, t) => sum + ((t.weight as number) ?? 1), 0
     );
-
-    return {
-      success: retryResult.success,
-      response: retryResult.response,
-      provider,
-      error: retryResult.error,
-    };
-  }
-
-  private async tryTargetStream(
-    target: Record<string, unknown>,
-    params: Params,
-    retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-    timeoutMs?: number
-  ): Promise<ReadableStream<ChatCompletionChunk>> {
-    const provider = (target['provider'] as string) || 'openai';
-    const mergedParams = {
-      ...params,
-      stream: true,
-      ...(target['overrideParams'] as Record<string, unknown>),
-    };
-
-    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
-
-    const retryResult = await retryRequestForStream(
-      url,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      },
-      retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] }),
-      timeoutMs
-    );
-
-    if (!retryResult.success || !retryResult.response) {
-      throw new Error(retryResult.error || 'Stream request failed');
+    const rand = Math.random() * totalWeight;
+    let cumulative = 0;
+    for (const target of targets) {
+      cumulative += (target.weight as number) ?? 1;
+      if (rand < cumulative) return target;
     }
-
-    if (isAnthropicProvider(provider)) {
-      return createAnthropicStream(retryResult.response, provider);
-    }
-
-    if (isGoogleProvider(provider)) {
-      return createGoogleStream(retryResult.response, provider);
-    }
-
-    if (isCohereProvider(provider)) {
-      return createCohereStream(retryResult.response, provider);
-    }
-
-    if (isBedrockProvider(provider)) {
-      return createBedrockStream(retryResult.response, provider);
-    }
-
-    if (isBytezProvider(provider)) {
-      return createBytezStream(retryResult.response, provider);
-    }
-
-    if (isOpenAICompatibleProvider(provider)) {
-      return createOpenAIStream(retryResult.response, provider);
-    }
-
-    return createOpenAIStream(retryResult.response, provider);
+    return targets[targets.length - 1];
   }
 }
