@@ -125,6 +125,10 @@ export class Chainr {
       const targets = this.config.imageTargets || this.config.targets;
       return this.executeImageGeneration(targets, params);
     },
+    edit: async (params: Params): Promise<Record<string, unknown>> => {
+      const targets = this.config.imageTargets || this.config.targets;
+      return this.executeSimpleEndpoint(targets as TargetConfig[], params, 'imageEdit');
+    },
   };
 
   audio = {
@@ -177,6 +181,79 @@ export class Chainr {
         return this.executeResponsesStreaming(params);
       }
       return this.executeResponses(params);
+    },
+  };
+
+  /**
+   * Legacy text completion API — /v1/completions 端点
+   * 通过策略系统路由，支持 fallback/loadbalance/single
+   */
+  completions = {
+    create: (
+      params: Params
+    ): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
+      if (params.stream === true) {
+        return this.executeStrategyStream(this.config.targets, params, 'complete') as Promise<ReadableStream>;
+      }
+      return this.executeCompletions(params);
+    },
+  };
+
+  /**
+   * 文件操作 API — upload/list/delete/retrieve
+   * 使用简单循环模式（管理类端点，不需要策略路由）
+   */
+  files = {
+    upload: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'uploadFile');
+    },
+    list: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'listFiles');
+    },
+    del: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'deleteFile');
+    },
+    retrieve: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'retrieveFile');
+    },
+    content: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'retrieveFileContent');
+    },
+  };
+
+  /**
+   * Batch API — 批量推理
+   */
+  batches = {
+    create: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'createBatch');
+    },
+    retrieve: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'retrieveBatch');
+    },
+    list: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'listBatches');
+    },
+    cancel: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'cancelBatch');
+    },
+  };
+
+  /**
+   * Fine-tune API — 微调管理
+   */
+  fineTuning = {
+    create: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'createFinetune');
+    },
+    list: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'listFinetunes');
+    },
+    cancel: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'cancelFinetune');
+    },
+    retrieve: async (params: Params): Promise<Record<string, unknown>> => {
+      return this.executeSimpleEndpoint(this.config.targets, params, 'retrieveFinetune');
     },
   };
 
@@ -270,6 +347,57 @@ export class Chainr {
       );
     }
     return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, endpoint);
+  }
+
+  /**
+   * Legacy text completion — 非流式
+   * 通过策略系统路由，使用 'complete' endpoint 配置
+   */
+  private async executeCompletions(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
+    const result: StrategyResult = await this.executeStrategy(this.config.targets, params, 'complete');
+    const transformed = transformProviderResponse(
+      result.response,
+      result.provider || 'openai',
+      'complete'
+    );
+    return transformed as Record<string, unknown> | ErrorResponse;
+  }
+
+  /**
+   * 通用简单端点执行 — 管理类 API（文件、批量、微调、图片编辑等）
+   * 使用简单循环模式，逐个 target 尝试直到成功
+   */
+  private async executeSimpleEndpoint(
+    targets: TargetConfig[],
+    params: Params,
+    endpoint: import('../providers/types').endpointStrings
+  ): Promise<Record<string, unknown>> {
+    let lastError: string | undefined;
+
+    for (const target of targets) {
+      try {
+        const provider = (target['provider'] as string) || 'openai';
+        const { body, headers, url } = await buildProviderRequest(params, provider, target, endpoint);
+
+        const response = await fetchWithTimeout(url, {
+          method: 'POST',
+          headers,
+          body: body instanceof FormData ? body : JSON.stringify(body),
+        }, this.config.timeout ?? 30000);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const transformed = transformProviderResponse(data, provider, endpoint);
+        return transformed as Record<string, unknown>;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    throw new Error(lastError || `All ${endpoint} targets exhausted`);
   }
 
   private async executeEmbeddings(
