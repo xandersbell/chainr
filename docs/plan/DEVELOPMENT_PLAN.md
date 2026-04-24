@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 4 Complete — **205 tests passing**, 0 TS errors, all core features + Messages/Responses API aligned (2026-04-24)
+**Status**: 🟢 Phase 4 Complete — **205 tests passing**, 0 TS errors, 所有核心功能已对齐 (2026-04-24)
 
-**Last Updated**: 2026-04-24 20:44 EEST — Phase 4 完成，Messages API + Responses API 端点已实现
+**Last Updated**: 2026-04-24 20:57 EEST — Phase 5 不需要（SDK 嵌入式调用，Firebase 无需额外适配）
 
 ---
 
@@ -575,8 +575,8 @@ const chainr = new Chainr({
 - [x] messagesTargets / responsesTargets 专用 target 池
 - [x] 8 个新测试覆盖两个 API 的路由、target 选择、默认 provider、retry/timeout 传递
 
-### Remaining
-- [ ] Phase 5: Firebase Functions example
+### Remaining (P2 可选)
+- [x] ~~Phase 5: Firebase Functions example~~ — 不需要，SDK 嵌入式调用在任何 Node.js 环境中用法一致
 - [ ] Phase 3E: Conditional routing（P2 低优先级，有需求再做）
 
 ---
