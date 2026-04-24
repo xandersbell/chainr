@@ -31,7 +31,7 @@ function getPayloadFromAWSChunk(chunk: Uint8Array): string {
     : JSON.stringify(decodedJson);
 }
 
-function concatenateUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
+function concatenateUint8Arrays(a: Uint8Array<ArrayBufferLike>, b: Uint8Array<ArrayBufferLike>): Uint8Array<ArrayBuffer> {
   const result = new Uint8Array(a.length + b.length);
   result.set(a, 0);
   result.set(b, a.length);
@@ -112,7 +112,7 @@ function bedrockStreamTransform(
             index: 0,
             delta: {},
             finish_reason: transformFinishReason(
-              streamState.stopReason,
+              streamState.stopReason ?? null,
               strictOpenAiCompliance
             ),
           },
@@ -287,7 +287,7 @@ export function createBedrockStream(
   strictOpenAiCompliance: boolean = false
 ): ReadableStream<ChatCompletionChunk> {
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
 
   const generator = readAWSStream(
     reader,

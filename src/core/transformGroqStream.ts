@@ -5,8 +5,8 @@ import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 function groqStreamTransform(
   chunk: string,
   fallbackId: string,
-  streamState: Record<string, unknown>,
-  strictOpenAiCompliance?: boolean,
+  _streamState: Record<string, unknown>,
+  _strictOpenAiCompliance?: boolean,
   provider?: string
 ): string | undefined {
   let trimmed = chunk.trim();
@@ -85,7 +85,7 @@ export function createGroqStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
 
   const generator = parseSSEStream(
     reader,

@@ -5,8 +5,8 @@ import { getFallbackChunkId } from './streamUtils';
 function bytezStreamTransform(
   chunk: string,
   fallbackId: string,
-  streamState: Record<string, unknown>,
-  strictOpenAiCompliance?: boolean,
+  _streamState: Record<string, unknown>,
+  _strictOpenAiCompliance?: boolean,
   provider?: string
 ): string | undefined {
   let trimmed = chunk.trim();
@@ -54,7 +54,7 @@ export function createBytezStream(
   strictOpenAiCompliance: boolean = false
 ): ReadableStream<ChatCompletionChunk> {
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
 
   const generator = parseSSEStream(
     reader,

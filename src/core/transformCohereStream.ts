@@ -126,7 +126,7 @@ export function createCohereStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider, '/chat');
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
   const streamState: CohereStreamState = { generation_id: '', lastIndex: 0 };
 
   const generator = parseSSEStream(
@@ -136,7 +136,7 @@ export function createCohereStream(
       cohereStreamTransform(
         chunk,
         fallbackId,
-        state as CohereStreamState,
+        state as unknown as CohereStreamState,
         strictOpenAiCompliance,
         provider,
         model

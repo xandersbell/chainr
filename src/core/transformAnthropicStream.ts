@@ -1,5 +1,5 @@
 import type { ChatCompletionChunk, AnthropicStreamState } from './types/streaming';
-import { parseSSEStream, parseSSEData, parseSSEDataMultiple } from './sseParser';
+import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
 import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 
 function transformFinishReason(
@@ -173,6 +173,7 @@ function anthropicStreamTransform(
   } else if (isToolBlockDelta) {
     toolCalls.push({
       index: streamState.toolIndex,
+      type: 'function' as const,
       function: {
         arguments: parsedChunk.delta.partial_json,
       },
@@ -217,7 +218,7 @@ export function createAnthropicStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider, '/v1/messages');
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
   const streamState: AnthropicStreamState = { toolIndex: -1 };
 
   const generator = parseSSEStream(
@@ -227,7 +228,7 @@ export function createAnthropicStream(
       anthropicStreamTransform(
         chunk,
         fallbackId,
-        state as AnthropicStreamState,
+        state as unknown as AnthropicStreamState,
         strictOpenAiCompliance,
         provider
       ),

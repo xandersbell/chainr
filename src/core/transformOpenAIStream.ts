@@ -11,8 +11,8 @@ export function isOpenAICompatibleProvider(provider: string): boolean {
 
 function openAIStreamTransform(
   chunk: string,
-  fallbackId: string,
-  streamState: Record<string, unknown>
+  _fallbackId: string,
+  _streamState: Record<string, unknown>
 ): string | undefined {
   const trimmed = chunk.trim();
   if (trimmed === '[DONE]') {
@@ -27,7 +27,7 @@ export function createOpenAIStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
 
   const generator = parseSSEStream(
     reader,
@@ -57,7 +57,7 @@ export function createOpenAIStream(
 }
 
 export function createPassthroughStream(response: Response): ReadableStream<Uint8Array> {
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
   return new ReadableStream({
     async start(controller) {
       try {

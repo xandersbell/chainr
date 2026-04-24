@@ -176,7 +176,7 @@ export function createGoogleStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
   const streamState: GoogleStreamState = { containsChainOfThoughtMessage: false };
 
   const generator = parseSSEStream(
@@ -186,7 +186,7 @@ export function createGoogleStream(
       googleStreamTransform(
         chunk,
         fallbackId,
-        state as GoogleStreamState,
+        state as unknown as GoogleStreamState,
         strictOpenAiCompliance,
         provider
       ),

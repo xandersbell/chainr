@@ -5,7 +5,7 @@ import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 function openrouterStreamTransform(
   chunk: string,
   fallbackId: string,
-  streamState: Record<string, unknown>,
+  _streamState: Record<string, unknown>,
   strictOpenAiCompliance?: boolean,
   provider?: string,
   model?: string
@@ -89,7 +89,7 @@ export function createOpenRouterStream(
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
-  const reader = response.body.getReader();
+  const reader = response.body!.getReader();
 
   const generator = parseSSEStream(
     reader,
