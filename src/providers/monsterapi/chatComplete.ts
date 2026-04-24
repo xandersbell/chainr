@@ -68,7 +68,7 @@ export interface MonsterAPIErrorResponse {
 export const MonsterAPIChatCompleteResponseTransform: (
   response: ChatCompletionResponse | MonsterAPIErrorResponse,
   responseStatus: number
-) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
+) => ChatCompletionResponse | ErrorResponse = (response, _responseStatus) => {
   if ('error' in response) {
     return generateErrorResponse(
       {

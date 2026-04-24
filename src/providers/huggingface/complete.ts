@@ -1,5 +1,4 @@
 import { HUGGING_FACE } from '../../globals';
-import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { HuggingfaceErrorResponse } from './types';

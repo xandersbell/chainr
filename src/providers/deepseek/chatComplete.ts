@@ -187,7 +187,7 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
   gatewayRequest: Params
 ) => string | string[] = (
   responseChunk,
-  fallbackId,
+  _fallbackId,
   _streamState,
   strictOpenAiCompliance,
   _gatewayRequest

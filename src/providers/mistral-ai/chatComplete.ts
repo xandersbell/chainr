@@ -211,7 +211,7 @@ export const GetMistralAIChatCompleteStreamChunkTransform = (
 ) => {
   return (
     responseChunk: string,
-    fallbackId: string,
+    _fallbackId: string,
     _streamState: any,
     strictOpenAiCompliance: boolean,
     _gatewayRequest: Params

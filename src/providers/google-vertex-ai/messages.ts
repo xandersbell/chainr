@@ -1,6 +1,6 @@
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { MessagesResponse } from '../../types/messagesResponse';
-import { Options } from '../../types/requestBody';
+import { Options, Params } from '../../types/requestBody';
 import { getMessagesConfig } from '../anthropic-base/messages';
 import { AnthropicErrorResponse } from '../anthropic/types';
 import { AnthropicErrorResponseTransform } from '../anthropic/utils';

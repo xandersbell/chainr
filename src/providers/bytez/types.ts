@@ -7,4 +7,4 @@ interface BytezResponse {
   output: Model[];
 }
 
-export { Model, BytezResponse };
+export type { Model, BytezResponse };

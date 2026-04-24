@@ -294,7 +294,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return [];
         const transformedMessages = params.messages
-          .filter((msg) => !SYSTEM_MESSAGE_ROLES.includes(msg.role))
+          .filter((msg) => !SYSTEM_MESSAGE_ROLES.includes(msg.role as any))
           .map((msg) => {
             return {
               role: msg.role === 'assistant' ? 'assistant' : 'user',
@@ -332,7 +332,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
             acc: Array<{ text: string } | { cachePoint: { type: string } }>,
             msg
           ) => {
-            if (SYSTEM_MESSAGE_ROLES.includes(msg.role))
+            if (SYSTEM_MESSAGE_ROLES.includes(msg.role as any))
               return acc.concat(...getMessageTextContentArray(msg));
             return acc;
           },
@@ -500,7 +500,7 @@ export const BedrockChatCompleteResponseTransform: (
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders,
+  _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
   gatewayRequest
@@ -867,7 +867,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
       if (params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;
@@ -1069,7 +1069,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
       if (params.messages) {
         let messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
-          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role)) {
+          if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;
           } else if (msg.role == 'user') {
             prompt += `user: ${msg.content}\n`;

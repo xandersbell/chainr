@@ -199,7 +199,7 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   strictOpenAiCompliance: boolean
 ) => string = (
   responseChunk,
-  fallbackId,
+  _fallbackId,
   _streamState,
   strictOpenAiCompliance
 ) => {

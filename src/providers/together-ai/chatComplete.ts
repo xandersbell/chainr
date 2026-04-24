@@ -218,10 +218,10 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
   gatewayRequest: Params
 ) => string = (
   responseChunk,
-  fallbackId,
-  streamState,
+  _fallbackId,
+  _streamState,
   strictOpenAiCompliance,
-  gatewayRequest
+  _gatewayRequest
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');

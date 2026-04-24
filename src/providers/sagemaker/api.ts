@@ -22,8 +22,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
       try {
         // 先在源账号中 assume role，获取临时凭证
         const sourceRoleCredentials = await getAssumedRoleCredentials(
-          null as any, // bedrock/utils 尚未完成 Hono 剥离，临时传 null
-          process.env.AWS_ASSUME_ROLE_SOURCE_ARN, // 源账号中的 Role ARN
+          process.env.AWS_ASSUME_ROLE_SOURCE_ARN || '', // 源账号中的 Role ARN
           process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // 源角色的外部 ID（如需要）
           providerOptions.awsRegion || ''
         );
@@ -35,7 +34,6 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
         // 使用第一步获取的临时凭证，在目标账号中 assume role
         const { accessKeyId, secretAccessKey, sessionToken } =
           (await getAssumedRoleCredentials(
-            null as any, // bedrock/utils 尚未完成 Hono 剥离，临时传 null
             providerOptions.awsRoleArn || '',
             providerOptions.awsExternalId || '',
             providerOptions.awsRegion || '',

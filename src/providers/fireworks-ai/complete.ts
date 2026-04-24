@@ -4,7 +4,6 @@ import { generateInvalidProviderResponseError } from '../utils';
 import {
   FireworksAIErrorResponse,
   FireworksAIErrorResponseTransform,
-  FireworksAIStreamChunk,
   FireworksAIValidationErrorResponse,
 } from './chatComplete';
 

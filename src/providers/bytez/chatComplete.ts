@@ -34,9 +34,9 @@ const BytezInferenceChatCompleteConfig: ProviderConfig = {
 function chatComplete(
   response: BytezResponse,
   responseStatus: number,
-  responseHeaders: any,
-  strictOpenAiCompliance: boolean,
-  endpoint: string,
+  _responseHeaders: any,
+  _strictOpenAiCompliance: boolean,
+  _endpoint: string,
   requestBody: any
 ) {
   const { error, output } = response;

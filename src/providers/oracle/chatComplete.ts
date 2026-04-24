@@ -175,6 +175,7 @@ export const OracleChatDetailsConfig: ProviderConfig = {
           };
         }
       }
+      return undefined;
     },
   },
   tools: {
@@ -193,8 +194,8 @@ export const OracleChatDetailsConfig: ProviderConfig = {
         } else if (tool.type === 'custom') {
           transformedTools.push({
             type: 'FUNCTION',
-            description: tool.custom.description,
-            name: tool.custom.name,
+            description: (tool.custom as any).description,
+            name: (tool.custom as any).name,
           });
         }
       }
@@ -332,14 +333,14 @@ export const OracleChatCompleteResponseTransform: (
 export const OracleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
-  streamState: any,
+  _streamState: any,
   _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) => string | undefined = (
   responseChunk,
   fallbackId,
-  streamState,
-  strictOpenAiCompliance,
+  _streamState,
+  _strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();

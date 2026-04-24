@@ -21,7 +21,9 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
 
         if (
           params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
+          SYSTEM_MESSAGE_ROLES.includes(
+            params.messages?.[0]?.role as 'system' | 'developer'
+          )
         ) {
           inputMessages = params.messages.slice(1);
         } else if (params.messages) {
@@ -40,10 +42,13 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         if (
           params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role)
+          SYSTEM_MESSAGE_ROLES.includes(
+            params.messages?.[0]?.role as 'system' | 'developer'
+          )
         ) {
           return params.messages?.[0].content;
         }
+        return undefined;
       },
     },
   ],

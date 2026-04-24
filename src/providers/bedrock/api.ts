@@ -171,7 +171,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
 
     if (['cancelFinetune', 'cancelBatch'].includes(fn as endpointStrings)) {
       // Cancel doesn't require any body, but fetch is sending empty body, to match the signature this block is required.
-      finalRequestBody = '';
+      finalRequestBody = {} as Record<string, never>;
     }
 
     return generateAWSHeaders(

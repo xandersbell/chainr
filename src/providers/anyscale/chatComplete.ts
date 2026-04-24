@@ -167,6 +167,8 @@ export const AnyscaleErrorResponseTransform: (
       ANYSCALE
     );
   }
+
+  return undefined;
 };
 
 export const AnyscaleChatCompleteResponseTransform: (

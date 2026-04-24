@@ -398,9 +398,9 @@ export const BedrockTitanCompleteResponseTransform: (
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders,
+  _responseHeaders,
   strictOpenAiCompliance,
-  gatewayRequestUrl,
+  _gatewayRequestUrl,
   gatewayRequest
 ) => {
   if (responseStatus !== 200) {

@@ -81,8 +81,11 @@ export const CohereChatCompleteConfig: ProviderConfig = {
       param: 'strict_tools',
       required: false,
       transform: (params: Params) => {
-        if (params.response_format?.type === 'json_schema') {
-          return params.response_format?.json_schema?.strict;
+        if (
+          typeof params.response_format === 'object' &&
+          params.response_format?.type === 'json_schema'
+        ) {
+          return (params.response_format as any)?.json_schema?.strict;
         }
         return null;
       },
@@ -146,7 +149,7 @@ export const CohereChatCompleteResponseTransform: (
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
-  responseHeaders,
+  _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
   gatewayRequest
@@ -222,7 +225,7 @@ export const CohereChatCompleteStreamChunkTransform: (
   gatewayRequest: Params
 ) => string = (
   responseChunk,
-  fallbackId,
+  _fallbackId,
   streamState = { generation_id: '', lastIndex: 0 },
   strictOpenAiCompliance,
   gatewayRequest

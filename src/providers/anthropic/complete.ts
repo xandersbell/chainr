@@ -123,8 +123,8 @@ export const AnthropicCompleteStreamChunkTransform: (
   strictOpenAiCompliance: boolean
 ) => string | undefined = (
   responseChunk,
-  fallbackId,
-  streamState,
+  _fallbackId,
+  _streamState,
   strictOpenAiCompliance
 ) => {
   let chunk = responseChunk.trim();

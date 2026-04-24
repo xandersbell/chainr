@@ -148,9 +148,9 @@ export const transformAnthropicAdditionalModelRequestFields = (
       if (tool.type !== 'function') {
         const toolOptions = tool[tool.type];
         anthropicTools.push({
-          ...(toolOptions && { ...toolOptions }),
+          ...(toolOptions && { ...(toolOptions as any) }),
           name: tool.type,
-          type: toolOptions?.name,
+          type: (toolOptions as any)?.name,
           ...(tool.cache_control && {
             cache_control: { type: 'ephemeral' },
           }),
@@ -374,7 +374,7 @@ export async function providerAssumedRoleCredentials(
   try {
     // Assume the role in the source account
     const sourceRoleCredentials = await getAssumedRoleCredentials(
-      Environment().AWS_ASSUME_ROLE_SOURCE_ARN, // Role ARN in the source account
+      Environment().AWS_ASSUME_ROLE_SOURCE_ARN || '', // Role ARN in the source account
       Environment().AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
       providerOptions.awsRegion || ''
     );

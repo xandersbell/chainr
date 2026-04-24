@@ -324,6 +324,7 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
         });
         return transformedSystem;
       }
+      return undefined;
     },
   },
   temperature: {
@@ -547,7 +548,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   responseChunk: string,
   fallbackId: string,
   streamState: BedrockStreamState,
-  strictOpenAiCompliance: boolean,
+  _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
@@ -615,6 +616,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
     returnChunk += `event: message_stop\ndata: ${JSON.stringify(ANTHROPIC_MESSAGE_STOP_EVENT)}\n\n`;
     return returnChunk;
   }
+  return undefined;
 };
 
 function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {

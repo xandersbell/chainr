@@ -4,6 +4,7 @@ import {
   EmbedResponse,
   EmbedResponseData,
 } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -32,6 +33,7 @@ export const CohereEmbedConfig: ProviderConfig = {
           });
           return texts.length > 0 ? texts : undefined;
         }
+        return undefined;
       },
     },
     {
@@ -47,6 +49,7 @@ export const CohereEmbedConfig: ProviderConfig = {
           });
           return images.length > 0 ? images : undefined;
         }
+        return undefined;
       },
     },
   ],
@@ -65,6 +68,7 @@ export const CohereEmbedConfig: ProviderConfig = {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
+      return undefined;
     },
   },
 };

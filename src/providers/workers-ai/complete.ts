@@ -86,13 +86,13 @@ export const WorkersAiCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   _streamState: Record<string, any>,
-  strictOpenAiCompliance: boolean,
+  _strictOpenAiCompliance: boolean,
   gatewayRequest: Params
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   _streamState,
-  strictOpenAiCompliance,
+  _strictOpenAiCompliance,
   gatewayRequest
 ) => {
   let chunk = responseChunk.trim();

@@ -1,5 +1,5 @@
 import { AZURE_OPEN_AI } from '../../globals';
-import { Options } from '../../types/requestBody';
+import { Options, Params } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import { ErrorResponse } from '../types';
 
@@ -37,6 +37,7 @@ export async function getAccessTokenFromEntraId(
     return data.access_token;
   } catch (error) {
     console.error('getAccessTokenFromEntraId error: ', error);
+    return undefined;
   }
 }
 
@@ -65,6 +66,7 @@ export async function getAzureManagedIdentityToken(
     return data.access_token;
   } catch (error) {
     console.error('getAzureManagedIdentityToken error: ', error);
+    return undefined;
   }
 }
 
@@ -103,6 +105,7 @@ export async function getAzureWorkloadIdentityToken(
     return data.access_token;
   } catch (error) {
     console.error(error);
+    return undefined;
   }
 }
 

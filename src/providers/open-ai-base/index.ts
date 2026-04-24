@@ -202,7 +202,7 @@ export const embedParams = (
 
 export const createSpeechParams = (
   exclude: string[],
-  defaultValues?: Record<string, string>,
+  _defaultValues?: Record<string, string>,
   extra?: ProviderConfig
 ): ProviderConfig => {
   const baseParams: ProviderConfig = {
@@ -239,7 +239,7 @@ export const createSpeechParams = (
 
 export const createModelResponseParams = (
   exclude: string[],
-  defaultValues: Record<string, string> = {},
+  _defaultValues: Record<string, string> = {},
   extra?: ProviderConfig
 ): ProviderConfig => {
   const baseParams: ProviderConfig = {
@@ -259,7 +259,7 @@ export const createModelResponseParams = (
 
 const EmbedResponseTransformer = <T extends EmbedResponse | ErrorResponse>(
   provider: string,
-  customTransformer?: CustomTransformer<EmbedResponse, T>
+  _customTransformer?: CustomTransformer<EmbedResponse, T>
 ) => {
   const transformer: (
     response: T | ErrorResponse,

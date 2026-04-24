@@ -240,7 +240,7 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   gatewayRequest: Params
 ) => string = (
   responseChunk,
-  fallbackId,
+  _fallbackId,
   _streamState,
   strictOpenAiCompliance,
   gatewayRequest

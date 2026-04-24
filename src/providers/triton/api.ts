@@ -7,9 +7,8 @@ const TritonAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     return providerOptions.customHost ?? '';
   },
-  getEndpoint: ({ fn, providerOptions }) => {
-    let mappedFn = fn;
-    switch (mappedFn) {
+  getEndpoint: ({ fn }) => {
+    switch (fn) {
       case 'complete': {
         return `/generate`;
       }

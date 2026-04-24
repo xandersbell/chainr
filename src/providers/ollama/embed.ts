@@ -1,5 +1,6 @@
 import { OLLAMA } from '../../globals';
 import { EmbedResponse } from '../../types/embedRequestBody';
+import { Params } from '../../types/requestBody';
 import { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
@@ -34,7 +35,7 @@ export const OllamaEmbedResponseTransform: (
   gatewayRequest: Params
 ) => EmbedResponse | ErrorResponse = (
   response,
-  responseStatus,
+  _responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,

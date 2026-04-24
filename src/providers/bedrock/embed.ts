@@ -27,6 +27,7 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
           });
           return texts.length > 0 ? texts : undefined;
         }
+        return undefined;
       },
     },
     {
@@ -42,6 +43,7 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
           });
           return images.length > 0 ? images : undefined;
         }
+        return undefined;
       },
     },
   ],
@@ -60,6 +62,7 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
+      return undefined;
     },
   },
 };
@@ -82,6 +85,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
           else if (typeof params.input[0] === 'string') return params.input[0];
         }
         if (typeof params.input === 'string') return params.input;
+        return undefined;
       },
     },
     {
@@ -96,6 +100,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
         ) {
           return params.input[0].image.base64;
         }
+        return undefined;
       },
     },
   ],
@@ -105,6 +110,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
       required: false,
       transform: (params: EmbedParams): number | undefined => {
         if (typeof params.input === 'string') return params.dimensions;
+        return undefined;
       },
     },
     {
@@ -118,6 +124,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
             outputEmbeddingLength: params.dimensions,
           };
         }
+        return undefined;
       },
     },
   ],
@@ -130,6 +137,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
       else if (typeof params.encoding_format === 'string')
         return [params.encoding_format];
+      return undefined;
     },
   },
   // Titan specific parameters

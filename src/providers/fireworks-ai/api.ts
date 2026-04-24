@@ -24,7 +24,6 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({
     fn,
     gatewayRequestBodyJSON: gatewayRequestBody,
-    c,
     gatewayRequestURL,
   }) => {
     const model = gatewayRequestBody?.model;
@@ -50,13 +49,13 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       case 'uploadFile':
         return '';
       case 'retrieveFile': {
-        const datasetId = c.req.param('id');
+        const datasetId = gatewayRequestURL.split('/').pop();
         return `/datasets/${datasetId}`;
       }
       case 'listFiles':
         return `/datasets`;
       case 'deleteFile': {
-        const datasetId = c.req.param('id');
+        const datasetId = gatewayRequestURL.split('/').pop();
         return `/datasets/${datasetId}`;
       }
       case 'createFinetune':
