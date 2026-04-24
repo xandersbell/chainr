@@ -21,6 +21,14 @@ function openAIStreamTransform(
   return chunk;
 }
 
+/**
+ * Azure OpenAI 的 SSE 流在某些情况下会把多个 chunk 粘连发送
+ * 不加延迟会导致客户端解析错误，对齐 Portkey 的 isSleepTimeRequired
+ */
+function isAzureProvider(provider: string): boolean {
+  return provider === 'azure-openai' || provider === 'azure-ai';
+}
+
 export function createOpenAIStream(
   response: Response,
   provider: string
@@ -28,6 +36,7 @@ export function createOpenAIStream(
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
   const reader = response.body!.getReader();
+  const needsChunkDelay = isAzureProvider(provider);
 
   const generator = parseSSEStream(
     reader,
@@ -37,11 +46,20 @@ export function createOpenAIStream(
     {}
   );
 
+  let isFirstChunk = true;
+
   return new ReadableStream({
     async start(controller) {
       try {
         for await (const chunkStr of generator) {
           if (chunkStr) {
+            // 首 chunk 延迟 25ms（所有 provider），Azure 后续 chunk 延迟 1ms
+            if (isFirstChunk) {
+              await new Promise(resolve => setTimeout(resolve, 25));
+              isFirstChunk = false;
+            } else if (needsChunkDelay) {
+              await new Promise(resolve => setTimeout(resolve, 1));
+            }
             const parsedChunks = parseSSEDataMultiple<ChatCompletionChunk>(chunkStr);
             for (const parsed of parsedChunks) {
               controller.enqueue(parsed);
