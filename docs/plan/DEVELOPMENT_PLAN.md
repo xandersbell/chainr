@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟡 In Development — **384 tests passing**, 647 TS errors (519 in `src/providers/`, 128 in core) (2026-04-24)
+**Status**: 🟡 In Development — **384 tests passing**, 553 TS errors (2026-04-24)
 
-**Last Updated**: 2026-04-24 13:53 EEST — Phase 1-4 重构完成，Provider 注册表已创建
+**Last Updated**: 2026-04-24 14:33 EEST — globals.ts 对齐 Portkey，TS 错误 647→553，google provider 已注册
 
 ---
 
