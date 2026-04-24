@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 3 Complete — **205 tests passing**, 0 TS errors, all core features aligned (2026-04-24)
+**Status**: 🟢 Phase 4 Complete — **205 tests passing**, 0 TS errors, all core features + Messages/Responses API aligned (2026-04-24)
 
-**Last Updated**: 2026-04-24 20:23 EEST — Phase 3 完成，conditional routing 降为 P2
+**Last Updated**: 2026-04-24 20:44 EEST — Phase 4 完成，Messages API + Responses API 端点已实现
 
 ---
 
@@ -568,8 +568,14 @@ const chainr = new Chainr({
 - [x] Tool Calling 完整对齐（DeepSeek 补齐 tools/tool_choice/tool_calls）
 - [x] Provider-specific params 确认全部对齐
 
+### Phase 4 Complete ✅ (2026-04-24)
+- [x] Anthropic Messages API — `chainr.messages.create()` 原生格式透传
+- [x] OpenAI Responses API — `chainr.responses.create()` 端点路由
+- [x] endpoint 参数贯穿策略系统（InheritedConfig → tryLeafTarget → buildProviderRequest）
+- [x] messagesTargets / responsesTargets 专用 target 池
+- [x] 8 个新测试覆盖两个 API 的路由、target 选择、默认 provider、retry/timeout 传递
+
 ### Remaining
-- [ ] Phase 4: Anthropic Messages API + OpenAI Responses API
 - [ ] Phase 5: Firebase Functions example
 - [ ] Phase 3E: Conditional routing（P2 低优先级，有需求再做）
 

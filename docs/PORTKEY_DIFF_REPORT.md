@@ -1,9 +1,9 @@
 # Chainr vs Portkey 差异报告
 
-**生成时间**: 2026-04-24 20:23 EEST（conditional routing 降级为 P2 后更新）
+**生成时间**: 2026-04-24 20:44 EEST（Phase 4 完成后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Chainr 版本**: Phase 3 Complete, 205 tests, main branch
+**Chainr 版本**: Phase 4 Complete, 205 tests, main branch
 
 ---
 
@@ -131,9 +131,9 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | uploadFile / listFiles / deleteFile | ✅ | ❌ | 🟡 |
 | createBatch / retrieveBatch | ✅ | ❌ | 🟡 |
 | createFinetune / listFinetunes | ✅ | ❌ | 🟡 |
-| messages (Anthropic native) | ✅ | ❌ | ⚠️ 中优先级 |
+| messages (Anthropic native) | ✅ | ✅ | ✅ Phase 4 |
 | messagesCountTokens | ✅ | ❌ | 🟡 |
-| createModelResponse (OpenAI Responses API) | ✅ | ❌ | ⚠️ 中优先级 |
+| createModelResponse (OpenAI Responses API) | ✅ | ✅ | ✅ Phase 4 |
 
 ---
 
@@ -166,8 +166,8 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 
 | # | 差异项 | 说明 | 工作量 |
 |---|--------|------|--------|
-| 3 | **Anthropic Messages API 原生端点** | 直接暴露 `/messages` 而非仅 chat completions 转换 | 中 |
-| 4 | **OpenAI Responses API** | `createModelResponse` — OpenAI 新 API 格式 | 中 |
+| 3 | ~~**Anthropic Messages API 原生端点**~~ | ~~直接暴露 `/messages` 而非仅 chat completions 转换~~ | ✅ Phase 4 |
+| 4 | ~~**OpenAI Responses API**~~ | ~~`createModelResponse` — OpenAI 新 API 格式~~ | ✅ Phase 4 |
 | 5 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
 | 6 | ~~**Provider-specific params 完整对齐**~~ | ~~所有 provider 参数已与 Portkey 一致~~ | ✅ Phase 3D |
 
@@ -196,7 +196,7 @@ graph LR
         B[3 路由策略]
         C[重试 + 退避]
         D[6 种流式转换]
-        E[7 种端点类型]
+        E[9 种端点类型]
         F[请求/响应转换]
         G[Config 验证]
         H[Request Timeout]
@@ -204,6 +204,8 @@ graph LR
         K[retry-after header]
         S[Tool Calling]
         T[Provider 特定参数]
+        U[Messages API]
+        V[Responses API]
     end
 
     subgraph "低优先级暂不做 🟡"
@@ -230,6 +232,8 @@ graph LR
     style K fill:#d4edda,color:#000
     style S fill:#d4edda,color:#000
     style T fill:#d4edda,color:#000
+    style U fill:#d4edda,color:#000
+    style V fill:#d4edda,color:#000
     style J fill:#fff3cd,color:#000
     style N fill:#f8d7da,color:#000
     style O fill:#f8d7da,color:#000
@@ -238,4 +242,4 @@ graph LR
     style R fill:#f8d7da,color:#000
 ```
 
-**核心结论**：Chainr 在 provider 覆盖、路由策略（fallback/loadbalance/single + 嵌套递归）、流式处理、请求转换、Tool Calling、Provider 特定参数、retry-after 等核心 LLM 调用能力方面已与 Portkey 完全对齐。Conditional 路由在 SDK 场景下优先级较低（调用方可用代码实现），降为 P2。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
+**核心结论**：Chainr 在 provider 覆盖、路由策略（fallback/loadbalance/single + 嵌套递归）、流式处理、请求转换、Tool Calling、Provider 特定参数、retry-after、Anthropic Messages API、OpenAI Responses API 等核心 LLM 调用能力方面已与 Portkey 完全对齐。Conditional 路由在 SDK 场景下优先级较低（调用方可用代码实现），降为 P2。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
