@@ -9,12 +9,15 @@ const mockSingleExecute = vi.fn();
 vi.mock('../../src/core/strategies', () => ({
   FallbackStrategy: class MockFallbackStrategy {
     execute = mockFallbackExecute;
+    executeStream = vi.fn();
   },
   LoadBalanceStrategy: class MockLoadBalanceStrategy {
     execute = mockLoadBalanceExecute;
+    executeStream = vi.fn();
   },
   SingleStrategy: class MockSingleStrategy {
     execute = mockSingleExecute;
+    executeStream = vi.fn();
   },
 }));
 
@@ -240,7 +243,7 @@ describe('Chainr (Router) 集成测试', () => {
       const chainr = new Chainr(config);
       const result = await chainr.chat.completions.create(baseParams);
 
-      expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig, undefined);
+      expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig, undefined, 'chatComplete');
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         strategyResult.response as unknown as Record<string, unknown>,
         'openai',
@@ -272,7 +275,7 @@ describe('Chainr (Router) 集成测试', () => {
       const chainr = new Chainr(config);
       await chainr.chat.completions.create(baseParams);
 
-      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined);
+      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined, 'chatComplete');
     });
 
     it('config.retry 正确传递给 strategy.execute() 作为 retryConfig', async () => {
@@ -299,7 +302,8 @@ describe('Chainr (Router) 集成测试', () => {
         expect.any(Array),
         baseParams,
         retryConfig,
-        undefined
+        undefined,
+        'chatComplete'
       );
     });
 
@@ -325,7 +329,292 @@ describe('Chainr (Router) 集成测试', () => {
         expect.any(Array),
         baseParams,
         undefined,
-        undefined
+        undefined,
+        'chatComplete'
+      );
+    });
+  });
+
+  describe('messages.create() — Anthropic Messages API', () => {
+    const messagesParams: Params = {
+      model: 'claude-sonnet-4-20250514',
+      messages: [{ role: 'user', content: 'Hello Claude!' }],
+      max_tokens: 1024,
+    };
+
+    const mockMessagesResponse = {
+      id: 'msg-test-123',
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'text', text: 'Hello!' }],
+      model: 'claude-sonnet-4-20250514',
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 10, output_tokens: 5 },
+    };
+
+    it('非流式调用通过策略系统路由，使用 messages endpoint', async () => {
+      const config: ChainrConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockMessagesResponse,
+        provider: 'anthropic',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+
+      const chainr = new Chainr(config);
+      const result = await chainr.messages.create(messagesParams);
+
+      // 验证策略调用时传入 'messages' endpoint
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        config.targets,
+        messagesParams,
+        undefined,
+        undefined,
+        'messages'
+      );
+      // 验证响应转换使用 'messages' endpoint
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        mockMessagesResponse,
+        'anthropic',
+        'messages'
+      );
+      expect(result).toEqual(mockMessagesResponse);
+    });
+
+    it('使用 messagesTargets 而非默认 targets', async () => {
+      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+      const config: ChainrConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'openai-key' }],
+        messagesTargets,
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockMessagesResponse,
+        provider: 'anthropic',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+
+      const chainr = new Chainr(config);
+      await chainr.messages.create(messagesParams);
+
+      // 应使用 messagesTargets 而非 targets
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        messagesTargets,
+        messagesParams,
+        undefined,
+        undefined,
+        'messages'
+      );
+    });
+
+    it('provider 缺失时默认使用 anthropic', async () => {
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockMessagesResponse,
+        // provider 未设置
+      };
+
+      mockSingleExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+
+      const chainr = new Chainr(config);
+      await chainr.messages.create(messagesParams);
+
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        mockMessagesResponse,
+        'anthropic',
+        'messages'
+      );
+    });
+
+    it('retry 和 timeout 正确传递', async () => {
+      const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
+      const config: ChainrConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+        retry: retryConfig,
+        timeout: 60000,
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockMessagesResponse,
+        provider: 'anthropic',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+
+      const chainr = new Chainr(config);
+      await chainr.messages.create(messagesParams);
+
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        config.targets,
+        messagesParams,
+        retryConfig,
+        60000,
+        'messages'
+      );
+    });
+  });
+
+  describe('responses.create() — OpenAI Responses API', () => {
+    const responsesParams: Params = {
+      model: 'gpt-4o',
+      // Responses API 使用 input 替代 messages
+      input: 'Tell me a joke',
+      instructions: 'You are a comedian',
+    } as unknown as Params;
+
+    const mockResponsesResult = {
+      id: 'resp-test-123',
+      object: 'response',
+      model: 'gpt-4o',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'Why did the chicken...' }],
+        },
+      ],
+      usage: { input_tokens: 10, output_tokens: 20, total_tokens: 30 },
+    };
+
+    it('非流式调用通过策略系统路由，使用 createModelResponse endpoint', async () => {
+      const config: ChainrConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockResponsesResult,
+        provider: 'openai',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+
+      const chainr = new Chainr(config);
+      const result = await chainr.responses.create(responsesParams);
+
+      // 验证策略调用时传入 'createModelResponse' endpoint
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        config.targets,
+        responsesParams,
+        undefined,
+        undefined,
+        'createModelResponse'
+      );
+      // 验证响应转换使用 'createModelResponse' endpoint
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        mockResponsesResult,
+        'openai',
+        'createModelResponse'
+      );
+      expect(result).toEqual(mockResponsesResult);
+    });
+
+    it('使用 responsesTargets 而非默认 targets', async () => {
+      const responsesTargets = [{ provider: 'openai', apiKey: 'responses-key' }];
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'anthropic', apiKey: 'anthropic-key' }],
+        responsesTargets,
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockResponsesResult,
+        provider: 'openai',
+      };
+
+      mockSingleExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+
+      const chainr = new Chainr(config);
+      await chainr.responses.create(responsesParams);
+
+      // 应使用 responsesTargets 而非 targets
+      expect(mockSingleExecute).toHaveBeenCalledWith(
+        responsesTargets,
+        responsesParams,
+        undefined,
+        undefined,
+        'createModelResponse'
+      );
+    });
+
+    it('provider 缺失时默认使用 openai', async () => {
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockResponsesResult,
+        // provider 未设置
+      };
+
+      mockSingleExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+
+      const chainr = new Chainr(config);
+      await chainr.responses.create(responsesParams);
+
+      expect(mockTransformProviderResponse).toHaveBeenCalledWith(
+        mockResponsesResult,
+        'openai',
+        'createModelResponse'
+      );
+    });
+
+    it('retry 和 timeout 正确传递', async () => {
+      const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
+      const config: ChainrConfig = {
+        strategy: 'loadbalance',
+        targets: [
+          { provider: 'openai', apiKey: 'key-1', weight: 0.7 },
+          { provider: 'openai', apiKey: 'key-2', weight: 0.3 },
+        ],
+        retry: retryConfig,
+        timeout: 45000,
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockResponsesResult,
+        provider: 'openai',
+      };
+
+      mockLoadBalanceExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+
+      const chainr = new Chainr(config);
+      await chainr.responses.create(responsesParams);
+
+      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(
+        config.targets,
+        responsesParams,
+        retryConfig,
+        45000,
+        'createModelResponse'
       );
     });
   });

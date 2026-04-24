@@ -106,7 +106,7 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'anthropic', expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'anthropic', expect.anything(), expect.anything());
     });
 
     it('defaults to openai when no provider specified', async () => {
@@ -118,7 +118,7 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'openai', expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'openai', expect.anything(), expect.anything());
     });
 
     it('merges params with target.overrideParams', async () => {
@@ -140,6 +140,7 @@ describe('FallbackStrategy', () => {
           temperature: 0.7,
           messages: [{ role: 'user', content: 'hi' }],
         }),
+        expect.anything(),
         expect.anything(),
         expect.anything()
       );

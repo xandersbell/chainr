@@ -52,7 +52,8 @@ describe('Timeout 传递', () => {
       expect.any(Array),
       expect.anything(),
       undefined,
-      15000
+      15000,
+      'chatComplete'
     );
   });
 
@@ -75,7 +76,8 @@ describe('Timeout 传递', () => {
       expect.any(Array),
       expect.anything(),
       undefined,
-      undefined
+      undefined,
+      'chatComplete'
     );
   });
 
@@ -101,7 +103,8 @@ describe('Timeout 传递', () => {
       expect.any(Array),
       expect.anything(),
       retryConfig,
-      60000
+      60000,
+      'chatComplete'
     );
   });
 });

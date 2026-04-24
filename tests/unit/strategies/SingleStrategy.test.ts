@@ -59,7 +59,8 @@ describe('SingleStrategy', () => {
       expect(buildProviderRequest).toHaveBeenCalledWith(
         expect.objectContaining({ model: 'claude-3' }),
         'anthropic',
-        targets[0]
+        targets[0],
+        expect.anything()
       );
       expect(result.provider).toBe('anthropic');
       expect(result.success).toBe(true);
@@ -89,7 +90,8 @@ describe('SingleStrategy', () => {
       expect(buildProviderRequest).toHaveBeenCalledWith(
         expect.anything(),
         'openai',
-        targets[0]
+        targets[0],
+        expect.anything()
       );
     });
 
@@ -115,6 +117,7 @@ describe('SingleStrategy', () => {
         expect(buildProviderRequest).toHaveBeenCalledWith(
           expect.anything(),
           'anthropic',
+          expect.anything(),
           expect.anything()
         );
       });
@@ -140,6 +143,7 @@ describe('SingleStrategy', () => {
         expect(buildProviderRequest).toHaveBeenCalledWith(
           expect.anything(),
           'openai',
+          expect.anything(),
           expect.anything()
         );
       });
@@ -180,6 +184,7 @@ describe('SingleStrategy', () => {
             temperature: 0.7,
           }),
           expect.anything(),
+          expect.anything(),
           expect.anything()
         );
       });
@@ -212,6 +217,7 @@ describe('SingleStrategy', () => {
 
         expect(buildProviderRequest).toHaveBeenCalledWith(
           expect.objectContaining({ model: 'gpt-4o' }),
+          expect.anything(),
           expect.anything(),
           expect.anything()
         );

@@ -181,6 +181,7 @@ describe('嵌套策略', () => {
           top_p: 0.9,        // 父级保留
         }),
         'openai',
+        expect.anything(),
         expect.anything()
       );
     });
