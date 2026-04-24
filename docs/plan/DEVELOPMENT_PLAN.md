@@ -4,7 +4,7 @@
 
 **Status**: 🟢 Phase 3 Complete — **205 tests passing**, 0 TS errors, all core features aligned (2026-04-24)
 
-**Last Updated**: 2026-04-24 19:28 EEST — Phase 3 全部完成（嵌套策略 + retry-after + Tool Calling + Provider 参数对齐）
+**Last Updated**: 2026-04-24 20:23 EEST — Phase 3 完成，conditional routing 降为 P2
 
 ---
 
@@ -382,22 +382,9 @@ Uses a single provider without fallback.
 - [x] Tool support (function calling) — 完整实现
 - [x] Provider-specific params — 完整对齐
 
-### Phase 3E: Conditional Routing 🟡 IN PROGRESS
+### Phase 3E: Conditional Routing 🟢 P2 低优先级（暂不实现）
 
-**Goal**: 实现 conditional 路由策略，根据请求参数/metadata 在运行时决定路由目标
-
-**设计**:
-- 与 fallback/loadbalance/single 同级的第四种路由策略
-- MongoDB 风格条件匹配：`$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$regex`, `$and`, `$or`
-- 匹配上下文：`params.*`（请求 body 字段）、`metadata.*`（调用方传入的元数据）
-- 按顺序匹配 conditions，命中第一个走对应 target，都不命中走 `default`
-- 被选中的 target 可以是嵌套的 fallback/loadbalance 组
-
-**Deliverables**:
-- [ ] ConditionalStrategy 类 + MongoDB 风格条件匹配器
-- [ ] Router/Config 类型更新支持 conditional
-- [ ] 完整测试覆盖
-- [ ] 文档更新
+**原因**: Chainr 是嵌入式 SDK，调用方可直接用代码实现条件路由逻辑。与独立网关（Portkey）需要声明式配置分流的场景不同，SDK 场景下 conditional routing 的价值有限。有需求时再实现。
 
 ### Phase 4: Firebase Integration ⬜ TODO
 
@@ -456,7 +443,7 @@ Uses a single provider without fallback.
 #### Nested Strategies
 - [x] Fallback + LoadBalance 组合（递归嵌套）
 - [x] 配置继承（overrideParams 合并，retry/timeout 子级优先）
-- [ ] Conditional routing（MongoDB 风格条件路由，Phase 3E）
+- [ ] Conditional routing（P2 低优先级，SDK 场景下调用方可用代码实现）
 
 ### 5.3 低优先级 (生态集成)
 
@@ -582,9 +569,9 @@ const chainr = new Chainr({
 - [x] Provider-specific params 确认全部对齐
 
 ### Remaining
-- [ ] Phase 3E: Conditional routing（MongoDB 风格条件路由）
 - [ ] Phase 4: Anthropic Messages API + OpenAI Responses API
 - [ ] Phase 5: Firebase Functions example
+- [ ] Phase 3E: Conditional routing（P2 低优先级，有需求再做）
 
 ---
 
