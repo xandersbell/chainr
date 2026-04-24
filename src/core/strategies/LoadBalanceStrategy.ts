@@ -2,14 +2,13 @@ import type { Params } from '../../types/requestBody';
 import type { StrategyResult } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
 import { retryRequest, retryRequestForStream } from '../RetryHandler';
-import { transformRequest } from '../transformRequest';
+import { buildProviderRequest } from '../providerRequest';
 import { createOpenAIStream, isOpenAICompatibleProvider } from '../transformOpenAIStream';
 import { createAnthropicStream, isAnthropicProvider } from '../transformAnthropicStream';
 import { createGoogleStream, isGoogleProvider } from '../transformGoogleStream';
 import { createCohereStream, isCohereProvider } from '../transformCohereStream';
 import { createBedrockStream, isBedrockProvider } from '../transformBedrockStream';
 import { createBytezStream, isBytezProvider } from '../transformBytezStream';
-import { generateAWSHeaders } from '../../providers/bedrock/utils';
 
 export class LoadBalanceStrategy {
   async execute(
@@ -66,28 +65,13 @@ export class LoadBalanceStrategy {
     const provider = (target['provider'] as string) || 'openai';
     const mergedParams = { ...params, ...(target['overrideParams'] as Record<string, unknown>) };
 
-    const { body, headers, url, awsRegion, awsAccessKeyId, awsSecretAccessKey, awsSessionToken } = transformRequest(mergedParams, provider, target);
-
-    let finalHeaders = headers;
-    if (awsRegion && awsAccessKeyId && awsSecretAccessKey) {
-      finalHeaders = await generateAWSHeaders(
-        JSON.stringify(body),
-        headers,
-        url,
-        'POST',
-        'bedrock',
-        awsRegion,
-        awsAccessKeyId,
-        awsSecretAccessKey,
-        awsSessionToken
-      );
-    }
+    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
 
     const retryResult = await retryRequest(
       url,
       {
         method: 'POST',
-        headers: finalHeaders,
+        headers,
         body: JSON.stringify(body),
       },
       retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })
@@ -113,28 +97,13 @@ export class LoadBalanceStrategy {
       ...(target['overrideParams'] as Record<string, unknown>),
     };
 
-    const { body, headers, url, awsRegion, awsAccessKeyId, awsSecretAccessKey, awsSessionToken } = transformRequest(mergedParams, provider, target);
-
-    let finalHeaders = headers;
-    if (awsRegion && awsAccessKeyId && awsSecretAccessKey) {
-      finalHeaders = await generateAWSHeaders(
-        JSON.stringify(body),
-        headers,
-        url,
-        'POST',
-        'bedrock',
-        awsRegion,
-        awsAccessKeyId,
-        awsSecretAccessKey,
-        awsSessionToken
-      );
-    }
+    const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target);
 
     const retryResult = await retryRequestForStream(
       url,
       {
         method: 'POST',
-        headers: finalHeaders,
+        headers,
         body: JSON.stringify(body),
       },
       retryConfig || (target['retry'] as { attempts?: number; onStatusCodes?: number[] })

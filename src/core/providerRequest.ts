@@ -1,8 +1,9 @@
-// 从 Portkey 的 transformToProviderRequest.ts 适配
+// 对齐 Portkey 的 transformToProviderRequest + responseHandler
 // 使用 ProviderConfig 参数映射将请求参数转换为 provider 格式
 import Providers from '../providers';
-import type { ProviderConfig } from '../providers/types';
+import type { ProviderConfig, endpointStrings } from '../providers/types';
 import type { Options, Params } from '../types/requestBody';
+import type { TransformResult } from './types';
 
 function setNestedProperty(obj: any, path: string, value: any) {
   const parts = path.split('.');
@@ -37,6 +38,7 @@ const getValue = (
   return value;
 };
 
+// 对齐 Portkey 的 transformUsingProviderConfig
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
@@ -69,71 +71,118 @@ export const transformUsingProviderConfig = (
   return transformedRequest;
 };
 
-/**
- * 使用 provider 注册表构建完整请求（URL + headers + body）
- * 返回与旧 transformRequest() 相同的接口
- */
-export async function buildProviderRequest(
-  params: Params,
+// 构建 providerOptions（对齐 Portkey 的 Options 结构）
+function buildProviderOptions(
   provider: string,
   target: Record<string, unknown>
-): Promise<{
-  body: Record<string, any>;
-  headers: Record<string, string>;
-  url: string;
-} | null> {
-  const providerConfigs = Providers[provider];
-  if (!providerConfigs) return null;
-
-  const apiConfig = providerConfigs.api;
-  if (!apiConfig) return null;
-
-  // 构建 providerOptions（对齐 Portkey 的 Options 结构）
-  const providerOptions: Options = {
+): Options {
+  return {
     provider,
     apiKey: target['apiKey'] as string,
     ...(target as Record<string, any>),
   };
+}
 
-  // 获取 chatComplete 的参数映射配置
-  let chatCompleteConfig: ProviderConfig | undefined;
-  if (providerConfigs.getConfig) {
-    const dynamicConfig = providerConfigs.getConfig({ params, providerOptions });
-    chatCompleteConfig = dynamicConfig?.chatComplete;
-  } else {
-    chatCompleteConfig = providerConfigs.chatComplete;
+/**
+ * 使用 provider 注册表构建完整请求（URL + headers + body）
+ * 对齐 Portkey 的 tryPost 流程：transformToProviderRequest → getBaseURL + getEndpoint → headers
+ */
+export async function buildProviderRequest(
+  params: Params,
+  provider: string,
+  target: Record<string, unknown>,
+  endpoint: endpointStrings = 'chatComplete'
+): Promise<TransformResult> {
+  const providerConfigs = Providers[provider];
+  if (!providerConfigs) {
+    throw new Error(`Provider "${provider}" not found in registry`);
   }
 
-  if (!chatCompleteConfig) return null;
+  const apiConfig = providerConfigs.api;
+  if (!apiConfig) {
+    throw new Error(`Provider "${provider}" has no API config`);
+  }
 
-  // 转换请求体
-  const body = transformUsingProviderConfig(chatCompleteConfig, params, providerOptions);
+  const providerOptions = buildProviderOptions(provider, target);
+
+  // 获取 endpoint 对应的参数映射配置
+  let endpointConfig: ProviderConfig | undefined;
+  if (providerConfigs.getConfig) {
+    const dynamicConfig = providerConfigs.getConfig({ params, providerOptions });
+    endpointConfig = dynamicConfig?.[endpoint];
+  } else {
+    endpointConfig = providerConfigs[endpoint];
+  }
+
+  // 转换请求体（有些 endpoint 如 createTranscription 可能没有 ProviderConfig，直接透传）
+  const body = endpointConfig
+    ? transformUsingProviderConfig(endpointConfig, params, providerOptions)
+    : { ...params };
 
   // 构建 URL
   const baseURL = await apiConfig.getBaseURL({
     providerOptions,
-    fn: 'chatComplete',
+    fn: endpoint,
     gatewayRequestURL: '',
     params,
   });
 
-  const endpoint = apiConfig.getEndpoint({
+  const endpointPath = apiConfig.getEndpoint({
     providerOptions,
-    fn: 'chatComplete',
+    fn: endpoint,
     gatewayRequestBodyJSON: params,
     gatewayRequestURL: '',
   });
 
-  const url = `${baseURL}${endpoint}`;
+  const url = `${baseURL}${endpointPath}`;
 
-  // 构建 headers
+  // 构建 headers（bedrock 的 headers() 内部已处理 AWS 签名）
   const headers = await apiConfig.headers({
     providerOptions,
-    fn: 'chatComplete',
+    fn: endpoint,
     transformedRequestBody: body,
     transformedRequestUrl: url,
     gatewayRequestBody: params,
   });
 
   return { body, headers, url };
+}
+
+/**
+ * 使用 provider 注册表的 responseTransforms 转换响应
+ * 对齐 Portkey 的 responseHandler 流程
+ */
+export function transformProviderResponse(
+  json: unknown,
+  provider: string,
+  endpoint: endpointStrings = 'chatComplete',
+  status: number = 200,
+  responseHeaders: Record<string, string> = {}
+): unknown {
+  const providerConfigs = Providers[provider];
+  if (!providerConfigs) {
+    // 未注册的 provider，直接返回原始响应
+    return json;
+  }
+
+  // 获取 responseTransforms
+  let responseTransforms: Record<string, any> | undefined;
+  if (providerConfigs.getConfig) {
+    const dynamicConfig = providerConfigs.getConfig({
+      params: json as Params,
+      providerOptions: { provider } as Options,
+    });
+    responseTransforms = dynamicConfig?.responseTransforms;
+  } else {
+    responseTransforms = providerConfigs.responseTransforms;
+  }
+
+  const transformFn = responseTransforms?.[endpoint];
+  if (!transformFn || typeof transformFn !== 'function') {
+    // 没有转换函数（如 OpenAI-compatible provider），直接返回
+    return json;
+  }
+
+  // 对齐 Portkey 的 responseTransformer 调用签名
+  return transformFn(json, status, responseHeaders, false);
 }

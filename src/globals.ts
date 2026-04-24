@@ -83,7 +83,7 @@ export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
 
-// 旧名称别名（transformRequest.ts 等核心代码使用）
+// 旧名称别名（向后兼容）
 export const PERPLEXITY = PERPLEXITY_AI;
 export const LEMONFOX = LEMONFOX_AI;
 export const RECRAFT_AI = RECRAFTAI;
@@ -111,7 +111,7 @@ export const SILICONFLOW_EMBED_URL = 'https://api.siliconflow.cn/v1/embeddings';
 export const SILICONFLOW_IMAGE_URL = 'https://api.siliconflow.cn/v1/images/generations';
 export const NSCALE_URL = 'https://api.nscale.io';
 
-// OpenAI-compatible Provider URLs（核心代码 transformRequest.ts 使用）
+// OpenAI-compatible Provider URLs（provider 注册表使用）
 export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'openai': 'https://api.openai.com/v1/chat/completions',
   'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
@@ -172,7 +172,7 @@ export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'cortex': '',
 };
 
-// Embeddings/Image/Audio 专用 URL 映射（transformRequest.ts 使用）
+// Embeddings/Image/Audio 专用 URL 映射（provider 注册表使用）
 export const OPENAI_COMPATIBLE_EMBED_URLS: Record<string, string> = {
   'openai': 'https://api.openai.com/v1/embeddings',
   'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/embeddings',

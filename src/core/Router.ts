@@ -2,8 +2,7 @@ import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, Spe
 import type { ChainrConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy } from './strategies';
-import { transformResponse } from './transformResponse';
-import { transformAudioRequest, transformSpeechRequest, transformTranslationRequest, transformEmbedRequest, transformImageRequest } from './transformRequest';
+import { buildProviderRequest, transformProviderResponse } from './providerRequest';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
@@ -80,11 +79,12 @@ export class Chainr {
 
   private async executeChatCompletions(params: Params): Promise<ChatCompletionResponse | ErrorResponse> {
     const result: StrategyResult = await this.strategy.execute(this.config.targets, params, this.config.retry);
-    const transformed = transformResponse(
-      result.response as unknown as Record<string, unknown>,
-      result.provider || 'openai'
+    const transformed = transformProviderResponse(
+      result.response,
+      result.provider || 'openai',
+      'chatComplete'
     );
-    return transformed;
+    return transformed as ChatCompletionResponse | ErrorResponse;
   }
 
   private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
@@ -100,7 +100,7 @@ export class Chainr {
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = transformEmbedRequest(params as unknown as Params, provider, target);
+        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'embed');
 
         const response = await fetch(url, {
           method: 'POST',
@@ -113,7 +113,7 @@ export class Chainr {
         }
 
         const data = await response.json();
-        const transformed = transformResponse(data, provider);
+        const transformed = transformProviderResponse(data, provider, 'embed');
         return transformed as unknown as EmbedResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -132,7 +132,7 @@ export class Chainr {
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = transformImageRequest(params as unknown as Params, provider, target);
+        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'imageGenerate');
 
         const response = await fetch(url, {
           method: 'POST',
@@ -145,7 +145,7 @@ export class Chainr {
         }
 
         const data = await response.json();
-        const transformed = transformResponse(data, provider);
+        const transformed = transformProviderResponse(data, provider, 'imageGenerate');
         return transformed as unknown as ImageGenerateResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -164,20 +164,13 @@ export class Chainr {
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url, isFormData } = transformAudioRequest(params, provider, target);
+        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranscription');
 
-        const options: RequestInit = {
+        const response = await fetch(url, {
           method: 'POST',
           headers,
-        };
-
-        if (isFormData && body instanceof FormData) {
-          options.body = body;
-        } else {
-          options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(url, options);
+          body: JSON.stringify(body),
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -202,7 +195,7 @@ export class Chainr {
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = transformSpeechRequest(params, provider, target);
+        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createSpeech');
 
         const response = await fetch(url, {
           method: 'POST',
@@ -238,20 +231,13 @@ export class Chainr {
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url, isFormData } = transformTranslationRequest(params, provider, target);
+        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranslation');
 
-        const options: RequestInit = {
+        const response = await fetch(url, {
           method: 'POST',
           headers,
-        };
-
-        if (isFormData && body instanceof FormData) {
-          options.body = body;
-        } else {
-          options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(url, options);
+          body: JSON.stringify(body),
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
