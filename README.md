@@ -2,7 +2,7 @@
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟢 Phase 5 Complete — 178 tests passing, 0 TS errors, 68 providers via registry
+**Status**: 🟢 Phase 3A Complete — 195 tests passing, 0 TS errors, 68 providers via registry
 
 ## Features
 
@@ -10,6 +10,8 @@
 - **Weighted Load Balancing**: Distribute traffic across providers based on weights
 - **Provider Registry**: 68 providers via Portkey-aligned ProviderConfig architecture
 - **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis, translation, 3D generation
+- **Config Validation**: Validates targets, provider, timeout, retry at construction
+- **Request Timeout**: Configurable timeout for all fetch paths via `config.timeout`
 - **Minimal Dependencies**: Only AWS SDK for Bedrock signing, everything else is pure fetch
 - **Firebase Compatible**: Works in Firebase Cloud Functions (Node.js 18+)
 - **TypeScript First**: Full type safety, strict mode, 0 TS errors
@@ -249,6 +251,18 @@ Chainr.chat.completions.create(params)
       → Providers[provider].responseTransforms[endpoint]()
 ```
 
+## Timeout Configuration
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback',
+  targets: [...],
+  timeout: 15000, // 15 seconds for all requests
+});
+```
+
+Default: 30000ms (30s). Applied to all fetch paths including chat, embeddings, images, audio, speech, and translation.
+
 ## Retry Configuration
 
 ```typescript
@@ -272,7 +286,7 @@ Default: 3 attempts, exponential backoff (100ms × 2^attempt), max 60s.
 ## Testing
 
 ```bash
-npm test           # Run all tests (178 tests)
+npm test           # Run all tests (195 tests)
 npm run test:watch # Watch mode
 ```
 

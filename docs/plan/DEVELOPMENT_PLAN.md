@@ -4,7 +4,7 @@
 
 **Status**: 🟢 Phase 3A Complete — **195 tests passing**, 0 TS errors, config validation + request timeout (2026-04-24)
 
-**Last Updated**: 2026-04-24 16:44 EEST — Phase 3A 完成，Config Validation + Request Timeout
+**Last Updated**: 2026-04-24 16:49 EEST — Phase 3A 完成，Config Validation + Request Timeout
 
 ---
 
@@ -85,14 +85,17 @@ chainr/
 │   ├── index.ts                    # SDK entry point
 │   ├── globals.ts                  # Provider constants
 │   ├── types/
-│   │   └── requestBody.ts         # Type definitions
+│   │   └── requestBody.ts         # Type definitions (Params, Options)
+│   ├── providers/                  # 68 provider directories (Portkey-aligned)
+│   │   ├── index.ts               # Static provider registry
+│   │   ├── types.ts               # ProviderConfig / ProviderAPIConfig types
+│   │   ├── utils.ts               # Provider utilities
+│   │   └── ... (68 provider dirs)
 │   └── core/
-│       ├── Router.ts               # Main Chainr class
-│       ├── types.ts                # Core types
-│       ├── transformRequest.ts     # Provider request transform (1717 lines)
-│       ├── transformResponse.ts    # Provider response transform (397 lines)
-│       ├── RetryHandler.ts         # Exponential backoff retry
-│       ├── awsSigV4.ts             # AWS SigV4 signing (NEW)
+│       ├── Router.ts               # Main Chainr class + validateConfig
+│       ├── types.ts                # Core types (ChainrConfig, StrategyResult)
+│       ├── providerRequest.ts     # buildProviderRequest + transformProviderResponse
+│       ├── RetryHandler.ts         # Exponential backoff retry + fetchWithTimeout
 │       ├── transformBedrockStream.ts # Bedrock streaming
 │       ├── transformOpenAIStream.ts # OpenAI streaming
 │       ├── transformAnthropicStream.ts
@@ -306,8 +309,8 @@ Uses a single provider without fallback.
 | **Streaming: Bedrock** | ✅ | ✅ | ✅ | 已实现 |
 | **Streaming: Bytez** | ✅ | ✅ | ✅ | 已实现 |
 | **Nested Strategies** | ✅ | ❌ | 缺失 | Phase 3 未开始 |
-| **Request Timeout** | ✅ | ⚠️ | ✅ | config.timeout 传入所有路径 |
-| **Config Validation** | ✅ | ❌ | ✅ | targets/provider/timeout/retry 验证 |
+| **Request Timeout** | ✅ | ✅ | ✅ | config.timeout 传入所有路径 |
+| **Config Validation** | ✅ | ✅ | ✅ | targets/provider/timeout/retry 验证 |
 
 ---
 
@@ -488,16 +491,20 @@ Google-specific:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
-| transformRequest.test.ts | 171 | 16 dedicated + default transforms |
-| transformResponse.test.ts | 35 | success/error paths |
 | streaming/types.test.ts | 26 | OPENAI_COMPATIBLE_PROVIDERS |
-| streaming/streamUtils.test.ts | 16 | split patterns |
-| streaming/sseParser.test.ts | 14 | SSE parsing |
-| streaming/transformOpenAIStream.test.ts | 16 | passthrough streaming |
-| streaming/transformAnthropicStream.test.ts | 11 | Anthropic streaming |
 | RetryHandler.test.ts | 23 | retry logic |
-| strategies/*.test.ts | 34 | strategy behaviors |
-| Router.test.ts + real-http.test.ts | 24 | integration |
+| streaming/streamUtils.test.ts | 16 | split patterns |
+| streaming/transformOpenAIStream.test.ts | 16 | passthrough streaming |
+| configValidation.test.ts | 14 | config validation |
+| providerRequest.test.ts | 14 | buildProviderRequest + transformProviderResponse |
+| streaming/sseParser.test.ts | 14 | SSE parsing |
+| strategies/SingleStrategy.test.ts | 13 | single strategy |
+| strategies/FallbackStrategy.test.ts | 12 | fallback strategy |
+| Router.test.ts | 12 | Router 集成 |
+| real-http.test.ts | 12 | real HTTP 集成 |
+| streaming/transformAnthropicStream.test.ts | 11 | Anthropic streaming |
+| strategies/LoadBalanceStrategy.test.ts | 9 | load balance strategy |
+| timeout.test.ts | 3 | timeout 传递 |
 
 ### Missing Tests
 

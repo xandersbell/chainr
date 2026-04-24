@@ -4,8 +4,8 @@
 > 成熟的外部依赖（如 AWS SDK）直接使用，不重新发明轮子。
 
 **创建时间**: 2026-04-24
-**最后更新**: 2026-04-24 16:22 EEST
-**状态**: ✅ Phase 5 已完成 — TS 0 错误，178 测试通过，68 个 provider 已注册，transformRequest.ts + transformResponse.ts 已删除
+**最后更新**: 2026-04-24 16:49 EEST
+**状态**: ✅ Phase 5 已完成 — TS 0 错误，195 测试通过，68 个 provider 已注册，transformRequest.ts + transformResponse.ts 已删除
 
 ---
 
@@ -64,7 +64,7 @@ Request
 - 3 个 Strategy 文件 + Router 全部使用 `buildProviderRequest()`
 - `transformRequest.ts`（1719 行）和 `transformResponse.ts`（396 行）已删除
 - TS 错误：**0**
-- 测试：178 个通过
+- 测试：195 个通过
 
 ### 3.2 待完成
 
