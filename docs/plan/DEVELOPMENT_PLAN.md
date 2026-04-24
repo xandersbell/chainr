@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 Phase 5 Complete — **178 tests passing**, 0 TS errors, transformRequest/Response deleted (2026-04-24)
+**Status**: 🟢 Phase 3A Complete — **195 tests passing**, 0 TS errors, config validation + request timeout (2026-04-24)
 
-**Last Updated**: 2026-04-24 16:22 EEST — Phase 5 完成，transformRequest.ts + transformResponse.ts 已删除，全部走 provider 注册表
+**Last Updated**: 2026-04-24 16:44 EEST — Phase 3A 完成，Config Validation + Request Timeout
 
 ---
 
@@ -306,8 +306,8 @@ Uses a single provider without fallback.
 | **Streaming: Bedrock** | ✅ | ✅ | ✅ | 已实现 |
 | **Streaming: Bytez** | ✅ | ✅ | ✅ | 已实现 |
 | **Nested Strategies** | ✅ | ❌ | 缺失 | Phase 3 未开始 |
-| **Request Timeout** | ✅ | ❌ | 缺失 | 未实现 |
-| **Config Validation** | ✅ | ❌ | 缺失 | 未实现 |
+| **Request Timeout** | ✅ | ⚠️ | ✅ | config.timeout 传入所有路径 |
+| **Config Validation** | ✅ | ❌ | ✅ | targets/provider/timeout/retry 验证 |
 
 ---
 
@@ -356,14 +356,18 @@ Uses a single provider without fallback.
 - [x] Phase 5：删除 transformRequest.ts + transformResponse.ts，Strategy/Router 全部接入注册表
 - [x] 178 tests passing
 
-### Phase 3: Advanced Features ⬜ TODO
+### Phase 3: Advanced Features 🟡 IN PROGRESS
 
 **Goal**: Nested strategies, conditional routing, tool support
 
+**Completed** (2026-04-24):
+- [x] Request timeout handling (config.timeout → Strategy → fetchWithTimeout)
+- [x] Configuration validation (targets/provider/timeout/retry)
+
 **Deliverables**:
+- [x] Request timeout handling
+- [x] Configuration validation
 - [ ] Nested strategy support (fallback + loadbalance combined)
-- [ ] Request timeout handling
-- [ ] Configuration validation
 - [ ] **Tool support (function calling) - 完整实现**
 - [ ] **Provider-specific params - 完整对齐**
 
@@ -457,8 +461,8 @@ Google-specific:
 ### 5.2 中优先级 (增强功能)
 
 #### Configuration & Validation
-- [ ] Request timeout handling
-- [ ] Config validation (required fields)
+- [x] Request timeout handling
+- [x] Config validation (required fields)
 - [ ] Retry config validation
 
 #### Nested Strategies
@@ -480,7 +484,7 @@ Google-specific:
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (384 tests ✅)
+### Current Test Coverage (195 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -568,6 +572,11 @@ const chainr = new Chainr({
 - [x] Streaming transforms for 8 providers
 - [x] AWS Bedrock complete support with SigV4 signing
 - [x] Git push to main
+
+### Phase 3A Complete ✅ (2026-04-24)
+- [x] 195 tests passing
+- [x] Config validation (targets/provider/timeout/retry)
+- [x] Request timeout (config.timeout → all fetch paths)
 
 ### Remaining
 - [ ] Phase 3: Tool support (function calling) complete
