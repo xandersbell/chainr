@@ -557,7 +557,14 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         output_tokens = 0,
         cache_creation_input_tokens,
         cache_read_input_tokens,
-      } = response?.usage;
+      } = response?.usage ?? {};
+
+      // prompt_tokens 应包含缓存 token，与 total_tokens 计算一致
+      const promptTokens =
+        input_tokens +
+        (cache_read_input_tokens ?? 0) +
+        (cache_creation_input_tokens ?? 0);
+      const totalTokens = promptTokens + output_tokens;
 
       const shouldSendCacheUsage =
         cache_creation_input_tokens || cache_read_input_tokens;
@@ -610,13 +617,9 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
           },
         ],
         usage: {
-          prompt_tokens: input_tokens,
+          prompt_tokens: promptTokens,
           completion_tokens: output_tokens,
-          total_tokens:
-            input_tokens +
-            output_tokens +
-            (cache_creation_input_tokens ?? 0) +
-            (cache_read_input_tokens ?? 0),
+          total_tokens: totalTokens,
           prompt_tokens_details: {
             cached_tokens: cache_read_input_tokens ?? 0,
           },
@@ -692,19 +695,20 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
       );
     }
 
-    const shouldSendCacheUsage =
-      parsedChunk.message?.usage?.cache_read_input_tokens ||
-      parsedChunk.message?.usage?.cache_creation_input_tokens;
-
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
+      // prompt_tokens 应包含缓存 token
+      const inputTokens = parsedChunk.message?.usage?.input_tokens ?? 0;
+      const cacheReadTokens =
+        parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
+      const cacheCreationTokens =
+        parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
+      const shouldSendCacheUsage = cacheReadTokens || cacheCreationTokens;
       streamState.usage = {
-        prompt_tokens: parsedChunk.message?.usage?.input_tokens,
+        prompt_tokens: inputTokens + cacheReadTokens + cacheCreationTokens,
         ...(shouldSendCacheUsage && {
-          cache_read_input_tokens:
-            parsedChunk.message?.usage?.cache_read_input_tokens,
-          cache_creation_input_tokens:
-            parsedChunk.message?.usage?.cache_creation_input_tokens,
+          cache_read_input_tokens: cacheReadTokens,
+          cache_creation_input_tokens: cacheCreationTokens,
         }),
       };
       return (
@@ -814,6 +818,7 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
           {
             delta: {
               content,
+              role: 'assistant',
               tool_calls: toolCalls.length ? toolCalls : undefined,
               ...(!strictOpenAiCompliance &&
                 !toolCalls.length && {
