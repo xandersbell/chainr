@@ -166,6 +166,15 @@ export class Chainr {
       }
       return this.executeMessages(params);
     },
+    /**
+     * Anthropic Messages Count Tokens — 预估 input token 数量
+     * POST /v1/messages/count_tokens
+     * 支持 Anthropic 直连、Bedrock、Vertex AI
+     */
+    countTokens: async (params: Params): Promise<Record<string, unknown>> => {
+      const targets = this.config.messagesTargets || this.config.targets;
+      return this.executeSimpleEndpoint(targets as TargetConfig[], params, 'messagesCountTokens');
+    },
   };
 
   /**
