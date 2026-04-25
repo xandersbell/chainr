@@ -171,6 +171,37 @@ const chainr = new Chainr({
 });
 ```
 
+## Per-Target Configuration
+
+Each target is independently configured — `apiKey`, `customHost`, and all provider-specific options are per-target, not global. This means you can mix providers, keys, and base URLs freely within a single strategy:
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'fallback',
+  targets: [
+    {
+      provider: 'openai',
+      apiKey: 'sk-primary-key',
+      customHost: 'https://my-proxy.com/v1/chat/completions',
+      overrideParams: { model: 'gpt-4o' }
+    },
+    {
+      provider: 'openai',
+      apiKey: 'sk-backup-key',
+      // no customHost → uses default api.openai.com
+      overrideParams: { model: 'gpt-4o-mini' }
+    },
+    {
+      provider: 'anthropic',
+      apiKey: 'ant-fallback-key',
+      overrideParams: { model: 'claude-sonnet-4-5-20250514' }
+    }
+  ]
+});
+```
+
+All fields from `TargetConfig` are passed through to the provider's `getBaseURL()` and `headers()` functions, so provider-specific options like `awsRegion`, `vertexProjectId`, `databricksWorkspace`, `azureResourceName`, etc. all work at the target level.
+
 ## Provider Configuration Examples
 
 ### AWS Bedrock
