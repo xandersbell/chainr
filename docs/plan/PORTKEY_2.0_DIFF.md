@@ -1,7 +1,7 @@
 # Portkey 2.0.0 分支 vs main 差异分析
 
 **创建时间**: 2026-04-25 06:59 EEST
-**最后更新**: 2026-04-25 07:04 EEST
+**最后更新**: 2026-04-25 07:19 EEST
 **Portkey main**: v1.15.2+17 (351692fd) — Chainr 当前参考版本
 **Portkey 2.0.0**: 分支 (8febc1dc) — Pre-Release，比 main 多 30 commits
 **总变更**: 687 文件，+141,463 / -25,098 行
@@ -22,7 +22,7 @@
 
 ## 二、需要同步的 Bug 修复（高优先级）
 
-### 2.1 Anthropic — prompt_tokens 未包含缓存 token
+### 2.1 ✅ Anthropic — prompt_tokens 未包含缓存 token
 
 非流式和流式响应中，`prompt_tokens` 只返回 `input_tokens`，没有加上 `cache_read_input_tokens` 和 `cache_creation_input_tokens`。
 
@@ -34,7 +34,7 @@ const promptTokens = input_tokens + (cache_read_input_tokens ?? 0) + (cache_crea
 prompt_tokens: promptTokens,
 ```
 
-### 2.2 Anthropic — `response?.usage` 缺少空值保护
+### 2.2 ✅ Anthropic — `response?.usage` 缺少空值保护
 
 ```typescript
 // 修复前 — usage 为 undefined 时抛异常
@@ -43,11 +43,11 @@ const { input_tokens = 0, ... } = response?.usage;
 const { input_tokens = 0, ... } = response?.usage ?? {};
 ```
 
-### 2.3 Anthropic — 流式 delta 缺少 `role: 'assistant'`
+### 2.3 ✅ Anthropic — 流式 delta 缺少 `role: 'assistant'`
 
 流式中间 chunk 的 delta 对象缺少 `role` 字段，影响 OpenAI 兼容性。
 
-### 2.4 Google/Vertex — `content?.parts?` 可选链缺失（crash 级）
+### 2.4 ✅ Google/Vertex — `content?.parts?` 可选链缺失（crash 级）
 
 Gemini 在 `MALFORMED_FUNCTION_CALL`、`IMAGE_SAFETY` 等 finishReason 下返回空 content，不做可选链直接 crash。
 
@@ -58,11 +58,11 @@ if (generation.content.parts[0]?.text) {
 if (generation.content?.parts?.[0]?.text) {
 ```
 
-### 2.5 Google/Vertex — `finishMessage` 兜底处理
+### 2.5 ✅ Google/Vertex — `finishMessage` 兜底处理
 
 content 为空但 `finishMessage` 有错误详情时，之前返回空响应。
 
-### 2.6 Google/Vertex — tool message `output` → `content` 字段名修正
+### 2.6 ✅ Google/Vertex — tool message `output` → `content` 字段名修正
 
 OpenAI tool message 转 Gemini `functionResponse` 时字段名错误，且不支持数组 content。
 
@@ -74,15 +74,15 @@ response: { content: message.content },
 // + 数组 content 支持
 ```
 
-### 2.7 Google/Vertex — `responseSchema` → `responseJsonSchema`
+### 2.7 ✅ Google/Vertex — `responseSchema` → `responseJsonSchema`
 
 json_schema 处理方式变更，新版 Gemini API 支持原生 JSON Schema。
 
-### 2.8 Google/Vertex — Schema 白名单机制
+### 2.8 ✅ Google/Vertex — Schema 白名单机制
 
 `recursivelyDeleteUnsupportedParameters` 从黑名单改为白名单，只保留 Vertex AI 支持的字段。新增 `type` 数组转 `anyOf` 处理。
 
-### 2.9 Google/Vertex — completion_tokens 漏算 thinking tokens
+### 2.9 ✅ Google/Vertex — completion_tokens 漏算 thinking tokens
 
 ```typescript
 // 修复前
@@ -91,31 +91,31 @@ completion_tokens: candidatesTokenCount,
 completion_tokens: candidatesTokenCount + thoughtsTokenCount,
 ```
 
-### 2.10 Google/Vertex — 音频格式映射修正
+### 2.10 ✅ Google/Vertex — 音频格式映射修正
 
 `opus` 从错误的 `audio/ogg` 改为 `audio/opus`，新增 `pcm`、`aac`、`m4a` 等格式。
 
-### 2.11 Google/Vertex — Schema 自引用处理
+### 2.11 ✅ Google/Vertex — Schema 自引用处理
 
 `derefer` 函数中自引用时从返回原始 node（含 $ref）改为返回 `{ type: 'object' }`。
 
-### 2.12 Google/Vertex — Tool 参数处理顺序
+### 2.12 ✅ Google/Vertex — Tool 参数处理顺序
 
 先 transform 再 delete，而非先 delete 再 transform。
 
-### 2.13 Bedrock — document block 缺少 name/citations/text source
+### 2.13 ✅ Bedrock — document block 缺少 name/citations/text source
 
 messages.ts 中 document block 转换不完整。
 
-### 2.14 Bedrock — 自动补 text block
+### 2.14 ✅ Bedrock — 自动补 text block
 
 缺少自动补充 text block 的逻辑。
 
-### 2.15 Bedrock — thinking 流式判断修复
+### 2.15 ✅ Bedrock — thinking 流式判断修复
 
 messages.ts 中 thinking 流式判断逻辑有误。
 
-### 2.16 Bedrock — arguments 空值保护
+### 2.16 ✅ Bedrock — arguments 空值保护
 
 chatComplete.ts 中 tool call arguments 缺少空值保护。
 
@@ -198,9 +198,9 @@ utils.ts 中新增 output_config 映射。
 **第一批（Bug 修复 — 必须做）**:
 1. ⬜ Anthropic token 计算修复 (2.1, 2.2, 2.3)
 2. ⬜ Google/Vertex 可选链 + finishMessage + tool message 修复 (2.4, 2.5, 2.6)
-3. ⬜ Google/Vertex schema 处理修复 (2.7, 2.8, 2.11, 2.12)
-4. ⬜ Google/Vertex token 计算 + 音频格式修复 (2.9, 2.10)
-5. ⬜ Bedrock bug 修复 (2.13, 2.14, 2.15, 2.16)
+3. ✅ Google/Vertex schema 处理修复 (2.7, 2.8, 2.11, 2.12)
+4. ✅ Google/Vertex token 计算 + 音频格式修复 (2.9, 2.10)
+5. ✅ Bedrock bug 修复 (2.13, 2.14, 2.15, 2.16)
 
 **第二批（新功能 — 应该做）**:
 6. ⬜ Anthropic 新功能 (3.1, 3.2, 3.3, 3.4, 3.5)
