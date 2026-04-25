@@ -1,6 +1,8 @@
 # Priorai
 
-> Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
+Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
+
+> Built on the shoulders of [Portkey AI Gateway](https://github.com/Portkey-ai/gateway) — Priorai extracts and refines Portkey's battle-tested provider routing core into a lightweight, embeddable SDK.
 
 **Status**: 🟢 All Portkey 2.0 sync complete — 250 tests passing, 0 TS errors, 71 providers via registry
 
