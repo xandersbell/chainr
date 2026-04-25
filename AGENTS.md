@@ -1,4 +1,4 @@
-# AGENTS.md — Chainr
+# AGENTS.md — Priorai
 
 本项目，的目的是将不同的 LLM API 通过一套统一的接口方案调用
 
@@ -15,7 +15,7 @@
 
 - 成熟的、必要的外部依赖可以直接引入，不执着于零依赖
 - AWS 官方 SDK（@smithy/signature-v4、@aws-crypto/sha256-js）→ 直接使用，不自己实现签名
-- Hono 框架 → 必须剥离。Hono 是 Web 服务器框架，Chainr 是嵌入式 SDK，架构不匹配。用 providerOptions + process.env 替代 Hono Context
+- Hono 框架 → 必须剥离。Hono 是 Web 服务器框架，Priorai 是嵌入式 SDK，架构不匹配。用 providerOptions + process.env 替代 Hono Context
 - 判断标准：该依赖是否在 SDK 嵌入场景下合理？合理就用，不合理就剥离
 
 ## 执行中时刻记得

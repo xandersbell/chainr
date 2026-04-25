@@ -2,18 +2,18 @@
 
 **创建时间**: 2026-04-25 06:59 EEST
 **最后更新**: 2026-04-25 08:08 EEST
-**Portkey main**: v1.15.2+17 (351692fd) — Chainr 当前参考版本
+**Portkey main**: v1.15.2+17 (351692fd) — Priorai 当前参考版本
 **Portkey 2.0.0**: 分支 (8febc1dc) — Pre-Release，比 main 多 30 commits
 **总变更**: 687 文件，+141,463 / -25,098 行
 **Provider 层变更**: 212 文件，+10,308 / -1,870 行
 
 ---
 
-## 一、与 Chainr 无关的变更（不迁移）
+## 一、与 Priorai 无关的变更（不迁移）
 
 - 插件系统 (`plugins/`) — Lasso Security v3、Zscaler、Akto
 - 服务器基础设施 — MCP Gateway、缓存、限流、熔断器
-- 认证工具 (`awsAuth.ts`, `azureAuth.ts`, `gcpAuth.ts`) — Chainr 已有自己的方案
+- 认证工具 (`awsAuth.ts`, `azureAuth.ts`, `gcpAuth.ts`) — Priorai 已有自己的方案
 - `pricing.ts` — 约 40+ 个 provider 新增，用于网关计费，全部跳过
 - Bedrock 凭证链重构（Web Identity/Pod Identity/ECS/IMDS）— 服务端部署场景
 - `portkey` provider — Portkey 自身作为 provider（嵌套代理），不需要
@@ -141,11 +141,11 @@ chatComplete.ts 中 tool call arguments 缺少空值保护。
 
 ### 3.6 ✅ Google/Vertex — Gemini 2.5 vs 3.0+ thinking 配置分化
 
-Chainr 已实现：`params.thinking` → `thinking_config`（Gemini 2.5），`params.reasoning_effort` → `thinkingConfig.thinkingLevel`（Gemini 3.0+）。无需额外修改。
+Priorai 已实现：`params.thinking` → `thinking_config`（Gemini 2.5），`params.reasoning_effort` → `thinkingConfig.thinkingLevel`（Gemini 3.0+）。无需额外修改。
 
 ### 3.7 ✅ Google/Vertex — Thought Signature（Gemini 3.0+ tool calling 必需）
 
-Chainr 已实现：请求侧 `tool_call.function.thought_signature` → `part.thoughtSignature`，响应侧 `part.thoughtSignature` → `tool_call.function.thought_signature`。无需额外修改。
+Priorai 已实现：请求侧 `tool_call.function.thought_signature` → `part.thoughtSignature`，响应侧 `part.thoughtSignature` → `tool_call.function.thought_signature`。无需额外修改。
 
 ### 3.8 ⏭️ Google/Vertex — `media_resolution` 支持
 
@@ -153,7 +153,7 @@ Portkey 2.0 中未实现此功能，无可同步代码。跳过。
 
 ### 3.9 ⏭️ Google/Vertex — `cached_content` 参数透传
 
-Portkey 2.0 中 `cached_content` 仅作为响应侧 `cachedContentTokenCount` 存在（Chainr 已有），无请求参数透传逻辑。跳过。
+Portkey 2.0 中 `cached_content` 仅作为响应侧 `cachedContentTokenCount` 存在（Priorai 已有），无请求参数透传逻辑。跳过。
 
 ### 3.10 ⏭️ Bedrock — Anthropic Invoke API 直连路径
 
@@ -181,7 +181,7 @@ Portkey 2.0 中仅有类型声明，无实际实现。跳过。
 
 ### 4.3 ⏭️ 类型扩展
 
-Chainr 已有 `realtime`、`refusal` 等类型；`RequestTransforms`、`StickyConfig`、`media_resolution`、`vertexAuthType` 在 Portkey 2.0 中也不存在。无需同步。
+Priorai 已有 `realtime`、`refusal` 等类型；`RequestTransforms`、`StickyConfig`、`media_resolution`、`vertexAuthType` 在 Portkey 2.0 中也不存在。无需同步。
 
 ---
 

@@ -1,4 +1,4 @@
-# Chainr
+# Priorai
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
@@ -20,15 +20,15 @@
 ## Installation
 
 ```bash
-npm install chainr
+npm install priorai
 ```
 
 ## Quick Start
 
 ```typescript
-import { Chainr } from 'chainr';
+import { Priorai } from 'priorai';
 
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   targets: [
     {
@@ -44,7 +44,7 @@ const chainr = new Chainr({
   ]
 });
 
-const response = await chainr.chat.completions.create({
+const response = await priorai.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello!' }]
 });
@@ -139,7 +139,7 @@ And more: DashScope, Zhipu, Nebius, Ollama, Palm, Cortex, CometAPI, IOIntelligen
 Tries targets in order, automatically fails over to next on error (429/5xx).
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   targets: [
     { provider: 'openai', apiKey: 'primary-key' },
@@ -152,7 +152,7 @@ const chainr = new Chainr({
 Distributes requests based on weight values.
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'loadbalance',
   targets: [
     { provider: 'openai', apiKey: 'key1', weight: 0.7 },
@@ -165,7 +165,7 @@ const chainr = new Chainr({
 Uses a single provider without fallback.
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{ provider: 'openai', apiKey: 'my-key' }]
 });
@@ -176,7 +176,7 @@ const chainr = new Chainr({
 Each target is independently configured — `apiKey`, `customHost`, and all provider-specific options are per-target, not global. This means you can mix providers, keys, and base URLs freely within a single strategy:
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   targets: [
     {
@@ -207,7 +207,7 @@ All fields from `TargetConfig` are passed through to the provider's `getBaseURL(
 ### AWS Bedrock
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'bedrock',
@@ -223,7 +223,7 @@ const chainr = new Chainr({
 ### Azure OpenAI
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'azure-openai',
@@ -238,7 +238,7 @@ const chainr = new Chainr({
 ### Google Vertex AI
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'vertex-ai',
@@ -253,7 +253,7 @@ const chainr = new Chainr({
 ### Databricks
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'databricks',
@@ -267,7 +267,7 @@ const chainr = new Chainr({
 ### Custom Host
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'openai',
@@ -297,7 +297,7 @@ src/
 │   ├── google-vertex-ai/
 │   └── ... (71 total)
 └── core/
-    ├── Router.ts              # Main Chainr class
+    ├── Router.ts              # Main Priorai class
     ├── types.ts               # Core types
     ├── providerRequest.ts     # buildProviderRequest + transformProviderResponse
     ├── RetryHandler.ts        # Exponential backoff retry
@@ -313,7 +313,7 @@ src/
 ### Request Flow
 
 ```
-Chainr.chat.completions.create(params)
+Priorai.chat.completions.create(params)
   → Strategy.execute(targets, params)
     → buildProviderRequest(params, provider, target, endpoint)
       → Providers[provider].api.getBaseURL()     // URL
@@ -328,7 +328,7 @@ Chainr.chat.completions.create(params)
 ## Timeout Configuration
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   targets: [...],
   timeout: 15000, // 15 seconds for all requests
@@ -340,7 +340,7 @@ Default: 30000ms (30s). Applied to all fetch paths including chat, embeddings, i
 ## Retry Configuration
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   retry: { attempts: 3, onStatusCodes: [429, 500, 502, 503, 504] },
   targets: [...]

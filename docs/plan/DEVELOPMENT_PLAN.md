@@ -1,4 +1,4 @@
-# Chainr - Unified LLM Gateway SDK
+# Priorai - Unified LLM Gateway SDK
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
@@ -37,7 +37,7 @@ Building production LLM-powered applications exposes developers to four critical
 
 ### 0.3 Target Users
 
-| User Profile | Primary Use Case | How Chainr Helps |
+| User Profile | Primary Use Case | How Priorai Helps |
 |---|---|---|
 | **Firebase Cloud Functions Developer** | Serverless LLM calls with high availability | Zero-dep embed, Node.js 18+ native |
 | **Node.js Backend Service** | REST API backend calling multiple LLM providers | One SDK init, unified interface |
@@ -54,14 +54,14 @@ Instead of:
   parse anthropicResponse();
   parse vertexResponse();
 
-Chainr delivers:
-  const r = await chainr.chat.completions.create({...})
+Priorai delivers:
+  const r = await priorai.chat.completions.create({...})
   // Transparent fallback + unified response format
 ```
 
 ### 0.5 Why This Project Exists
 
-| Requirement | Chainr | Portkey (Hosted) | LiteLLM (Python) |
+| Requirement | Priorai | Portkey (Hosted) | LiteLLM (Python) |
 |-------------|--------|------------------|------------------|
 | TypeScript SDK | ✅ | ❌ | ❌ |
 | Embeddable (npm package) | ✅ | ❌ (独立托管服务) | ✅ (但需要自建) |
@@ -80,7 +80,7 @@ Chainr delivers:
 ### Current Directory Structure
 
 ```
-chainr/
+priorai/
 ├── src/
 │   ├── index.ts                    # SDK entry point
 │   ├── globals.ts                  # Provider constants
@@ -92,8 +92,8 @@ chainr/
 │   │   ├── utils.ts               # Provider utilities
 │   │   └── ... (71 provider dirs, 72 registered)
 │   └── core/
-│       ├── Router.ts               # Main Chainr class + validateConfig
-│       ├── types.ts                # Core types (ChainrConfig, StrategyResult)
+│       ├── Router.ts               # Main Priorai class + validateConfig
+│       ├── types.ts                # Core types (PrioraiConfig, StrategyResult)
 │       ├── providerRequest.ts     # buildProviderRequest + transformProviderResponse
 │       ├── tryTarget.ts              # 核心递归调度（嵌套策略 + 配置继承）
 │       ├── RetryHandler.ts         # Exponential backoff retry + fetchWithTimeout + retry-after
@@ -238,11 +238,11 @@ Uses a single provider without fallback.
 | **Meshy** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | **Tripo 3D** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
-### 3.2 Chainr vs Portkey 功能映射分析
+### 3.2 Priorai vs Portkey 功能映射分析
 
 #### 已实现 (✅)
 
-| 功能 | Portkey | Chainr | 状态 |
+| 功能 | Portkey | Priorai | 状态 |
 |------|---------|--------|------|
 | OpenAI chat completions | ✅ | ✅ | ✅ |
 | Anthropic chat completions | ✅ | ✅ | ✅ |
@@ -301,7 +301,7 @@ Uses a single provider without fallback.
 
 #### 缺失或部分实现 (⚠️)
 
-| 功能 | Portkey | Chainr | 状态 | 说明 |
+| 功能 | Portkey | Priorai | 状态 | 说明 |
 |------|---------|--------|------|------|
 | **Tool Support (Function Calling)** | ✅ | ✅ | ✅ | Phase 3C 完成，所有 provider 已对齐 |
 | **Provider-specific params** | ✅ | ✅ | ✅ | Phase 3D 确认，所有 provider 参数已与 Portkey 一致 |
@@ -324,7 +324,7 @@ Uses a single provider without fallback.
 
 **Completed**:
 - [x] Project scaffolding (tsconfig, vitest, tsup, package.json)
-- [x] Chainr Router class with `chat.completions.create()` API
+- [x] Priorai Router class with `chat.completions.create()` API
 - [x] FallbackStrategy implemented
 - [x] LoadBalanceStrategy implemented
 - [x] SingleStrategy implemented
@@ -395,15 +395,15 @@ Uses a single provider without fallback.
 ### Phase 4: API Expansion & P2 Features 🟢 COMPLETE
 
 **Completed** (2026-04-24):
-- [x] Anthropic Messages API — `chainr.messages.create()` 原生格式透传
-- [x] OpenAI Responses API — `chainr.responses.create()` 端点路由
+- [x] Anthropic Messages API — `priorai.messages.create()` 原生格式透传
+- [x] OpenAI Responses API — `priorai.responses.create()` 端点路由
 - [x] endpoint 参数贯穿策略系统（InheritedConfig → tryLeafTarget → buildProviderRequest）
 - [x] messagesTargets / responsesTargets 专用 target 池
-- [x] complete (legacy) 端点 — `chainr.completions.create()`
-- [x] imageEdit 端点 — `chainr.images.edit()`
-- [x] 文件操作端点 — `chainr.files.upload/list/del/retrieve/content()`
-- [x] Batch API — `chainr.batches.create/retrieve/list/cancel()`
-- [x] Fine-tune API — `chainr.fineTuning.create/list/cancel/retrieve()`
+- [x] complete (legacy) 端点 — `priorai.completions.create()`
+- [x] imageEdit 端点 — `priorai.images.edit()`
+- [x] 文件操作端点 — `priorai.files.upload/list/del/retrieve/content()`
+- [x] Batch API — `priorai.batches.create/retrieve/list/cancel()`
+- [x] Fine-tune API — `priorai.fineTuning.create/list/cancel/retrieve()`
 - [x] ConnectTimeoutError → 503 错误区分
 - [x] Azure 1ms chunk 间隔
 - [x] Firebase Functions example — 不需要，SDK 嵌入式调用在任何 Node.js 环境中用法一致
@@ -466,7 +466,7 @@ Uses a single provider without fallback.
 - [ ] 其他 Portkey 支持的别名
 
 #### Error Handling Alignment
-- [ ] Portkey error format → Chainr error mapping
+- [ ] Portkey error format → Priorai error mapping
 - [ ] Provider-specific error codes
 
 ---
@@ -510,9 +510,9 @@ Uses a single provider without fallback.
 ### Main Entry Point
 
 ```typescript
-import { Chainr } from 'chainr';
+import { Priorai } from 'priorai';
 
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'fallback',
   targets: [
     {
@@ -527,7 +527,7 @@ const chainr = new Chainr({
   ]
 });
 
-const response = await chainr.chat.completions.create({
+const response = await priorai.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Hello!' }]
 });
@@ -536,7 +536,7 @@ const response = await chainr.chat.completions.create({
 ### AWS Bedrock Usage
 
 ```typescript
-const chainr = new Chainr({
+const priorai = new Priorai({
   strategy: 'single',
   targets: [{
     provider: 'bedrock',
@@ -555,7 +555,7 @@ const chainr = new Chainr({
 
 ### Phase 1 Complete ✅
 - [x] Project scaffolding complete
-- [x] Chainr Router class implemented
+- [x] Priorai Router class implemented
 - [x] All 3 strategies implemented
 - [x] TypeScript 0 errors
 - [x] Build success (ESM + CJS)
@@ -583,8 +583,8 @@ const chainr = new Chainr({
 - [x] Provider-specific params 确认全部对齐
 
 ### Phase 4 Complete ✅ (2026-04-24)
-- [x] Anthropic Messages API — `chainr.messages.create()` 原生格式透传
-- [x] OpenAI Responses API — `chainr.responses.create()` 端点路由
+- [x] Anthropic Messages API — `priorai.messages.create()` 原生格式透传
+- [x] OpenAI Responses API — `priorai.responses.create()` 端点路由
 - [x] endpoint 参数贯穿策略系统（InheritedConfig → tryLeafTarget → buildProviderRequest）
 - [x] messagesTargets / responsesTargets 专用 target 池
 - [x] 8 个新测试覆盖两个 API 的路由、target 选择、默认 provider、retry/timeout 传递
@@ -621,4 +621,4 @@ const chainr = new Chainr({
 
 MIT - See [LICENSE](./LICENSE)
 
-Chainr is an independent implementation.
+Priorai is an independent implementation.

@@ -8,7 +8,7 @@
 
 ## 1. 概述
 
-本文档说明如何在 Chainr 项目中使用真实 API Key 进行集成测试。
+本文档说明如何在 Priorai 项目中使用真实 API Key 进行集成测试。
 
 **两种测试模式**：
 
@@ -106,7 +106,7 @@ if (!apiKey) {
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { Chainr } from '../../src';
+import { Priorai } from '../../src';
 
 describe('OpenAI Real HTTP Tests', () => {
   it('should make a real request to OpenAI', async () => {
@@ -116,12 +116,12 @@ describe('OpenAI Real HTTP Tests', () => {
       return;
     }
 
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'single',
       targets: [{ provider: 'openai', apiKey }],
     });
 
-    const response = await chainr.chat.completions.create({
+    const response = await priorai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: 'Say "hello" in one word' }],
       max_tokens: 10,
@@ -144,12 +144,12 @@ describe('Anthropic Real HTTP Tests', () => {
       return;
     }
 
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'single',
       targets: [{ provider: 'anthropic', apiKey }],
     });
 
-    const response = await chainr.chat.completions.create({
+    const response = await priorai.chat.completions.create({
       model: 'claude-3-5-haiku-20241022',
       messages: [
         { role: 'system', content: 'You are a pirate. Speak in pirate dialect.' },
@@ -176,7 +176,7 @@ describe('Vertex AI Real HTTP Tests', () => {
       return;
     }
 
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'single',
       targets: [{
         provider: 'vertex-ai',
@@ -188,7 +188,7 @@ describe('Vertex AI Real HTTP Tests', () => {
       }],
     });
 
-    const response = await chainr.chat.completions.create({
+    const response = await priorai.chat.completions.create({
       model: 'gemini-1.5-flash',
       messages: [{ role: 'user', content: 'Say "hello" in one word' }],
     });
@@ -208,7 +208,7 @@ describe('Fallback Real HTTP Tests', () => {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
     // 使用一个无效的 key 来触发 fallback
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'fallback',
       targets: [
         { provider: 'openai', apiKey: 'invalid-key-for-testing' },
@@ -217,7 +217,7 @@ describe('Fallback Real HTTP Tests', () => {
     });
 
     // 第一个 provider 会失败，应该 fallback 到第二个
-    const response = await chainr.chat.completions.create({
+    const response = await priorai.chat.completions.create({
       model: 'claude-3-5-haiku-20241022',
       messages: [{ role: 'user', content: 'Say "fallback works" in one word' }],
       max_tokens: 20,
