@@ -4,7 +4,7 @@
  *
  * 运行方式：npx tsx tests/local/vertex-adc-live.ts
  */
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import { Priorai } from '../../src';
 import type { PrioraiConfig } from '../../src/core/types';
 
@@ -23,13 +23,15 @@ async function main() {
   // vertexRegion 设为 global，使用全局端点
   const config: PrioraiConfig = {
     strategy: 'single',
-    targets: [{
-      provider: 'vertex-ai',
-      providerOptions: {
-        vertexProjectId: projectId,
-        vertexRegion: 'global',
+    targets: [
+      {
+        provider: 'vertex-ai',
+        providerOptions: {
+          vertexProjectId: projectId,
+          vertexRegion: 'global',
+        },
       },
-    }],
+    ],
   };
 
   const priorai = new Priorai(config);
@@ -58,9 +60,10 @@ async function main() {
     console.error('Status:', error.status ?? error.statusCode);
     console.error('Message:', error.message);
     if (error.response) {
-      const text = typeof error.response === 'string'
-        ? error.response
-        : JSON.stringify(error.response, null, 2);
+      const text =
+        typeof error.response === 'string'
+          ? error.response
+          : JSON.stringify(error.response, null, 2);
       console.error('Response body:', text);
     }
     process.exit(1);

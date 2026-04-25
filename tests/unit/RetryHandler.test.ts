@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { retryRequest } from '../../src/core/RetryHandler';
 
 function createSuccessResponse(status: number, data: Record<string, unknown>): Response {
@@ -77,7 +77,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -104,7 +104,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.advanceTimersByTimeAsync(0);
@@ -132,7 +132,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -153,7 +153,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -171,7 +171,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -189,7 +189,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -207,7 +207,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -227,7 +227,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -243,7 +243,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -259,7 +259,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -281,7 +281,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.advanceTimersByTimeAsync(0);
@@ -309,7 +309,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -326,7 +326,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -424,7 +424,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 5 }
+        { attempts: 5 },
       );
 
       await vi.runAllTimersAsync();
@@ -442,7 +442,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3, onStatusCodes: [500] }
+        { attempts: 3, onStatusCodes: [500] },
       );
 
       expect(result.success).toBe(false);
@@ -455,12 +455,7 @@ describe('RetryHandler', () => {
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
       vi.stubGlobal('fetch', fetchMock);
 
-      await retryRequest(
-        'https://api.example.com/test',
-        { method: 'GET' },
-        undefined,
-        5000
-      );
+      await retryRequest('https://api.example.com/test', { method: 'GET' }, undefined, 5000);
 
       expect(fetchMock).toHaveBeenCalled();
     });

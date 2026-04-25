@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { parseSSEData, isStreamDone } from '../../../src/core/sseParser';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { isStreamDone, parseSSEData } from '../../../src/core/sseParser';
 
 describe('sseParser', () => {
   describe('parseSSEData', () => {
@@ -68,12 +68,18 @@ describe('parseSSEStream', () => {
   it('yields chunks split by double newline pattern', async () => {
     const chunks: string[] = [];
     const mockReader = {
-      read: vi.fn()
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('data: {"content":"Hello"}\n\ndata: {"content":"World"}\n\n') })
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(
+            'data: {"content":"Hello"}\n\ndata: {"content":"World"}\n\n',
+          ),
+        })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     } as any;
 
-    const iterator = (async function*() {
+    const iterator = (async function* () {
       let buffer = '';
       const decoder = new TextDecoder();
       let isFirstChunk = true;
@@ -97,7 +103,7 @@ describe('parseSSEStream', () => {
             if (part.length > 0) {
               if (isFirstChunk) {
                 isFirstChunk = false;
-                await new Promise(resolve => setTimeout(resolve, 25));
+                await new Promise((resolve) => setTimeout(resolve, 25));
               }
               yield part;
             }
@@ -120,12 +126,16 @@ describe('parseSSEStream', () => {
   it('handles empty chunks gracefully', async () => {
     const chunks: string[] = [];
     const mockReader = {
-      read: vi.fn()
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('\n\ndata: {"content":"Hello"}\n\n') })
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('\n\ndata: {"content":"Hello"}\n\n'),
+        })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     } as any;
 
-    const iterator = (async function*() {
+    const iterator = (async function* () {
       let buffer = '';
       const decoder = new TextDecoder();
 
@@ -166,12 +176,16 @@ describe('parseSSEStream', () => {
   it('handles DONE signal correctly', async () => {
     const chunks: string[] = [];
     const mockReader = {
-      read: vi.fn()
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('data: {"content":"Hello"}\n\ndata: [DONE]\n\n') })
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('data: {"content":"Hello"}\n\ndata: [DONE]\n\n'),
+        })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     } as any;
 
-    const iterator = (async function*() {
+    const iterator = (async function* () {
       let buffer = '';
       const decoder = new TextDecoder();
 
@@ -214,13 +228,20 @@ describe('parseSSEStream', () => {
   it('handles partial data across multiple reads', async () => {
     const chunks: string[] = [];
     const mockReader = {
-      read: vi.fn()
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('data: {"content":"Hel') })
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('lo"}\n\ndata: {"content":"World"}\n\n') })
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('data: {"content":"Hel'),
+        })
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('lo"}\n\ndata: {"content":"World"}\n\n'),
+        })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     } as any;
 
-    const iterator = (async function*() {
+    const iterator = (async function* () {
       let buffer = '';
       const decoder = new TextDecoder();
 
@@ -262,12 +283,16 @@ describe('parseSSEStream', () => {
     const transformFn = (chunk: string) => `transformed:${chunk}`;
 
     const mockReader = {
-      read: vi.fn()
-        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('data: {"content":"Hello"}\n\n') })
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('data: {"content":"Hello"}\n\n'),
+        })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     } as any;
 
-    const iterator = (async function*() {
+    const iterator = (async function* () {
       let buffer = '';
       const decoder = new TextDecoder();
 

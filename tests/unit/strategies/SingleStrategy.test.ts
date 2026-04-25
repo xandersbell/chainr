@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SingleStrategy } from '../../../src/core/strategies/SingleStrategy';
 import type { RetryResult } from '../../../src/core/types';
 
@@ -10,8 +10,8 @@ vi.mock('../../../src/core/providerRequest', () => ({
   buildProviderRequest: vi.fn(),
 }));
 
-import { retryRequest } from '../../../src/core/RetryHandler';
 import { buildProviderRequest } from '../../../src/core/providerRequest';
+import { retryRequest } from '../../../src/core/RetryHandler';
 
 describe('SingleStrategy', () => {
   beforeEach(() => {
@@ -24,9 +24,7 @@ describe('SingleStrategy', () => {
       const targets: Array<Record<string, unknown>> = [];
       const params = { messages: [] };
 
-      await expect(strategy.execute(targets, params)).rejects.toThrow(
-        'No targets provided'
-      );
+      await expect(strategy.execute(targets, params)).rejects.toThrow('No targets provided');
     });
 
     it('should use the single target when only one target is provided', async () => {
@@ -60,7 +58,7 @@ describe('SingleStrategy', () => {
         expect.objectContaining({ model: 'claude-3' }),
         'anthropic',
         targets[0],
-        expect.anything()
+        expect.anything(),
       );
       expect(result.provider).toBe('anthropic');
       expect(result.success).toBe(true);
@@ -91,12 +89,12 @@ describe('SingleStrategy', () => {
         expect.anything(),
         'openai',
         targets[0],
-        expect.anything()
+        expect.anything(),
       );
     });
 
-describe('Provider extraction', () => {
-    it('should use target.provider when provided', async () => {
+    describe('Provider extraction', () => {
+      it('should use target.provider when provided', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'anthropic', apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -118,7 +116,7 @@ describe('Provider extraction', () => {
           expect.anything(),
           'anthropic',
           expect.anything(),
-          expect.anything()
+          expect.anything(),
         );
       });
 
@@ -144,13 +142,13 @@ describe('Provider extraction', () => {
           expect.anything(),
           'openai',
           expect.anything(),
-          expect.anything()
+          expect.anything(),
         );
       });
     });
 
-describe('overrideParams merging', () => {
-    it('should merge target.overrideParams with params', async () => {
+    describe('overrideParams merging', () => {
+      it('should merge target.overrideParams with params', async () => {
         const strategy = new SingleStrategy();
         const targets = [
           {
@@ -185,7 +183,7 @@ describe('overrideParams merging', () => {
           }),
           expect.anything(),
           expect.anything(),
-          expect.anything()
+          expect.anything(),
         );
       });
 
@@ -219,7 +217,7 @@ describe('overrideParams merging', () => {
           expect.objectContaining({ model: 'gpt-4o' }),
           expect.anything(),
           expect.anything(),
-          expect.anything()
+          expect.anything(),
         );
       });
     });
@@ -276,8 +274,8 @@ describe('overrideParams merging', () => {
       expect(result.error).toBe('HTTP 500');
     });
 
-describe('Retry Config passing', () => {
-    it('should use the provided retryConfig', async () => {
+    describe('Retry Config passing', () => {
+      it('should use the provided retryConfig', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'openai', apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -299,7 +297,7 @@ describe('Retry Config passing', () => {
           expect.anything(),
           expect.anything(),
           retryConfig,
-          undefined
+          undefined,
         );
       });
 
@@ -325,7 +323,7 @@ describe('Retry Config passing', () => {
           expect.anything(),
           expect.anything(),
           targetRetry,
-          undefined
+          undefined,
         );
       });
 
@@ -350,7 +348,7 @@ describe('Retry Config passing', () => {
           expect.anything(),
           expect.anything(),
           undefined,
-          undefined
+          undefined,
         );
       });
 
@@ -377,7 +375,7 @@ describe('Retry Config passing', () => {
           expect.anything(),
           expect.anything(),
           { attempts: 2 },
-          undefined
+          undefined,
         );
       });
     });

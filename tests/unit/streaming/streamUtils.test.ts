@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { getSplitPattern, getFallbackChunkId } from '../../../src/core/streamUtils';
+import { describe, expect, it } from 'vitest';
+import { getFallbackChunkId, getSplitPattern } from '../../../src/core/streamUtils';
 
 describe('streamUtils', () => {
   describe('getSplitPattern', () => {

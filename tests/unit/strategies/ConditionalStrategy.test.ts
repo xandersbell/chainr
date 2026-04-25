@@ -2,9 +2,9 @@
  * Conditional routing strategy tests
  * Verify MongoDB-style query operators and condition matching logic
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConditionalStrategy } from '../../../src/core/strategies/ConditionalStrategy';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConditionConfig } from '../../../src/core/strategies/ConditionalStrategy';
+import { ConditionalStrategy } from '../../../src/core/strategies/ConditionalStrategy';
 import type { TargetConfig } from '../../../src/core/types';
 import type { Params } from '../../../src/types/requestBody';
 
@@ -15,10 +15,8 @@ vi.mock('../../../src/core/tryTarget', () => ({
     response: { status: 200, data: { id: 'test' } },
     provider: 'openai',
   }),
-  executeTargetStream: vi.fn().mockResolvedValue(
-    new ReadableStream()
-  ),
-  buildInheritedConfig: vi.fn((target: any, parent: any) => parent),
+  executeTargetStream: vi.fn().mockResolvedValue(new ReadableStream()),
+  buildInheritedConfig: vi.fn((_target: any, parent: any) => parent),
   isNestedTarget: vi.fn(() => false),
   tryLeafTarget: vi.fn(),
   tryLeafTargetStream: vi.fn(),
@@ -49,7 +47,10 @@ describe('ConditionalStrategy', () => {
     it('$eq — exact match on model field', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $eq: 'gpt-4o' } }, then: 'openai-target' },
-        { query: { 'params.model': { $eq: 'claude-sonnet-4-20250514' } }, then: 'anthropic-target' },
+        {
+          query: { 'params.model': { $eq: 'claude-sonnet-4-20250514' } },
+          then: 'anthropic-target',
+        },
       ];
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
@@ -57,7 +58,7 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -73,7 +74,7 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -90,7 +91,7 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -134,8 +135,14 @@ describe('ConditionalStrategy', () => {
 
     it('$nin — value not in array', async () => {
       const conditions: ConditionConfig[] = [
-        { query: { 'params.model': { $nin: ['gpt-4o', 'gpt-4o-mini'] } }, then: 'anthropic-target' },
-        { query: { 'params.model': { $nin: ['claude-sonnet-4-20250514'] } }, then: 'openai-target' },
+        {
+          query: { 'params.model': { $nin: ['gpt-4o', 'gpt-4o-mini'] } },
+          then: 'anthropic-target',
+        },
+        {
+          query: { 'params.model': { $nin: ['claude-sonnet-4-20250514'] } },
+          then: 'openai-target',
+        },
       ];
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
@@ -171,10 +178,7 @@ describe('ConditionalStrategy', () => {
       const conditions: ConditionConfig[] = [
         {
           query: {
-            $and: [
-              { 'params.model': { $regex: '^gpt-' } },
-              { 'params.temperature': { $gt: 0.5 } },
-            ],
+            $and: [{ 'params.model': { $regex: '^gpt-' } }, { 'params.temperature': { $gt: 0.5 } }],
           },
           then: 'openai-target',
         },
@@ -188,10 +192,7 @@ describe('ConditionalStrategy', () => {
       const conditions: ConditionConfig[] = [
         {
           query: {
-            $or: [
-              { 'params.model': 'claude-sonnet-4-20250514' },
-              { 'params.model': 'gpt-4o' },
-            ],
+            $or: [{ 'params.model': 'claude-sonnet-4-20250514' }, { 'params.model': 'gpt-4o' }],
           },
           then: 'openai-target',
         },
@@ -210,8 +211,14 @@ describe('ConditionalStrategy', () => {
       ];
 
       await strategy.execute(
-        targets, baseParams, undefined, undefined, undefined,
-        conditions, undefined, { region: 'eu-west' }
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        undefined,
+        { region: 'eu-west' },
       );
 
       expect(executeTarget).toHaveBeenCalledWith(targets[1], baseParams, expect.any(Object));
@@ -225,8 +232,13 @@ describe('ConditionalStrategy', () => {
       ];
 
       await strategy.execute(
-        targets, baseParams, undefined, undefined, undefined,
-        conditions, 'openai-target'
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        'openai-target',
       );
 
       expect(executeTarget).toHaveBeenCalledWith(targets[0], baseParams, expect.any(Object));
@@ -238,16 +250,16 @@ describe('ConditionalStrategy', () => {
       ];
 
       await expect(
-        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions)
+        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions),
       ).rejects.toThrow('Conditional routing did not resolve to any valid target');
     });
   });
 
   describe('error handling', () => {
     it('throws error when no conditions provided', async () => {
-      await expect(
-        strategy.execute(targets, baseParams)
-      ).rejects.toThrow('No conditions provided for conditional routing');
+      await expect(strategy.execute(targets, baseParams)).rejects.toThrow(
+        'No conditions provided for conditional routing',
+      );
     });
 
     it('throws error when target name does not exist', async () => {
@@ -256,7 +268,7 @@ describe('ConditionalStrategy', () => {
       ];
 
       await expect(
-        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions)
+        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions),
       ).rejects.toThrow('Invalid target name in conditional routing: nonexistent-target');
     });
   });

@@ -2,7 +2,7 @@
  * retry-after header support test
  * Verify RetryHandler correctly parses retry-after / retry-after-ms / x-ms-retry-after-ms
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { retryRequest } from '../../src/core/RetryHandler';
 
 describe('retry-after header support', () => {
@@ -37,7 +37,7 @@ describe('retry-after header support', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     // advance fake timer to complete sleep
@@ -56,7 +56,7 @@ describe('retry-after header support', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     await vi.advanceTimersByTimeAsync(300);
@@ -74,7 +74,7 @@ describe('retry-after header support', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     // retry-after: 2 → 2000ms
@@ -87,16 +87,18 @@ describe('retry-after header support', () => {
 
   it('retry-after-ms takes priority over retry-after', async () => {
     fetchSpy
-      .mockResolvedValueOnce(makeResponse(429, {
-        'retry-after-ms': '100',
-        'retry-after': '10', // 10s = 10000ms, but should be ignored
-      }))
+      .mockResolvedValueOnce(
+        makeResponse(429, {
+          'retry-after-ms': '100',
+          'retry-after': '10', // 10s = 10000ms, but should be ignored
+        }),
+      )
       .mockResolvedValueOnce(makeResponse(200));
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     // should use 100ms instead of 10000ms
@@ -107,13 +109,12 @@ describe('retry-after header support', () => {
   });
 
   it('gives up retry when retry-after exceeds 60s budget', async () => {
-    fetchSpy
-      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '120' })); // 120s > 60s
+    fetchSpy.mockResolvedValueOnce(makeResponse(429, { 'retry-after': '120' })); // 120s > 60s
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 3, onStatusCodes: [429] }
+      { attempts: 3, onStatusCodes: [429] },
     );
 
     // no waiting needed, should give up immediately
@@ -133,7 +134,7 @@ describe('retry-after header support', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [500] }
+      { attempts: 2, onStatusCodes: [500] },
     );
 
     // exponential backoff first attempt: 100ms (BASE_DELAY_MS * 2^0)
@@ -146,13 +147,13 @@ describe('retry-after header support', () => {
 
   it('gives up when cumulative retry-after across multiple 429s exceeds budget', async () => {
     fetchSpy
-.mockResolvedValueOnce(makeResponse(429, { 'retry-after': '30' })) // 30s
+      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '30' })) // 30s
       .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '40' })); // 40s, cumulative 70s > 60s
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 3, onStatusCodes: [429] }
+      { attempts: 3, onStatusCodes: [429] },
     );
 
     // wait first: 30s
@@ -173,7 +174,7 @@ describe('retry-after header support', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     // fallback to exponential backoff: 100ms

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrioraiConfig, StrategyResult } from '../../src/core/types';
 import type { Params } from '../../src/types/requestBody';
 
@@ -83,7 +83,8 @@ describe('Priorai (Router) integration tests', () => {
       };
 
       const priorai = new Priorai(config);
-      const strategy = (priorai as unknown as { strategy: { execute: typeof mockFallbackExecute } }).strategy;
+      const strategy = (priorai as unknown as { strategy: { execute: typeof mockFallbackExecute } })
+        .strategy;
 
       expect(strategy.execute).toBe(mockFallbackExecute);
     });
@@ -98,7 +99,9 @@ describe('Priorai (Router) integration tests', () => {
       };
 
       const priorai = new Priorai(config);
-      const strategy = (priorai as unknown as { strategy: { execute: typeof mockLoadBalanceExecute } }).strategy;
+      const strategy = (
+        priorai as unknown as { strategy: { execute: typeof mockLoadBalanceExecute } }
+      ).strategy;
 
       expect(strategy.execute).toBe(mockLoadBalanceExecute);
     });
@@ -110,7 +113,8 @@ describe('Priorai (Router) integration tests', () => {
       };
 
       const priorai = new Priorai(config);
-      const strategy = (priorai as unknown as { strategy: { execute: typeof mockSingleExecute } }).strategy;
+      const strategy = (priorai as unknown as { strategy: { execute: typeof mockSingleExecute } })
+        .strategy;
 
       expect(strategy.execute).toBe(mockSingleExecute);
     });
@@ -197,7 +201,7 @@ describe('Priorai (Router) integration tests', () => {
         'chatComplete',
         200,
         {},
-        'gpt-4o'
+        'gpt-4o',
       );
     });
 
@@ -224,7 +228,7 @@ describe('Priorai (Router) integration tests', () => {
         'chatComplete',
         200,
         {},
-        'gpt-4o'
+        'gpt-4o',
       );
     });
   });
@@ -255,14 +259,20 @@ describe('Priorai (Router) integration tests', () => {
       const priorai = new Priorai(config);
       const result = await priorai.chat.completions.create(baseParams);
 
-      expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig, undefined, 'chatComplete');
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        targets,
+        baseParams,
+        retryConfig,
+        undefined,
+        'chatComplete',
+      );
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         strategyResult.response as unknown as Record<string, unknown>,
         'openai',
         'chatComplete',
         200,
         {},
-        'gpt-4o'
+        'gpt-4o',
       );
       expect(result).toEqual(mockChatCompletionResponse);
     });
@@ -290,7 +300,13 @@ describe('Priorai (Router) integration tests', () => {
       const priorai = new Priorai(config);
       await priorai.chat.completions.create(baseParams);
 
-      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined, 'chatComplete');
+      expect(mockLoadBalanceExecute).toHaveBeenCalledWith(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        'chatComplete',
+      );
     });
 
     it('config.retry is correctly passed to strategy.execute() as retryConfig', async () => {
@@ -318,7 +334,7 @@ describe('Priorai (Router) integration tests', () => {
         baseParams,
         retryConfig,
         undefined,
-        'chatComplete'
+        'chatComplete',
       );
     });
 
@@ -345,7 +361,7 @@ describe('Priorai (Router) integration tests', () => {
         baseParams,
         undefined,
         undefined,
-        'chatComplete'
+        'chatComplete',
       );
     });
   });
@@ -391,7 +407,7 @@ describe('Priorai (Router) integration tests', () => {
         messagesParams,
         undefined,
         undefined,
-        'messages'
+        'messages',
       );
       // Verify response transform uses 'messages' endpoint
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
@@ -400,13 +416,13 @@ describe('Priorai (Router) integration tests', () => {
         'messages',
         200,
         {},
-        'claude-sonnet-4-20250514'
+        'claude-sonnet-4-20250514',
       );
       expect(result).toEqual(mockMessagesResponse);
     });
 
-  it('uses messagesTargets instead of default targets', async () => {
-    const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+    it('uses messagesTargets instead of default targets', async () => {
+      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
@@ -431,7 +447,7 @@ describe('Priorai (Router) integration tests', () => {
         messagesParams,
         undefined,
         undefined,
-        'messages'
+        'messages',
       );
     });
 
@@ -444,11 +460,11 @@ describe('Priorai (Router) integration tests', () => {
       const strategyResult: StrategyResult = {
         success: true,
         response: mockMessagesResponse,
-      // provider not set
-    };
+        // provider not set
+      };
 
-    mockSingleExecute.mockResolvedValue(strategyResult);
-    mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+      mockSingleExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
       const priorai = new Priorai(config);
       await priorai.messages.create(messagesParams);
@@ -459,37 +475,37 @@ describe('Priorai (Router) integration tests', () => {
         'messages',
         200,
         {},
-        'claude-sonnet-4-20250514'
+        'claude-sonnet-4-20250514',
       );
     });
 
-  it('correctly passes retry and timeout', async () => {
-    const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
-    const config: PrioraiConfig = {
-      strategy: 'fallback',
-      targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
-      retry: retryConfig,
-      timeout: 60000,
-    };
+    it('correctly passes retry and timeout', async () => {
+      const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+        retry: retryConfig,
+        timeout: 60000,
+      };
 
-    const strategyResult: StrategyResult = {
-      success: true,
-      response: mockMessagesResponse,
-      provider: 'anthropic',
-    };
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockMessagesResponse,
+        provider: 'anthropic',
+      };
 
-    mockFallbackExecute.mockResolvedValue(strategyResult);
-    mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-    const priorai = new Priorai(config);
-    await priorai.messages.create(messagesParams);
+      const priorai = new Priorai(config);
+      await priorai.messages.create(messagesParams);
 
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         config.targets,
         messagesParams,
         retryConfig,
         60000,
-        'messages'
+        'messages',
       );
     });
   });
@@ -540,7 +556,7 @@ describe('Priorai (Router) integration tests', () => {
         responsesParams,
         undefined,
         undefined,
-        'createModelResponse'
+        'createModelResponse',
       );
       // Verify response transform uses 'createModelResponse' endpoint
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
@@ -549,7 +565,7 @@ describe('Priorai (Router) integration tests', () => {
         'createModelResponse',
         200,
         {},
-        'gpt-4o'
+        'gpt-4o',
       );
       expect(result).toEqual(mockResponsesResult);
     });
@@ -580,7 +596,7 @@ describe('Priorai (Router) integration tests', () => {
         responsesParams,
         undefined,
         undefined,
-        'createModelResponse'
+        'createModelResponse',
       );
     });
 
@@ -593,11 +609,11 @@ describe('Priorai (Router) integration tests', () => {
       const strategyResult: StrategyResult = {
         success: true,
         response: mockResponsesResult,
-      // provider not set
-    };
+        // provider not set
+      };
 
-    mockSingleExecute.mockResolvedValue(strategyResult);
-    mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+      mockSingleExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
       const priorai = new Priorai(config);
       await priorai.responses.create(responsesParams);
@@ -608,12 +624,12 @@ describe('Priorai (Router) integration tests', () => {
         'createModelResponse',
         200,
         {},
-        'gpt-4o'
+        'gpt-4o',
       );
     });
 
-  it('correctly passes retry and timeout', async () => {
-    const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
+    it('correctly passes retry and timeout', async () => {
+      const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
       const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
@@ -641,7 +657,7 @@ describe('Priorai (Router) integration tests', () => {
         responsesParams,
         retryConfig,
         45000,
-        'createModelResponse'
+        'createModelResponse',
       );
     });
   });
@@ -684,9 +700,9 @@ describe('Priorai (Router) integration tests', () => {
       expect(result).toEqual(mockCountTokensResponse);
     });
 
-  it('uses messagesTargets instead of default targets', async () => {
-    await setupMocks();
-    const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+    it('uses messagesTargets instead of default targets', async () => {
+      await setupMocks();
+      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
@@ -709,7 +725,7 @@ describe('Priorai (Router) integration tests', () => {
         countTokensParams,
         'anthropic',
         messagesTargets[0],
-        'messagesCountTokens'
+        'messagesCountTokens',
       );
     });
 

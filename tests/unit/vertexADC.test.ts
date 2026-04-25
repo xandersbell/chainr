@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock fs/os/path to avoid reading the real filesystem
 vi.mock('fs');
@@ -33,7 +32,8 @@ const mockServiceAccountCredentials = {
   type: 'service_account',
   project_id: 'test-sa-project',
   private_key_id: 'key-id-123',
-  private_key: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...\n-----END PRIVATE KEY-----\n',
+  private_key:
+    '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...\n-----END PRIVATE KEY-----\n',
   client_email: 'test@test-sa-project.iam.gserviceaccount.com',
   token_uri: 'https://oauth2.googleapis.com/token',
 };
@@ -56,12 +56,8 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
       const customPath = '/custom/path/credentials.json';
       process.env.GOOGLE_APPLICATION_CREDENTIALS = customPath;
 
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === customPath
-      );
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify(mockAuthorizedUserCredentials)
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === customPath);
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockAuthorizedUserCredentials));
       mockFetch.mockResolvedValue({
         json: async () => ({ access_token: 'adc-token-from-env' }),
       });
@@ -78,12 +74,8 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
       process.env.GOOGLE_APPLICATION_CREDENTIALS = '/nonexistent/path.json';
       const defaultPath = '/home/testuser/.config/gcloud/application_default_credentials.json';
 
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === defaultPath
-      );
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify(mockAuthorizedUserCredentials)
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === defaultPath);
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockAuthorizedUserCredentials));
       mockFetch.mockResolvedValue({
         json: async () => ({ access_token: 'adc-token-default' }),
       });
@@ -104,9 +96,7 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
 
     it('returns null when credential file content is invalid', async () => {
       const defaultPath = '/home/testuser/.config/gcloud/application_default_credentials.json';
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === defaultPath
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === defaultPath);
       vi.mocked(fs.readFileSync).mockReturnValue('not valid json{{{');
 
       const result = await getAccessTokenFromADC();
@@ -118,12 +108,8 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
   describe('authorized_user type', () => {
     beforeEach(() => {
       const defaultPath = '/home/testuser/.config/gcloud/application_default_credentials.json';
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === defaultPath
-      );
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify(mockAuthorizedUserCredentials)
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === defaultPath);
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockAuthorizedUserCredentials));
     });
 
     it('exchanges refresh_token for access_token', async () => {
@@ -142,7 +128,7 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        })
+        }),
       );
 
       // Verify body contains correct parameters
@@ -178,28 +164,24 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
   describe('service_account type', () => {
     it('uses JWT signing flow to obtain token and returns project_id', async () => {
       const defaultPath = '/home/testuser/.config/gcloud/application_default_credentials.json';
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === defaultPath
-      );
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify(mockServiceAccountCredentials)
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === defaultPath);
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockServiceAccountCredentials));
 
-    // getAccessToken internally calls fetch to exchange JWT→access_token
-    // Since crypto.subtle may not be available in the test environment,
-    // here we only verify that the service_account path is correctly identified
-    // The actual JWT signing logic has been verified in getAccessToken
+      // getAccessToken internally calls fetch to exchange JWT→access_token
+      // Since crypto.subtle may not be available in the test environment,
+      // here we only verify that the service_account path is correctly identified
+      // The actual JWT signing logic has been verified in getAccessToken
       mockFetch.mockResolvedValue({
         json: async () => ({ access_token: 'sa-access-token' }),
       });
 
-    // service_account type goes through getAccessToken,
-    // but due to crypto.subtle.importKey behavior in Node test environment,
-    // this may return null because the mocked private_key is invalid
+      // service_account type goes through getAccessToken,
+      // but due to crypto.subtle.importKey behavior in Node test environment,
+      // this may return null because the mocked private_key is invalid
       const result = await getAccessTokenFromADC();
 
-    // Regardless of whether token acquisition succeeds, at least the path dispatch is verified
-    // If crypto.subtle is available and the key is valid, it should return token + projectId
+      // Regardless of whether token acquisition succeeds, at least the path dispatch is verified
+      // If crypto.subtle is available and the key is valid, it should return token + projectId
       if (result) {
         expect(result.projectId).toBe('test-sa-project');
       }
@@ -209,11 +191,9 @@ describe('Vertex AI ADC (Application Default Credentials)', () => {
   describe('Unsupported credential types', () => {
     it('returns null for unknown type', async () => {
       const defaultPath = '/home/testuser/.config/gcloud/application_default_credentials.json';
-      vi.mocked(fs.existsSync).mockImplementation(
-        (p) => p === defaultPath
-      );
+      vi.mocked(fs.existsSync).mockImplementation((p) => p === defaultPath);
       vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify({ type: 'external_account', audience: '...' })
+        JSON.stringify({ type: 'external_account', audience: '...' }),
       );
 
       const result = await getAccessTokenFromADC();

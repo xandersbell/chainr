@@ -2,7 +2,7 @@
  * Tool Calling alignment tests
  * Verify tools/tool_choice request transformation and tool_calls response passthrough across providers
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   DeepSeekChatCompleteConfig,
   DeepSeekChatCompleteResponseTransform,
@@ -122,7 +122,7 @@ describe('Tool Calling — DeepSeek', () => {
         mockResponse as any,
         200,
         new Headers(),
-        false
+        false,
       );
 
       expect(result).toHaveProperty('choices');
@@ -162,7 +162,7 @@ describe('Tool Calling — DeepSeek', () => {
         mockResponse as any,
         200,
         new Headers(),
-        false
+        false,
       );
 
       const choices = (result as any).choices;
@@ -200,7 +200,7 @@ describe('Tool Calling — DeepSeek', () => {
         '',
         {},
         false,
-        {} as any
+        {} as any,
       );
 
       const parsed = JSON.parse((result as string).replace('data: ', '').trim());
@@ -234,7 +234,7 @@ describe('Tool Calling — DeepSeek', () => {
         '',
         {},
         false,
-        {} as any
+        {} as any,
       );
 
       const parsed = JSON.parse((result as string).replace('data: ', '').trim());

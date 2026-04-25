@@ -2,7 +2,7 @@
  * Nested strategy tests
  * Verify fallback-within-loadbalance, config recursive inheritance, etc.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../src/core/RetryHandler', () => ({
   retryRequest: vi.fn(),
@@ -13,12 +13,12 @@ vi.mock('../../../src/core/providerRequest', () => ({
   buildProviderRequest: vi.fn(),
 }));
 
+import { buildProviderRequest } from '../../../src/core/providerRequest';
+import { retryRequest } from '../../../src/core/RetryHandler';
+import { Priorai } from '../../../src/core/Router';
 import { FallbackStrategy } from '../../../src/core/strategies/FallbackStrategy';
 import { LoadBalanceStrategy } from '../../../src/core/strategies/LoadBalanceStrategy';
 import { SingleStrategy } from '../../../src/core/strategies/SingleStrategy';
-import { retryRequest } from '../../../src/core/RetryHandler';
-import { buildProviderRequest } from '../../../src/core/providerRequest';
-import { Priorai } from '../../../src/core/Router';
 
 describe('Nested strategies', () => {
   beforeEach(() => {
@@ -71,9 +71,7 @@ describe('Nested strategies', () => {
       const targets = [
         {
           strategy: 'loadbalance' as const,
-          targets: [
-            { provider: 'openai', apiKey: 'key-1', weight: 1 },
-          ],
+          targets: [{ provider: 'openai', apiKey: 'key-1', weight: 1 }],
         },
         { provider: 'anthropic', apiKey: 'key-2' },
       ];
@@ -132,9 +130,7 @@ describe('Nested strategies', () => {
             {
               weight: 100,
               strategy: 'single' as const,
-              targets: [
-                { provider: 'openai', apiKey: 'key-deep' },
-              ],
+              targets: [{ provider: 'openai', apiKey: 'key-deep' }],
             },
           ],
         },
@@ -177,12 +173,12 @@ describe('Nested strategies', () => {
       expect(buildProviderRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4o',
-          temperature: 0.8,  // child overrides
-          top_p: 0.9,        // parent preserved
+          temperature: 0.8, // child overrides
+          top_p: 0.9, // parent preserved
         }),
         'openai',
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -214,7 +210,7 @@ describe('Nested strategies', () => {
         expect.anything(),
         expect.anything(),
         { attempts: 2 }, // child's retry
-        undefined
+        undefined,
       );
     });
 
@@ -246,7 +242,7 @@ describe('Nested strategies', () => {
         expect.anything(),
         expect.anything(),
         undefined,
-        5000 // child's timeout
+        5000, // child's timeout
       );
     });
 
@@ -261,9 +257,7 @@ describe('Nested strategies', () => {
         {
           strategy: 'single' as const,
           timeout: 15000,
-          targets: [
-            { provider: 'openai', apiKey: 'key-1' },
-          ],
+          targets: [{ provider: 'openai', apiKey: 'key-1' }],
         },
       ];
       const params = { model: 'gpt-4o', messages: [] };
@@ -274,53 +268,59 @@ describe('Nested strategies', () => {
         expect.anything(),
         expect.anything(),
         undefined,
-        15000 // inherit from parent
+        15000, // inherit from parent
       );
     });
   });
 
   describe('Config validation', () => {
     it('throws when nested target has strategy but no targets', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { strategy: 'loadbalance' },
-        ],
-      })).toThrow('requires non-empty "targets" array');
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ strategy: 'loadbalance' }],
+          }),
+      ).toThrow('requires non-empty "targets" array');
     });
 
     it('throws when nested target has targets but no strategy', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { targets: [{ provider: 'openai' }] },
-        ],
-      })).toThrow('missing "strategy" field');
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ targets: [{ provider: 'openai' }] }],
+          }),
+      ).toThrow('missing "strategy" field');
     });
 
     it('throws when nested target uses unknown strategy', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { strategy: 'roundrobin', targets: [{ provider: 'openai' }] },
-        ],
-      })).toThrow('unknown strategy: roundrobin');
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ strategy: 'roundrobin', targets: [{ provider: 'openai' }] }],
+          }),
+      ).toThrow('unknown strategy: roundrobin');
     });
 
     it('valid nested config does not throw', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          {
-            strategy: 'loadbalance',
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
             targets: [
-              { provider: 'openai', apiKey: 'key-1', weight: 3 },
-              { provider: 'openai', apiKey: 'key-2', weight: 1 },
+              {
+                strategy: 'loadbalance',
+                targets: [
+                  { provider: 'openai', apiKey: 'key-1', weight: 3 },
+                  { provider: 'openai', apiKey: 'key-2', weight: 1 },
+                ],
+              },
+              { provider: 'anthropic', apiKey: 'key-3' },
             ],
-          },
-          { provider: 'anthropic', apiKey: 'key-3' },
-        ],
-      })).not.toThrow();
+          }),
+      ).not.toThrow();
     });
   });
 });

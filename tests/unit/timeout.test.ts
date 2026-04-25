@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StrategyResult } from '../../src/core/types';
 
 const mockFallbackExecute = vi.fn();
@@ -53,7 +53,7 @@ describe('Timeout propagation', () => {
       expect.anything(),
       undefined,
       15000,
-      'chatComplete'
+      'chatComplete',
     );
   });
 
@@ -77,7 +77,7 @@ describe('Timeout propagation', () => {
       expect.anything(),
       undefined,
       undefined,
-      'chatComplete'
+      'chatComplete',
     );
   });
 
@@ -104,7 +104,7 @@ describe('Timeout propagation', () => {
       expect.anything(),
       retryConfig,
       60000,
-      'chatComplete'
+      'chatComplete',
     );
   });
 });

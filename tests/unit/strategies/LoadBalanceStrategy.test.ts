@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LoadBalanceStrategy } from '../../../src/core/strategies/LoadBalanceStrategy';
 
 vi.mock('../../../src/core/RetryHandler', () => ({
@@ -9,8 +9,8 @@ vi.mock('../../../src/core/providerRequest', () => ({
   buildProviderRequest: vi.fn(),
 }));
 
-import { retryRequest } from '../../../src/core/RetryHandler';
 import { buildProviderRequest } from '../../../src/core/providerRequest';
+import { retryRequest } from '../../../src/core/RetryHandler';
 
 describe('LoadBalanceStrategy', () => {
   let strategy: LoadBalanceStrategy;
@@ -26,9 +26,9 @@ describe('LoadBalanceStrategy', () => {
 
   describe('execute()', () => {
     it('should throw Error("No targets provided for load balance") when targets array is empty', async () => {
-      await expect(
-        strategy.execute([], { messages: [], model: 'test' })
-      ).rejects.toThrow('No targets provided for load balance');
+      await expect(strategy.execute([], { messages: [], model: 'test' })).rejects.toThrow(
+        'No targets provided for load balance',
+      );
     });
   });
 
@@ -94,10 +94,7 @@ describe('LoadBalanceStrategy', () => {
     });
 
     it('target without weight property defaults to weight=1', async () => {
-      const targets = [
-        { provider: 'openai' },
-        { provider: 'anthropic' },
-      ];
+      const targets = [{ provider: 'openai' }, { provider: 'anthropic' }];
       vi.spyOn(Math, 'random').mockReturnValue(0.4);
 
       (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({

@@ -1,6 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { isOpenAICompatibleProvider, createPassthroughStream } from '../../../src/core/transformOpenAIStream';
-import { createOpenAIStream } from '../../../src/core/transformOpenAIStream';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createOpenAIStream,
+  createPassthroughStream,
+  isOpenAICompatibleProvider,
+} from '../../../src/core/transformOpenAIStream';
 
 describe('transformOpenAIStream', () => {
   beforeEach(() => {
@@ -57,7 +60,11 @@ describe('transformOpenAIStream', () => {
     it('creates ReadableStream from mock Response', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('data: {"id":"test","object":"chat.completion.chunk","created":123,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'data: {"id":"test","object":"chat.completion.chunk","created":123,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}\n\n',
+            ),
+          );
           controller.close();
         },
       });
@@ -75,14 +82,18 @@ describe('transformOpenAIStream', () => {
       expect(value).toMatchObject({
         id: 'test',
         object: 'chat.completion.chunk',
-        choices: [{ delta: { content: 'Hi' } }]
+        choices: [{ delta: { content: 'Hi' } }],
       });
     });
 
     it('handles DONE signal gracefully', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('data: {"id":"test","object":"chat.completion.chunk","created":123,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'data: {"id":"test","object":"chat.completion.chunk","created":123,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}\n\n',
+            ),
+          );
           controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
           controller.close();
         },
