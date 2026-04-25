@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const LEPTON_API_URL = 'https://api.lepton.ai';
 

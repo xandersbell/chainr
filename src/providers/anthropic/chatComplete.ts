@@ -1,26 +1,19 @@
 import { fileExtensionMimeTypeMap } from '../../globals';
 import {
-  Params,
-  Message,
-  ContentType,
+  type ContentType,
+  type Message,
+  type Params,
   SYSTEM_MESSAGE_ROLES,
-  ToolChoiceObject,
+  type ToolChoiceObject,
 } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError, transformFinishReason } from '../utils';
+import type {
+  ANTHROPIC_STOP_REASON,
   AnthropicErrorObject,
   AnthropicErrorResponse,
   AnthropicStreamState,
-  ANTHROPIC_STOP_REASON,
 } from './types';
-import {
-  generateInvalidProviderResponseError,
-  transformFinishReason,
-} from '../utils';
 import { AnthropicErrorResponseTransform } from './utils';
 
 // TODO: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -42,7 +35,7 @@ interface AnthropicTool {
     $defs: Record<string, any>;
   };
   type?: string;
-  // 约束解码：保证 tool call 参数严格符合 schema
+  // Constrained decoding: ensures tool call parameters strictly conform to the schema
   strict?: boolean;
   display_width_px?: number;
   display_height_px?: number;
@@ -135,16 +128,13 @@ type AnthropicMessageContentItem =
   | AnthropicBase64PdfContentItem
   | AnthropicPlainTextContentItem;
 
-// 构建 Anthropic output_config：将 response_format (json_schema) 和 reasoning_effort 映射
+// Build Anthropic output_config: map response_format (json_schema) and reasoning_effort
 const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null => {
   const outputConfig: Record<string, any> = {};
   const responseFormat = params.response_format;
 
-  // json_schema → output_config.schema
-  if (
-    typeof responseFormat === 'object' &&
-    responseFormat?.type === 'json_schema'
-  ) {
+  // Map json_schema to output_config.schema
+  if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     const jsonSchema = (responseFormat as any)?.json_schema;
     if (jsonSchema?.schema) {
       outputConfig.schema = jsonSchema.schema;
@@ -154,7 +144,7 @@ const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null 
     }
   }
 
-  // reasoning_effort → output_config.effort
+  // Map reasoning_effort to output_config.effort
   if (params.reasoning_effort) {
     outputConfig.effort = params.reasoning_effort;
   }
@@ -168,21 +158,19 @@ interface AnthropicMessage extends Message {
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
-  let transformedContent: AnthropicContentItem[] = [];
-  let inputContent: ContentType[] | string | undefined =
-    (msg.content_blocks ?? msg.content) as ContentType[] | string | undefined;
-  const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
+  const transformedContent: AnthropicContentItem[] = [];
+  const inputContent: ContentType[] | string | undefined = (msg.content_blocks ?? msg.content) as
+    | ContentType[]
+    | string
+    | undefined;
+  const containsToolCalls = msg.tool_calls?.length;
 
   if (inputContent && typeof inputContent === 'string') {
     transformedContent.push({
       type: 'text',
       text: inputContent,
     });
-  } else if (
-    inputContent &&
-    typeof inputContent === 'object' &&
-    inputContent.length
-  ) {
+  } else if (inputContent && typeof inputContent === 'object' && inputContent.length) {
     inputContent.forEach((item) => {
       if (item.type !== 'tool_use') {
         transformedContent.push(item as AnthropicContentItem);
@@ -195,9 +183,7 @@ const transformAssistantMessage = (msg: Message): AnthropicMessage => {
         type: 'tool_use',
         name: toolCall.function.name,
         id: toolCall.id,
-        input: toolCall.function.arguments?.length
-          ? JSON.parse(toolCall.function.arguments)
-          : {},
+        input: toolCall.function.arguments?.length ? JSON.parse(toolCall.function.arguments) : {},
         ...(toolCall.cache_control && {
           cache_control: toolCall.cache_control,
         }),
@@ -226,10 +212,9 @@ const transformToolMessage = (msg: Message): AnthropicMessage => {
 
 const transformAndAppendImageContentItem = (
   item: ContentType,
-  transformedMessage: AnthropicMessage
+  transformedMessage: AnthropicMessage,
 ) => {
-  if (!item?.image_url?.url || typeof transformedMessage.content === 'string')
-    return;
+  if (!item?.image_url?.url || typeof transformedMessage.content === 'string') return;
   const url = item.image_url.url;
   const isBase64EncodedImage = url.startsWith('data:');
   if (!isBase64EncodedImage) {
@@ -249,8 +234,7 @@ const transformAndAppendImageContentItem = (
       if (mediaTypeParts.length === 2 && base64Image) {
         const mediaType = mediaTypeParts[1];
         transformedMessage.content.push({
-          type:
-            mediaType === fileExtensionMimeTypeMap.pdf ? 'document' : 'image',
+          type: mediaType === fileExtensionMimeTypeMap.pdf ? 'document' : 'image',
           source: {
             type: 'base64',
             media_type: mediaType,
@@ -267,11 +251,10 @@ const transformAndAppendImageContentItem = (
 
 const transformAndAppendFileContentItem = (
   item: ContentType,
-  transformedMessage: AnthropicMessage
+  transformedMessage: AnthropicMessage,
 ) => {
   const mimeType =
-    (item.file?.mime_type as keyof typeof fileExtensionMimeTypeMap) ||
-    fileExtensionMimeTypeMap.pdf;
+    (item.file?.mime_type as keyof typeof fileExtensionMimeTypeMap) || fileExtensionMimeTypeMap.pdf;
   if (item.file?.file_url) {
     transformedMessage.content.push({
       type: 'document',
@@ -281,8 +264,7 @@ const transformAndAppendFileContentItem = (
       },
     });
   } else if (item.file?.file_data) {
-    const contentType =
-      mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
+    const contentType = mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
     transformedMessage.content.push({
       type: 'document',
       source: {
@@ -305,9 +287,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let messages: AnthropicMessage[] = [];
+        const messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer')) return;
 
@@ -316,11 +298,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             } else if (msg.role === 'tool') {
               // even though anthropic supports images in tool results, openai doesn't support it yet
               messages.push(transformToolMessage(msg));
-            } else if (
-              msg.content &&
-              typeof msg.content === 'object' &&
-              msg.content.length
-            ) {
+            } else if (msg.content && typeof msg.content === 'object' && msg.content.length) {
               const transformedMessage: AnthropicMessage = {
                 role: msg.role,
                 content: [],
@@ -357,9 +335,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'system',
       required: false,
       transform: (params: Params) => {
-        let systemMessages: AnthropicMessageContentItem[] = [];
+        const systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer') &&
@@ -398,7 +376,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'tools',
     required: false,
     transform: (params: Params) => {
-      let tools: AnthropicTool[] = [];
+      const tools: AnthropicTool[] = [];
       if (params.tools) {
         params.tools.forEach((tool) => {
           if (tool.function) {
@@ -407,11 +385,15 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
               description: tool.function?.description || '',
               input_schema: {
                 type: (tool.function.parameters?.['type'] as string) || 'object',
-                properties: (tool.function.parameters?.['properties'] as Record<string, { type: string; description: string }>) || {},
+                properties:
+                  (tool.function.parameters?.['properties'] as Record<
+                    string,
+                    { type: string; description: string }
+                  >) || {},
                 required: (tool.function.parameters?.['required'] as string[]) || [],
                 $defs: (tool.function.parameters?.['$defs'] as Record<string, any>) || {},
               },
-              // strict 约束解码透传
+              // Pass through strict constrained decoding
               ...(tool.function.strict !== undefined && {
                 strict: tool.function.strict,
               }),
@@ -503,7 +485,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'thinking',
     required: false,
   },
-  // output_config：将 response_format (json_schema) 和 reasoning_effort 映射到 Anthropic 格式
+  // output_config: map response_format (json_schema) and reasoning_effort to Anthropic format
   response_format: {
     param: 'output_config',
     required: false,
@@ -580,12 +562,12 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
     response: AnthropicChatCompleteResponse | AnthropicErrorResponse,
     responseStatus: number,
     responseHeaders: Headers,
-    strictOpenAiCompliance: boolean
+    strictOpenAiCompliance: boolean,
   ) => ChatCompletionResponse | ErrorResponse = (
     response,
     responseStatus,
     _responseHeaders,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
   ) => {
     if (responseStatus !== 200 && 'error' in response) {
       return AnthropicErrorResponseTransform(response, provider);
@@ -599,15 +581,12 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         cache_read_input_tokens,
       } = response?.usage ?? {};
 
-      // prompt_tokens 应包含缓存 token，与 total_tokens 计算一致
+      // prompt_tokens should include cache tokens for consistent total_tokens calculation
       const promptTokens =
-        input_tokens +
-        (cache_read_input_tokens ?? 0) +
-        (cache_creation_input_tokens ?? 0);
+        input_tokens + (cache_read_input_tokens ?? 0) + (cache_creation_input_tokens ?? 0);
       const totalTokens = promptTokens + output_tokens;
 
-      const shouldSendCacheUsage =
-        cache_creation_input_tokens || cache_read_input_tokens;
+      const shouldSendCacheUsage = cache_creation_input_tokens || cache_read_input_tokens;
 
       let content: string = '';
       response.content.forEach((item) => {
@@ -616,7 +595,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         }
       });
 
-      let toolCalls: any = [];
+      const toolCalls: any = [];
       response.content.forEach((item) => {
         if (item.type === 'tool_use') {
           toolCalls.push({
@@ -642,18 +621,13 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
               role: 'assistant',
               content,
               ...(!strictOpenAiCompliance && {
-                content_blocks: response.content.filter(
-                  (item) => item.type !== 'tool_use'
-                ),
+                content_blocks: response.content.filter((item) => item.type !== 'tool_use'),
               }),
               tool_calls: toolCalls.length ? toolCalls : undefined,
             },
             index: 0,
             logprobs: null,
-            finish_reason: transformFinishReason(
-              response.stop_reason,
-              strictOpenAiCompliance
-            ),
+            finish_reason: transformFinishReason(response.stop_reason, strictOpenAiCompliance),
           },
         ],
         usage: {
@@ -678,20 +652,15 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
 
 export const getAnthropicStreamChunkTransform = (
   provider: string,
-  chunkPatternsToIgnore?: string[]
+  chunkPatternsToIgnore?: string[],
 ) => {
   const AnthropicChatCompleteStreamChunkTransform: (
     response: string,
     fallbackId: string,
     streamState: AnthropicStreamState,
-    _strictOpenAiCompliance: boolean
-  ) => string | undefined = (
-    responseChunk,
-    fallbackId,
-    streamState,
-    strictOpenAiCompliance
-  ) => {
-    if (streamState.toolIndex == undefined) {
+    _strictOpenAiCompliance: boolean,
+  ) => string | undefined = (responseChunk, fallbackId, streamState, strictOpenAiCompliance) => {
+    if (streamState.toolIndex === undefined) {
       streamState.toolIndex = -1;
     }
     let chunk = responseChunk.trim();
@@ -741,12 +710,10 @@ export const getAnthropicStreamChunkTransform = (
 
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
-      // prompt_tokens 应包含缓存 token
+      // prompt_tokens should include cache tokens
       const inputTokens = parsedChunk.message?.usage?.input_tokens ?? 0;
-      const cacheReadTokens =
-        parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
-      const cacheCreationTokens =
-        parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
+      const cacheReadTokens = parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
+      const cacheCreationTokens = parsedChunk.message?.usage?.cache_creation_input_tokens ?? 0;
       const shouldSendCacheUsage = cacheReadTokens || cacheCreationTokens;
       streamState.usage = {
         prompt_tokens: inputTokens + cacheReadTokens + cacheCreationTokens,
@@ -777,7 +744,7 @@ export const getAnthropicStreamChunkTransform = (
       );
     }
 
-    // final chunk — 计算最终 token 统计
+    // final chunk — compute final token statistics
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
       const promptTokens = streamState?.usage?.prompt_tokens ?? 0;
       const completionTokens = parsedChunk.usage.output_tokens ?? 0;
@@ -795,7 +762,7 @@ export const getAnthropicStreamChunkTransform = (
               delta: {},
               finish_reason: transformFinishReason(
                 parsedChunk.delta?.stop_reason,
-                strictOpenAiCompliance
+                strictOpenAiCompliance,
               ),
             },
           ],
@@ -813,14 +780,12 @@ export const getAnthropicStreamChunkTransform = (
 
     const toolCalls = [];
     const isToolBlockStart: boolean =
-      parsedChunk.type === 'content_block_start' &&
-      parsedChunk.content_block?.type === 'tool_use';
+      parsedChunk.type === 'content_block_start' && parsedChunk.content_block?.type === 'tool_use';
     if (isToolBlockStart) {
       streamState.toolIndex = streamState.toolIndex + 1;
     }
     const isToolBlockDelta: boolean =
-      parsedChunk.type === 'content_block_delta' &&
-      parsedChunk.delta?.partial_json != undefined;
+      parsedChunk.type === 'content_block_delta' && parsedChunk.delta?.partial_json !== undefined;
 
     if (isToolBlockStart && parsedChunk.content_block) {
       toolCalls.push({

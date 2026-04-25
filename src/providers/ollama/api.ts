@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const OllamaAPIConfig: ProviderAPIConfig = {
   headers: () => {
@@ -12,11 +12,7 @@ const OllamaAPIConfig: ProviderAPIConfig = {
     const { urlToFetch } = providerOptions;
     if (fn === 'proxy' && urlToFetch && urlToFetch?.indexOf('/api/chat') > -1) {
       mappedFn = 'chatComplete';
-    } else if (
-      fn === 'proxy' &&
-      urlToFetch &&
-      urlToFetch?.indexOf('/embeddings') > -1
-    ) {
+    } else if (fn === 'proxy' && urlToFetch && urlToFetch?.indexOf('/embeddings') > -1) {
       mappedFn = 'embed';
     }
 

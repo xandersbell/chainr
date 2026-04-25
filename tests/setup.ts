@@ -2,7 +2,7 @@ import type { RetryResult, TransformResult } from '../src/core/types';
 
 export function createMockFetch(
   mockResponse: Record<string, unknown>,
-  ok: boolean = true
+  ok: boolean = true,
 ): typeof fetch {
   return vi.fn().mockResolvedValue({
     ok,
@@ -15,20 +15,26 @@ export function createMockFetch(
 export function createMockRetryRequest(
   success: boolean,
   responseData?: Record<string, unknown>,
-  errorMsg?: string
+  errorMsg?: string,
 ): typeof import('../src/core/RetryHandler').retryRequest {
   const result: RetryResult = {
     success,
     response: responseData || { status: 200, data: { id: 'test', choices: [] } },
     error: errorMsg,
   };
-  return vi.fn().mockResolvedValue(result) as unknown as typeof import('../src/core/RetryHandler').retryRequest;
+  return vi
+    .fn()
+    .mockResolvedValue(result) as unknown as typeof import('../src/core/RetryHandler').retryRequest;
 }
 
 export function createMockBuildProviderRequest(
-  result: TransformResult
+  result: TransformResult,
 ): typeof import('../src/core/providerRequest').buildProviderRequest {
-  return vi.fn().mockResolvedValue(result) as unknown as typeof import('../src/core/providerRequest').buildProviderRequest;
+  return vi
+    .fn()
+    .mockResolvedValue(
+      result,
+    ) as unknown as typeof import('../src/core/providerRequest').buildProviderRequest;
 }
 
 export function mockMathRandom(value: number): () => void {
@@ -50,7 +56,7 @@ export function createMockResponse(status: number, data: unknown): Record<string
 }
 
 export function createSuccessChatCompletionResponse(
-  content: string = 'Hello, world!'
+  content: string = 'Hello, world!',
 ): Record<string, unknown> {
   return {
     id: 'chatcmpl-123',
@@ -76,7 +82,7 @@ export function createSuccessChatCompletionResponse(
 }
 
 export function createAnthropicResponse(
-  content: string = 'Hello, world!'
+  content: string = 'Hello, world!',
 ): Record<string, unknown> {
   return {
     id: 'msg_123',
@@ -97,9 +103,7 @@ export function createAnthropicResponse(
   };
 }
 
-export function createVertexAIResponse(
-  content: string = 'Hello, world!'
-): Record<string, unknown> {
+export function createVertexAIResponse(content: string = 'Hello, world!'): Record<string, unknown> {
   return {
     candidates: [
       {

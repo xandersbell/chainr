@@ -1,18 +1,14 @@
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  EmbedResponse,
-  EmbedResponseData,
-  EmbedParams,
-} from '../../types/embedRequestBody';
-import { GoogleErrorResponse, GoogleEmbedResponse } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
+import type { EmbedParams, EmbedResponse, EmbedResponseData } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import { GoogleErrorResponseTransform } from './utils';
 import {
   transformEmbeddingInputs,
   transformEmbeddingsParameters,
 } from './transformGenerationConfig';
-import { Params } from '../../types/requestBody';
+import type { GoogleEmbedResponse, GoogleErrorResponse } from './types';
+import { GoogleErrorResponseTransform } from './utils';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',
@@ -45,8 +41,7 @@ export const GoogleEmbedConfig: ProviderConfig = {
   dimensions: {
     param: 'parameters',
     required: false,
-    transform: (params: GoogleEmbedParams) =>
-      transformEmbeddingsParameters(params),
+    transform: (params: GoogleEmbedParams) => transformEmbeddingsParameters(params),
   },
 };
 
@@ -69,19 +64,17 @@ export const GoogleEmbedResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse
-    );
+    const errorResposne = GoogleErrorResponseTransform(response as GoogleErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
@@ -98,15 +91,13 @@ export const GoogleEmbedResponseTransform: (
           image_embedding: prediction.imageEmbedding,
         }),
         ...(prediction.videoEmbeddings && {
-          video_embeddings: prediction.videoEmbeddings.map(
-            (videoEmbedding, idx) => ({
-              object: 'embedding',
-              embedding: videoEmbedding.embedding,
-              index: idx,
-              start_offset: videoEmbedding.startOffsetSec,
-              end_offset: videoEmbedding.endOffsetSec,
-            })
-          ),
+          video_embeddings: prediction.videoEmbeddings.map((videoEmbedding, idx) => ({
+            object: 'embedding',
+            embedding: videoEmbedding.embedding,
+            index: idx,
+            start_offset: videoEmbedding.startOffsetSec,
+            end_offset: videoEmbedding.endOffsetSec,
+          })),
         }),
         ...(prediction.textEmbedding && {
           embedding: prediction.textEmbedding,

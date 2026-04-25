@@ -1,5 +1,5 @@
 import { MISTRAL_AI } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import MistralAIAPIConfig from './api';
 import {
   GetMistralAIChatCompleteResponseTransform,
@@ -14,8 +14,7 @@ const MistralAIConfig: ProviderConfigs = {
   api: MistralAIAPIConfig,
   responseTransforms: {
     chatComplete: GetMistralAIChatCompleteResponseTransform(MISTRAL_AI),
-    'stream-chatComplete':
-      GetMistralAIChatCompleteStreamChunkTransform(MISTRAL_AI),
+    'stream-chatComplete': GetMistralAIChatCompleteStreamChunkTransform(MISTRAL_AI),
     embed: MistralAIEmbedResponseTransform,
   },
 };

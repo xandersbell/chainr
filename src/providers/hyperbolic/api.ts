@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const HYPERBOLIC_API_URL = 'https://api.hyperbolic.xyz';
 

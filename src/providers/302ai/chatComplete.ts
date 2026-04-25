@@ -1,10 +1,6 @@
 import { THREE_ZERO_TWO_AI } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 export const AI302ChatCompleteConfig: ProviderConfig = {
@@ -85,7 +81,7 @@ interface AI302StreamChunk {
 
 export const AI302ChatCompleteResponseTransform: (
   response: AI302ChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
     return OpenAIErrorResponseTransform(response, THREE_ZERO_TWO_AI);
@@ -117,9 +113,9 @@ export const AI302ChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, THREE_ZERO_TWO_AI);
 };
 
-export const AI302ChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const AI302ChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

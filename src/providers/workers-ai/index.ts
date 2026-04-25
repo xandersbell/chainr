@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import WorkersAiAPIConfig from './api';
 import {
   WorkersAiChatCompleteConfig,
@@ -11,6 +11,7 @@ import {
   WorkersAiCompleteStreamChunkTransform,
 } from './complete';
 import { WorkersAiEmbedConfig, WorkersAiEmbedResponseTransform } from './embed';
+
 const WorkersAiConfig: ProviderConfigs = {
   complete: WorkersAiCompleteConfig,
   chatComplete: WorkersAiChatCompleteConfig,

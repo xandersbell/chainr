@@ -1,13 +1,27 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { buildProviderRequest, transformUsingProviderConfig } from '../../src/core/providerRequest';
 import Providers from '../../src/providers';
 
 describe('Provider Registry', () => {
   it('should have all expected providers registered', () => {
     const expectedProviders = [
-      'openai', 'anthropic', 'cohere', 'azure-openai', 'azure-ai',
-      'github', 'vertex-ai', 'together-ai', 'perplexity-ai', 'mistral-ai',
-      'groq', 'deepseek', 'openrouter', 'bedrock', 'nomic', 'jina', 'voyage',
+      'openai',
+      'anthropic',
+      'cohere',
+      'azure-openai',
+      'azure-ai',
+      'github',
+      'vertex-ai',
+      'together-ai',
+      'perplexity-ai',
+      'mistral-ai',
+      'groq',
+      'deepseek',
+      'openrouter',
+      'bedrock',
+      'nomic',
+      'jina',
+      'voyage',
     ];
     for (const p of expectedProviders) {
       expect(Providers[p], `Provider ${p} should be registered`).toBeDefined();
@@ -22,8 +36,14 @@ describe('Provider Registry', () => {
 
   it('should have chatComplete config for chat providers', () => {
     const chatProviders = [
-      'openai', 'anthropic', 'cohere', 'groq', 'deepseek',
-      'together-ai', 'mistral-ai', 'openrouter',
+      'openai',
+      'anthropic',
+      'cohere',
+      'groq',
+      'deepseek',
+      'together-ai',
+      'mistral-ai',
+      'openrouter',
     ];
     for (const p of chatProviders) {
       const config = Providers[p];
@@ -44,7 +64,7 @@ describe('transformUsingProviderConfig', () => {
     const result = transformUsingProviderConfig(
       config,
       { model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }], temperature: 0.7 },
-      { provider: 'openai' }
+      { provider: 'openai' },
     );
 
     expect(result.model).toBe('gpt-4o');
@@ -57,11 +77,9 @@ describe('transformUsingProviderConfig', () => {
       temperature: { param: 'temperature', min: 0, max: 2 },
     };
 
-    const result = transformUsingProviderConfig(
-      config,
-      { temperature: 5 } as any,
-      { provider: 'openai' }
-    );
+    const result = transformUsingProviderConfig(config, { temperature: 5 } as any, {
+      provider: 'openai',
+    });
 
     expect(result.temperature).toBe(2);
   });
@@ -71,11 +89,7 @@ describe('transformUsingProviderConfig', () => {
       model: { param: 'model', required: true, default: 'gpt-3.5-turbo' },
     };
 
-    const result = transformUsingProviderConfig(
-      config,
-      {} as any,
-      { provider: 'openai' }
-    );
+    const result = transformUsingProviderConfig(config, {} as any, { provider: 'openai' });
 
     expect(result.model).toBe('gpt-3.5-turbo');
   });
@@ -85,11 +99,9 @@ describe('transformUsingProviderConfig', () => {
       temperature: { param: 'config.temperature' },
     };
 
-    const result = transformUsingProviderConfig(
-      config,
-      { temperature: 0.5 } as any,
-      { provider: 'test' }
-    );
+    const result = transformUsingProviderConfig(config, { temperature: 0.5 } as any, {
+      provider: 'test',
+    });
 
     expect(result.config.temperature).toBe(0.5);
   });
@@ -104,7 +116,7 @@ describe('buildProviderRequest', () => {
         temperature: 0.7,
       },
       'openai',
-      { provider: 'openai', apiKey: 'sk-test-key' }
+      { provider: 'openai', apiKey: 'sk-test-key' },
     );
 
     expect(result).not.toBeNull();
@@ -122,7 +134,7 @@ describe('buildProviderRequest', () => {
         messages: [{ role: 'user', content: 'Hello' }],
       },
       'groq',
-      { provider: 'groq', apiKey: 'gsk-test-key' }
+      { provider: 'groq', apiKey: 'gsk-test-key' },
     );
 
     expect(result).not.toBeNull();
@@ -138,7 +150,7 @@ describe('buildProviderRequest', () => {
         messages: [{ role: 'user', content: 'Hello' }],
       },
       'together-ai',
-      { provider: 'together-ai', apiKey: 'tog-test-key' }
+      { provider: 'together-ai', apiKey: 'tog-test-key' },
     );
 
     expect(result).not.toBeNull();
@@ -153,7 +165,7 @@ describe('buildProviderRequest', () => {
         messages: [{ role: 'user', content: 'Hello' }],
       },
       'deepseek',
-      { provider: 'deepseek', apiKey: 'ds-test-key' }
+      { provider: 'deepseek', apiKey: 'ds-test-key' },
     );
 
     expect(result).not.toBeNull();
@@ -163,11 +175,9 @@ describe('buildProviderRequest', () => {
 
   it('should throw for unknown provider', async () => {
     await expect(
-      buildProviderRequest(
-        { model: 'test', messages: [] },
-        'nonexistent-provider',
-        { provider: 'nonexistent' }
-      )
+      buildProviderRequest({ model: 'test', messages: [] }, 'nonexistent-provider', {
+        provider: 'nonexistent',
+      }),
     ).rejects.toThrow('Provider "nonexistent-provider" not found in registry');
   });
 
@@ -178,7 +188,7 @@ describe('buildProviderRequest', () => {
         messages: [{ role: 'user', content: 'Hello' }],
       },
       'mistral-ai',
-      { provider: 'mistral-ai', apiKey: 'mist-test-key' }
+      { provider: 'mistral-ai', apiKey: 'mist-test-key' },
     );
 
     expect(result).not.toBeNull();
@@ -187,14 +197,16 @@ describe('buildProviderRequest', () => {
   });
 
   it('should include tools in request body when provided', async () => {
-    const tools = [{
-      type: 'function' as const,
-      function: {
-        name: 'get_weather',
-        description: 'Get weather',
-        parameters: { type: 'object', properties: {} },
+    const tools = [
+      {
+        type: 'function' as const,
+        function: {
+          name: 'get_weather',
+          description: 'Get weather',
+          parameters: { type: 'object', properties: {} },
+        },
       },
-    }];
+    ];
 
     const result = await buildProviderRequest(
       {
@@ -203,7 +215,7 @@ describe('buildProviderRequest', () => {
         tools,
       },
       'openai',
-      { provider: 'openai', apiKey: 'sk-test' }
+      { provider: 'openai', apiKey: 'sk-test' },
     );
 
     expect(result).not.toBeNull();

@@ -1,8 +1,7 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const SambaNovaAPIConfig: ProviderAPIConfig = {
-  getBaseURL: ({ providerOptions }) =>
-    providerOptions.customHost || 'https://api.sambanova.ai',
+  getBaseURL: ({ providerOptions }) => providerOptions.customHost || 'https://api.sambanova.ai',
   headers: ({ providerOptions }) => {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },

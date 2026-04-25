@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const AI302APIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.302.ai',

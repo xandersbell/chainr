@@ -1,7 +1,4 @@
-export const BEDROCK_STABILITY_V1_MODELS = [
-  'stable-diffusion-xl-v0',
-  'stable-diffusion-xl-v1',
-];
+export const BEDROCK_STABILITY_V1_MODELS = ['stable-diffusion-xl-v0', 'stable-diffusion-xl-v1'];
 
 export const bedrockInvokeModels = [
   'cohere.command-light-text-v14',

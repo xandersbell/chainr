@@ -1,24 +1,26 @@
 import { GatewayError } from '../../errors/GatewayError';
-import { Options } from '../../types/requestBody';
-import { endpointStrings, ProviderAPIConfig } from '../types';
-import { getModelAndProvider, getAccessToken, getBucketAndFile, getAccessTokenFromADC } from './utils';
+import type { Options } from '../../types/requestBody';
+import type { endpointStrings, ProviderAPIConfig } from '../types';
+import {
+  getAccessToken,
+  getAccessTokenFromADC,
+  getBucketAndFile,
+  getModelAndProvider,
+} from './utils';
 
 const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
   return 'v1';
 };
 
-const getProjectRoute = (
-  providerOptions: Options,
-  inputModel: string
-): string => {
+const getProjectRoute = (providerOptions: Options, inputModel: string): string => {
   const {
     vertexProjectId: inputProjectId,
     vertexRegion,
     vertexServiceAccountJson,
   } = providerOptions;
   let projectId = inputProjectId;
-  if (vertexServiceAccountJson && vertexServiceAccountJson.project_id) {
+  if (vertexServiceAccountJson?.project_id) {
     projectId = vertexServiceAccountJson.project_id as string;
   }
 
@@ -69,24 +71,23 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     let authToken = apiKey;
 
     if (vertexServiceAccountJson) {
-      // 方式一：显式传入 service account JSON
+      // Method 1: Explicitly provided service account JSON
       authToken = await getAccessToken(vertexServiceAccountJson as Record<string, any>);
     } else if (!apiKey) {
-      // 方式二：ADC 自动发现（本地开发场景）
-      // 当 apiKey 和 vertexServiceAccountJson 都未提供时，
-      // 自动从 GOOGLE_APPLICATION_CREDENTIALS 或 ~/.config/gcloud/ 读取凭证
+      // Method 2: ADC auto-discovery (local development scenario)
+      // When neither apiKey nor vertexServiceAccountJson is provided,
+      // automatically read credentials from GOOGLE_APPLICATION_CREDENTIALS or ~/.config/gcloud/
       const adcResult = await getAccessTokenFromADC();
       if (adcResult) {
         authToken = adcResult.token;
-        // 如果用户未指定 vertexProjectId，尝试从 ADC 凭证中获取
+        // If user did not specify vertexProjectId, try to get it from ADC credentials
         if (!providerOptions.vertexProjectId && adcResult.projectId) {
           providerOptions.vertexProjectId = adcResult.projectId;
         }
       }
     }
     const anthropicBeta =
-      providerOptions?.['anthropicBeta'] ??
-      gatewayRequestBody?.['anthropic_beta'];
+      providerOptions?.['anthropicBeta'] ?? gatewayRequestBody?.['anthropic_beta'];
 
     return {
       'Content-Type': 'application/json',
@@ -102,8 +103,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     providerOptions,
     gatewayRequestURL,
   }) => {
-    const { vertexProjectId, vertexRegion, vertexServiceAccountJson } =
-      providerOptions;
+    const { vertexProjectId, vertexRegion, vertexServiceAccountJson } = providerOptions;
     let mappedFn = fn;
     const { model: inputModel, stream } = gatewayRequestBody;
     if (stream) {
@@ -114,11 +114,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     const searchParams = url?.searchParams ?? new URLSearchParams();
 
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
-      const jobIdIndex = [
-        'cancelBatch',
-        'retrieveFileContent',
-        'cancelFinetune',
-      ].includes(fn)
+      const jobIdIndex = ['cancelBatch', 'retrieveFileContent', 'cancelFinetune'].includes(fn)
         ? -2
         : -1;
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
@@ -177,22 +173,13 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     const { provider, model } = getModelAndProvider(inputModel as string);
     const projectRoute = getProjectRoute(providerOptions, inputModel as string);
     const googleUrlMap = new Map<string, string>([
-      [
-        'chatComplete',
-        `${projectRoute}/publishers/${provider}/models/${model}:generateContent`,
-      ],
+      ['chatComplete', `${projectRoute}/publishers/${provider}/models/${model}:generateContent`],
       [
         'stream-chatComplete',
         `${projectRoute}/publishers/${provider}/models/${model}:streamGenerateContent?alt=sse`,
       ],
-      [
-        'embed',
-        `${projectRoute}/publishers/${provider}/models/${model}:predict`,
-      ],
-      [
-        'imageGenerate',
-        `${projectRoute}/publishers/${provider}/models/${model}:predict`,
-      ],
+      ['embed', `${projectRoute}/publishers/${provider}/models/${model}:predict`],
+      ['imageGenerate', `${projectRoute}/publishers/${provider}/models/${model}:predict`],
     ]);
 
     switch (provider) {
@@ -204,10 +191,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       case 'anthropic': {
         if (mappedFn === 'chatComplete' || mappedFn === 'messages') {
           return `${projectRoute}/publishers/${provider}/models/${model}:rawPredict`;
-        } else if (
-          mappedFn === 'stream-chatComplete' ||
-          mappedFn === 'stream-messages'
-        ) {
+        } else if (mappedFn === 'stream-chatComplete' || mappedFn === 'stream-messages') {
           return `${projectRoute}/publishers/${provider}/models/${model}:streamRawPredict`;
         } else if (mappedFn === 'messagesCountTokens') {
           return `${projectRoute}/publishers/${provider}/models/count-tokens:rawPredict`;

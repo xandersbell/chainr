@@ -1,6 +1,6 @@
-import { ErrorResponse } from '../types';
-import { generateErrorResponse } from '../utils';
 import { WORKERS_AI } from '../../globals';
+import type { ErrorResponse } from '../types';
+import { generateErrorResponse } from '../utils';
 
 export interface WorkersAiErrorResponse {
   success: boolean;
@@ -13,19 +13,17 @@ export interface WorkersAiErrorObject {
 }
 
 export const WorkersAiErrorResponseTransform: (
-  response: WorkersAiErrorResponse
+  response: WorkersAiErrorResponse,
 ) => ErrorResponse | undefined = (response) => {
   if ('errors' in response) {
     return generateErrorResponse(
       {
-        message: response.errors
-          ?.map((error) => `Error ${error.code}:${error.message}`)
-          .join(', '),
+        message: response.errors?.map((error) => `Error ${error.code}:${error.message}`).join(', '),
         type: null,
         param: null,
         code: null,
       },
-      WORKERS_AI
+      WORKERS_AI,
     );
   }
 

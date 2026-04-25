@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const ReplicateApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.replicate.com/v1',

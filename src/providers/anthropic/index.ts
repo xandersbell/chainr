@@ -1,5 +1,5 @@
 import { ANTHROPIC } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import AnthropicAPIConfig from './api';
 import {
   AnthropicChatCompleteConfig,
@@ -11,10 +11,7 @@ import {
   AnthropicCompleteResponseTransform,
   AnthropicCompleteStreamChunkTransform,
 } from './complete';
-import {
-  AnthropicMessagesConfig,
-  AnthropicMessagesResponseTransform,
-} from './messages';
+import { AnthropicMessagesConfig, AnthropicMessagesResponseTransform } from './messages';
 
 const AnthropicConfig: ProviderConfigs = {
   complete: AnthropicCompleteConfig,

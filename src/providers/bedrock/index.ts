@@ -1,18 +1,18 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import {
-  BedrockConverseChatCompleteConfig,
-  BedrockChatCompleteStreamChunkTransform,
-  BedrockChatCompleteResponseTransform,
-  BedrockCohereChatCompleteConfig,
-  BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockCohereChatCompleteResponseTransform,
   BedrockAI21ChatCompleteConfig,
   BedrockAI21ChatCompleteResponseTransform,
-  BedrockConverseAnthropicChatCompleteConfig,
-  BedrockConverseCohereChatCompleteConfig,
+  BedrockChatCompleteResponseTransform,
+  BedrockChatCompleteStreamChunkTransform,
+  BedrockCohereChatCompleteConfig,
+  BedrockCohereChatCompleteResponseTransform,
+  BedrockCohereChatCompleteStreamChunkTransform,
   BedrockConverseAI21ChatCompleteConfig,
+  BedrockConverseAnthropicChatCompleteConfig,
+  BedrockConverseChatCompleteConfig,
+  BedrockConverseCohereChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -34,6 +34,11 @@ import {
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
 import {
+  BedrockAnthropicMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensResponseTransform,
+} from './countTokens';
+import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
   BedrockTitanEmbedConfig,
@@ -45,17 +50,12 @@ import {
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
 } from './messages';
-import {
-  BedrockAnthropicMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensResponseTransform,
-} from './countTokens';
 import { getBedrockModelWithoutRegion } from './utils';
 
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   getConfig: ({ params, providerOptions }) => {
-    // 移除跨区域推理配置 ID 中的区域前缀
+    // Remove region prefix from cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
@@ -95,8 +95,7 @@ const BedrockConfig: ProviderConfigs = {
             config.chatComplete = BedrockCohereChatCompleteConfig;
             config.responseTransforms['stream-chatComplete'] =
               BedrockCohereChatCompleteStreamChunkTransform;
-            config.responseTransforms.chatComplete =
-              BedrockCohereChatCompleteResponseTransform;
+            config.responseTransforms.chatComplete = BedrockCohereChatCompleteResponseTransform;
           }
           break;
         case 'meta':
@@ -142,18 +141,17 @@ const BedrockConfig: ProviderConfigs = {
           };
           if (['j2-mid-v1', 'j2-ultra-v1'].includes(model)) {
             config.chatComplete = BedrockAI21ChatCompleteConfig;
-            config.responseTransforms.chatComplete =
-              BedrockAI21ChatCompleteResponseTransform;
+            config.responseTransforms.chatComplete = BedrockAI21ChatCompleteResponseTransform;
           }
           break;
         case 'stability':
-          // stability 模型暂不支持（imageGenerate 文件已移除）
+          // stability models not supported (imageGenerate file removed)
           return {
             api: BedrockAPIConfig,
           };
       }
 
-      // 默认配置合并
+      // Merge default configuration
       config = {
         ...config,
         ...(!config.chatComplete && {
@@ -182,8 +180,7 @@ const BedrockConfig: ProviderConfigs = {
           'stream-messages': BedrockConverseMessagesStreamChunkTransform,
         }),
         ...(!config.responseTransforms?.messagesCountTokens && {
-          messagesCountTokens:
-            BedrockConverseMessageCountTokensResponseTransform,
+          messagesCountTokens: BedrockConverseMessageCountTokensResponseTransform,
         }),
       };
     }

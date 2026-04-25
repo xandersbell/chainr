@@ -1,7 +1,7 @@
-// 对齐 Portkey 的 transformToProviderRequest + responseHandler
-// 使用 ProviderConfig 参数映射将请求参数转换为 provider 格式
+// Aligned with Portkey's transformToProviderRequest + responseHandler
+// Uses ProviderConfig parameter mapping to transform request params into provider format
 import Providers from '../providers';
-import type { ProviderConfig, endpointStrings } from '../providers/types';
+import type { endpointStrings, ProviderConfig } from '../providers/types';
 import type { Options, Params } from '../types/requestBody';
 import type { TransformResult } from './types';
 
@@ -21,7 +21,7 @@ const getValue = (
   configParam: string,
   params: Params,
   paramConfig: any,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   let value = params[configParam as keyof typeof params];
 
@@ -31,18 +31,22 @@ const getValue = (
 
   if (typeof value === 'number' && paramConfig?.min !== undefined && value < paramConfig.min) {
     value = paramConfig.min;
-  } else if (typeof value === 'number' && paramConfig?.max !== undefined && value > paramConfig.max) {
+  } else if (
+    typeof value === 'number' &&
+    paramConfig?.max !== undefined &&
+    value > paramConfig.max
+  ) {
     value = paramConfig.max;
   }
 
   return value;
 };
 
-// 对齐 Portkey 的 transformUsingProviderConfig
+// Aligned with Portkey's transformUsingProviderConfig
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 
@@ -71,13 +75,10 @@ export const transformUsingProviderConfig = (
   return transformedRequest;
 };
 
-// 构建 providerOptions（对齐 Portkey 的 Options 结构）
-// 用户可以在 target 中使用 providerOptions 嵌套对象传递 provider 特定字段，
-// 这里将其展平到顶层，与 Options 接口对齐
-function buildProviderOptions(
-  provider: string,
-  target: Record<string, unknown>
-): Options {
+// Build providerOptions (aligned with Portkey's Options structure)
+// Users can pass provider-specific fields via the nested providerOptions object in target,
+// which is flattened to the top level here to align with the Options interface
+function buildProviderOptions(provider: string, target: Record<string, unknown>): Options {
   const { providerOptions, ...rest } = target;
   return {
     provider,
@@ -90,14 +91,14 @@ function buildProviderOptions(
 }
 
 /**
- * 使用 provider 注册表构建完整请求（URL + headers + body）
- * 对齐 Portkey 的 tryPost 流程：transformToProviderRequest → getBaseURL + getEndpoint → headers
+ * Build a complete request (URL + headers + body) using the provider registry
+ * Aligned with Portkey's tryPost flow: transformToProviderRequest → getBaseURL + getEndpoint → headers
  */
 export async function buildProviderRequest(
   params: Params,
   provider: string,
   target: Record<string, unknown>,
-  endpoint: endpointStrings = 'chatComplete'
+  endpoint: endpointStrings = 'chatComplete',
 ): Promise<TransformResult> {
   const providerConfigs = Providers[provider];
   if (!providerConfigs) {
@@ -111,7 +112,7 @@ export async function buildProviderRequest(
 
   const providerOptions = buildProviderOptions(provider, target);
 
-  // 获取 endpoint 对应的参数映射配置
+  // Get the parameter mapping config for the endpoint
   let endpointConfig: ProviderConfig | undefined;
   if (providerConfigs.getConfig) {
     const dynamicConfig = providerConfigs.getConfig({ params, providerOptions });
@@ -120,13 +121,13 @@ export async function buildProviderRequest(
     endpointConfig = providerConfigs[endpoint];
   }
 
-  // 转换请求体（有些 endpoint 如 createTranscription 可能没有 ProviderConfig，直接透传）
+  // Transform request body (some endpoints like createTranscription may lack ProviderConfig, pass through directly)
   const body = endpointConfig
     ? transformUsingProviderConfig(endpointConfig, params, providerOptions)
     : { ...params };
 
-  // 构建 URL
-  const baseURL = await apiConfig.getBaseURL({
+  // Build URL
+  const baseUrl = await apiConfig.getBaseURL({
     providerOptions,
     fn: endpoint,
     gatewayRequestURL: '',
@@ -140,9 +141,9 @@ export async function buildProviderRequest(
     gatewayRequestURL: '',
   });
 
-  const url = `${baseURL}${endpointPath}`;
+  const url = `${baseUrl}${endpointPath}`;
 
-  // 构建 headers（bedrock 的 headers() 内部已处理 AWS 签名）
+  // Build headers (Bedrock's headers() handles AWS signing internally)
   const headers = await apiConfig.headers({
     providerOptions,
     fn: endpoint,
@@ -155,9 +156,9 @@ export async function buildProviderRequest(
 }
 
 /**
- * 使用 provider 注册表的 responseTransforms 转换响应
- * 对齐 Portkey 的 responseHandler 流程
- * requestModel: 原始请求中的模型名，用于动态 provider（如 Vertex AI）的 getConfig 路由
+ * Transform response using the provider registry's responseTransforms
+ * Aligned with Portkey's responseHandler flow
+ * requestModel: the model name from the original request, used for dynamic provider (e.g. Vertex AI) getConfig routing
  */
 export function transformProviderResponse(
   json: unknown,
@@ -165,26 +166,27 @@ export function transformProviderResponse(
   endpoint: endpointStrings = 'chatComplete',
   status: number = 200,
   responseHeaders: Record<string, string> = {},
-  requestModel?: string
+  requestModel?: string,
 ): unknown {
-  // retryRequest 返回 { status, data } 包装结构，解包取实际响应体
-  const responseBody = (json && typeof json === 'object' && 'data' in json)
-    ? (json as Record<string, unknown>).data
-    : json;
+  // retryRequest returns a { status, data } wrapper; unwrap to get the actual response body
+  const responseBody =
+    json && typeof json === 'object' && 'data' in json
+      ? (json as Record<string, unknown>).data
+      : json;
 
   const providerConfigs = Providers[provider];
   if (!providerConfigs) {
     return responseBody;
   }
 
-  // 获取 responseTransforms
+  // Get responseTransforms
   let responseTransforms: Record<string, any> | undefined;
   if (providerConfigs.getConfig) {
-    // 对于动态 provider（如 Vertex AI），需要用请求的 model 来路由到正确的子配置
-    // 响应 JSON 中可能没有 model 字段，所以优先使用 requestModel
+    // For dynamic providers (e.g. Vertex AI), the request model is needed to route to the correct sub-config
+    // The response JSON may not contain a model field, so requestModel takes priority
     const configParams = requestModel
-      ? { model: requestModel } as Params
-      : responseBody as Params;
+      ? ({ model: requestModel } as Params)
+      : (responseBody as Params);
     const dynamicConfig = providerConfigs.getConfig({
       params: configParams,
       providerOptions: { provider } as Options,
@@ -199,6 +201,6 @@ export function transformProviderResponse(
     return responseBody;
   }
 
-  // 对齐 Portkey 的 responseTransformer 调用签名
+  // Aligned with Portkey's responseTransformer call signature
   return transformFn(responseBody, status, responseHeaders, false);
 }

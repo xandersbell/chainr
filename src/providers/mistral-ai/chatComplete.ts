@@ -1,15 +1,11 @@
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { MISTRAL_AI_FINISH_REASON } from './types';
+import type { MISTRAL_AI_FINISH_REASON } from './types';
 
 export const MistralAIChatCompleteConfig: ProviderConfig = {
   model: {
@@ -87,10 +83,7 @@ export const MistralAIChatCompleteConfig: ProviderConfig = {
     param: 'tool_choice',
     default: null,
     transform: (params: Params) => {
-      if (
-        typeof params.tool_choice === 'string' &&
-        params.tool_choice === 'required'
-      ) {
+      if (typeof params.tool_choice === 'string' && params.tool_choice === 'required') {
         return 'any';
       }
       return params.tool_choice;
@@ -161,7 +154,7 @@ export const GetMistralAIChatCompleteResponseTransform = (provider: string) => {
     _responseHeaders: Headers,
     strictOpenAiCompliance: boolean,
     _gatewayRequestUrl: string,
-    _gatewayRequest: Params
+    _gatewayRequest: Params,
   ): ChatCompletionResponse | ErrorResponse => {
     if ('message' in response && responseStatus !== 200) {
       return generateErrorResponse(
@@ -171,7 +164,7 @@ export const GetMistralAIChatCompleteResponseTransform = (provider: string) => {
           param: response.param,
           code: response.code,
         },
-        provider
+        provider,
       );
     }
 
@@ -191,7 +184,7 @@ export const GetMistralAIChatCompleteResponseTransform = (provider: string) => {
           },
           finish_reason: transformFinishReason(
             c.finish_reason as MISTRAL_AI_FINISH_REASON,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
           ),
         })),
         usage: {
@@ -206,15 +199,13 @@ export const GetMistralAIChatCompleteResponseTransform = (provider: string) => {
   };
 };
 
-export const GetMistralAIChatCompleteStreamChunkTransform = (
-  provider: string
-) => {
+export const GetMistralAIChatCompleteStreamChunkTransform = (provider: string) => {
   return (
     responseChunk: string,
     _fallbackId: string,
     _streamState: any,
     strictOpenAiCompliance: boolean,
-    _gatewayRequest: Params
+    _gatewayRequest: Params,
   ) => {
     let chunk = responseChunk.trim();
     chunk = chunk.replace(/^data: /, '');
@@ -226,7 +217,7 @@ export const GetMistralAIChatCompleteStreamChunkTransform = (
     const finishReason = parsedChunk.choices[0].finish_reason
       ? transformFinishReason(
           parsedChunk.choices[0].finish_reason as MISTRAL_AI_FINISH_REASON,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
         )
       : null;
     return (

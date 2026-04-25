@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const JinaAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.jina.ai/v1',

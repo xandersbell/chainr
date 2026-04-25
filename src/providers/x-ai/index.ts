@@ -1,12 +1,12 @@
-import { ProviderConfigs } from '../types';
 import { X_AI } from '../../globals';
-import XAIAPIConfig from './api';
 import {
   chatCompleteParams,
   completeParams,
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
+import type { ProviderConfigs } from '../types';
+import XAIAPIConfig from './api';
 
 interface XAIErrorResponse {
   error:
@@ -21,7 +21,7 @@ interface XAIErrorResponse {
 }
 
 const xAIResponseTransform = <T>(response: T) => {
-  let _response = response as XAIErrorResponse;
+  const _response = response as XAIErrorResponse;
   if ('error' in _response) {
     return {
       error: {

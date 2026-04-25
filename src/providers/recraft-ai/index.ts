@@ -1,5 +1,6 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import RecraftAIAPIConfig from './api';
+
 const RecraftAIConfig: ProviderConfigs = {
   api: RecraftAIAPIConfig,
   responseTransforms: {},

@@ -1,5 +1,5 @@
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -56,7 +56,7 @@ interface AzureAIInferenceCompleteResponse extends CompletionResponse {}
 export const AzureAIInferenceCompleteResponseTransform = (provider: string) => {
   const transformer: (
     response: AzureAIInferenceCompleteResponse | ErrorResponse,
-    responseStatus: number
+    responseStatus: number,
   ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200 && 'error' in response) {
       return OpenAIErrorResponseTransform(response, provider);

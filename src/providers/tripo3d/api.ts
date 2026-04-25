@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const Tripo3DAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.tripo3d.ai/v2/openapi',

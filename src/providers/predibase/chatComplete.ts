@@ -1,15 +1,7 @@
 import { PREDIBASE } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-  splitString,
-} from '../utils';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError, splitString } from '../utils';
 
 export const PredibaseChatCompleteConfig: ProviderConfig = {
   model: {
@@ -109,7 +101,7 @@ export interface PredibaseErrorResponse extends ErrorResponse {}
 
 export const PredibaseChatCompleteResponseTransform: (
   response: PredibaseChatCompleteResponse | PredibaseErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -119,7 +111,7 @@ export const PredibaseChatCompleteResponseTransform: (
         param: null,
         code: response.error.code?.toString() || null,
       },
-      PREDIBASE
+      PREDIBASE,
     );
   }
 
@@ -176,7 +168,7 @@ export interface PredibaseChatCompletionStreamChunk {
 }
 
 export const PredibaseChatCompleteStreamChunkTransform: (
-  response: string
+  response: string,
 ) => string | ErrorResponse = (responseChunk) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data:\s*/, '');

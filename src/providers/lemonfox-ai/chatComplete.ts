@@ -15,9 +15,9 @@ interface LemonfoxAIStreamChunk {
   }[];
 }
 
-export const LemonfoxAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const LemonfoxAIChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

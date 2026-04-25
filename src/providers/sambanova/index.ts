@@ -1,6 +1,6 @@
 import { SAMBANOVA } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import SambaNovaAPIConfig from './api';
 import { SambaNovaChatCompleteStreamChunkTransform } from './chatComplete';
 
@@ -21,7 +21,7 @@ const SambaNovaConfig: ProviderConfigs = {
     ],
     {
       model: 'Meta-Llama-3.1-8B-Instruct',
-    }
+    },
   ),
   api: SambaNovaAPIConfig,
   responseTransforms: {

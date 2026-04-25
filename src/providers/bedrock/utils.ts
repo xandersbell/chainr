@@ -1,20 +1,19 @@
-import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import {
+import { SignatureV4 } from '@smithy/signature-v4';
+import { GatewayError } from '../../errors/GatewayError';
+import { BEDROCK } from '../../globals';
+import type { Options, Tool } from '../../types/requestBody';
+import { Environment } from '../../utils/env';
+import type { FinetuneRequest } from '../types';
+import type {
   BedrockChatCompletionsParams,
   BedrockConverseAI21ChatCompletionsParams,
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options, Tool } from '../../types/requestBody';
-import { GatewayError } from '../../errors/GatewayError';
-import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
-import { FinetuneRequest } from '../types';
-import { BEDROCK } from '../../globals';
-import { Environment } from '../../utils/env';
+import type { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
 
-export const getAwsEndpointDomain = () =>
-  Environment().AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
+export const getAwsEndpointDomain = () => Environment().AWS_ENDPOINT_DOMAIN || 'amazonaws.com';
 
 export const generateAWSHeaders = async (
   body: Record<string, any> | string | undefined,
@@ -25,7 +24,7 @@ export const generateAWSHeaders = async (
   awsRegion: string,
   awsAccessKeyID: string,
   awsSecretAccessKey: string,
-  awsSessionToken: string | undefined
+  awsSessionToken: string | undefined,
 ): Promise<Record<string, string>> => {
   const signer = new SignatureV4({
     service: awsService,
@@ -44,11 +43,7 @@ export const generateAWSHeaders = async (
   let requestBody;
   if (!body) {
     requestBody = null;
-  } else if (
-    body instanceof Uint8Array ||
-    body instanceof Buffer ||
-    typeof body === 'string'
-  ) {
+  } else if (body instanceof Uint8Array || body instanceof Buffer || typeof body === 'string') {
     requestBody = body;
   } else if (body && typeof body === 'object' && method !== 'GET') {
     requestBody = JSON.stringify(body);
@@ -72,13 +67,10 @@ export const generateAWSHeaders = async (
   return signed.headers;
 };
 
-export const transformInferenceConfig = (
-  params: BedrockChatCompletionsParams
-) => {
+export const transformInferenceConfig = (params: BedrockChatCompletionsParams) => {
   const inferenceConfig: Record<string, any> = {};
   if (params['max_tokens'] || params['max_completion_tokens']) {
-    inferenceConfig['maxTokens'] =
-      params['max_tokens'] || params['max_completion_tokens'];
+    inferenceConfig['maxTokens'] = params['max_tokens'] || params['max_completion_tokens'];
   }
   if (params['stop']) {
     inferenceConfig['stopSequences'] = params['stop'];
@@ -92,13 +84,9 @@ export const transformInferenceConfig = (
   return inferenceConfig;
 };
 
-export const transformAdditionalModelRequestFields = (
-  params: BedrockChatCompletionsParams
-) => {
+export const transformAdditionalModelRequestFields = (params: BedrockChatCompletionsParams) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
+    params.additionalModelRequestFields || params.additional_model_request_fields || {};
   if (params['top_k'] !== null && params['top_k'] !== undefined) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -110,18 +98,15 @@ export const transformAdditionalModelRequestFields = (
 
 export const transformAnthropicAdditionalModelRequestFields = (
   params: BedrockConverseAnthropicChatCompletionsParams,
-  providerOptions?: Options
+  providerOptions?: Options,
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
+    params.additionalModelRequestFields || params.additional_model_request_fields || {};
   if (params['top_k'] !== undefined && params['top_k'] !== null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['anthropic_version']) {
-    additionalModelRequestFields['anthropic_version'] =
-      params['anthropic_version'];
+    additionalModelRequestFields['anthropic_version'] = params['anthropic_version'];
   }
   if (params['user']) {
     additionalModelRequestFields['metadata'] = {
@@ -131,8 +116,7 @@ export const transformAnthropicAdditionalModelRequestFields = (
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-  const anthropicBeta =
-    providerOptions?.anthropicBeta || params['anthropic_beta'];
+  const anthropicBeta = providerOptions?.anthropicBeta || params['anthropic_beta'];
   if (anthropicBeta) {
     if (typeof anthropicBeta === 'string') {
       additionalModelRequestFields['anthropic_beta'] = anthropicBeta
@@ -142,7 +126,7 @@ export const transformAnthropicAdditionalModelRequestFields = (
       additionalModelRequestFields['anthropic_beta'] = anthropicBeta;
     }
   }
-  if (params.tools && params.tools.length) {
+  if (params.tools?.length) {
     const anthropicTools: any[] = [];
     params.tools.forEach((tool: Tool) => {
       if (tool.type !== 'function') {
@@ -165,13 +149,11 @@ export const transformAnthropicAdditionalModelRequestFields = (
 };
 
 export const transformCohereAdditionalModelRequestFields = (
-  params: BedrockConverseCohereChatCompletionsParams
+  params: BedrockConverseCohereChatCompletionsParams,
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
-  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+    params.additionalModelRequestFields || params.additional_model_request_fields || {};
+  // Use != null to avoid filtering out top_k=0 via falsy check
   if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -179,12 +161,10 @@ export const transformCohereAdditionalModelRequestFields = (
     additionalModelRequestFields['n'] = params['n'];
   }
   if (params['frequency_penalty']) {
-    additionalModelRequestFields['frequency_penalty'] =
-      params['frequency_penalty'];
+    additionalModelRequestFields['frequency_penalty'] = params['frequency_penalty'];
   }
   if (params['presence_penalty']) {
-    additionalModelRequestFields['presence_penalty'] =
-      params['presence_penalty'];
+    additionalModelRequestFields['presence_penalty'] = params['presence_penalty'];
   }
   if (params['logit_bias']) {
     additionalModelRequestFields['logitBias'] = params['logit_bias'];
@@ -193,13 +173,11 @@ export const transformCohereAdditionalModelRequestFields = (
 };
 
 export const transformAI21AdditionalModelRequestFields = (
-  params: BedrockConverseAI21ChatCompletionsParams
+  params: BedrockConverseAI21ChatCompletionsParams,
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
-  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+    params.additionalModelRequestFields || params.additional_model_request_fields || {};
+  // Use != null to avoid filtering out top_k=0 via falsy check
   if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -214,8 +192,7 @@ export const transformAI21AdditionalModelRequestFields = (
     };
   }
   if (params['frequencyPenalty']) {
-    additionalModelRequestFields['frequencyPenalty'] =
-      params['frequencyPenalty'];
+    additionalModelRequestFields['frequencyPenalty'] = params['frequencyPenalty'];
   }
   if (params['presencePenalty']) {
     additionalModelRequestFields['presencePenalty'] = params['presencePenalty'];
@@ -234,7 +211,7 @@ export async function getAssumedRoleCredentials(
     accessKeyId: string;
     secretAccessKey: string;
     sessionToken?: string;
-  }
+  },
 ) {
   // Determine which credentials to use
   let accessKeyId: string;
@@ -248,8 +225,7 @@ export async function getAssumedRoleCredentials(
     sessionToken = creds.sessionToken;
   } else {
     // Use environment credentials
-    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } =
-      Environment();
+    const { AWS_ASSUME_ROLE_ACCESS_KEY_ID, AWS_ASSUME_ROLE_SECRET_ACCESS_KEY } = Environment();
     accessKeyId = AWS_ASSUME_ROLE_ACCESS_KEY_ID || '';
     secretAccessKey = AWS_ASSUME_ROLE_SECRET_ACCESS_KEY || '';
   }
@@ -351,16 +327,10 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
     created_at: new Date(finetune.creationTime).getTime(),
     finished_at: new Date(finetune.endTime).getTime(),
     fine_tuned_model:
-      finetune.outputModelArn ||
-      finetune.outputModelName ||
-      finetune.customModelArn,
+      finetune.outputModelArn || finetune.outputModelName || finetune.customModelArn,
     suffix: finetune.customModelName,
-    training_file: encodeURIComponent(
-      finetune?.trainingDataConfig?.s3Uri ?? ''
-    ),
-    validation_file: encodeURIComponent(
-      finetune?.validationDataConfig?.s3Uri ?? ''
-    ),
+    training_file: encodeURIComponent(finetune?.trainingDataConfig?.s3Uri ?? ''),
+    validation_file: encodeURIComponent(finetune?.validationDataConfig?.s3Uri ?? ''),
     hyperparameters: {
       learning_rate_multiplier: Number(finetune?.hyperParameters?.learningRate),
       batch_size: Number(finetune?.hyperParameters?.batchSize),
@@ -370,15 +340,13 @@ export const bedrockFinetuneToOpenAI = (finetune: BedrockFinetuneRecord) => {
   };
 };
 
-export async function providerAssumedRoleCredentials(
-  providerOptions: Options
-) {
+export async function providerAssumedRoleCredentials(providerOptions: Options) {
   try {
     // Assume the role in the source account
     const sourceRoleCredentials = await getAssumedRoleCredentials(
       Environment().AWS_ASSUME_ROLE_SOURCE_ARN || '', // Role ARN in the source account
       Environment().AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
-      providerOptions.awsRegion || ''
+      providerOptions.awsRegion || '',
     );
 
     if (!sourceRoleCredentials) {
@@ -395,7 +363,7 @@ export async function providerAssumedRoleCredentials(
           accessKeyId: sourceRoleCredentials.accessKeyId,
           secretAccessKey: sourceRoleCredentials.secretAccessKey,
           sessionToken: sourceRoleCredentials.sessionToken,
-        }
+        },
       )) || {};
     providerOptions.awsAccessKeyId = accessKeyId;
     providerOptions.awsSecretAccessKey = secretAccessKey;
@@ -418,7 +386,7 @@ export const populateHyperParameters = (value: FinetuneRequest) => {
 
 export const getInferenceProfile = async (
   inferenceProfileIdentifier: string,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   if (providerOptions.awsAuthType === 'assumedRole') {
     try {
@@ -443,7 +411,7 @@ export const getInferenceProfile = async (
     awsRegion,
     awsAccessKeyId,
     awsSecretAccessKey,
-    awsSessionToken
+    awsSessionToken,
   );
 
   try {
@@ -453,9 +421,7 @@ export const getInferenceProfile = async (
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to get inference profile: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to get inference profile: ${response.status} ${response.statusText}`);
     }
 
     return (await response.json()) as BedrockInferenceProfile;
@@ -467,18 +433,15 @@ export const getInferenceProfile = async (
 
 export const getFoundationModelFromInferenceProfile = async (
   inferenceProfileIdentifier: string,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   try {
-    const inferenceProfile = await getInferenceProfile(
-      inferenceProfileIdentifier || '',
-      { ...providerOptions }
-    );
+    const inferenceProfile = await getInferenceProfile(inferenceProfileIdentifier || '', {
+      ...providerOptions,
+    });
 
     // modelArn is always like arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2:1
-    const foundationModel = inferenceProfile?.models?.[0]?.modelArn
-      ?.split('/')
-      ?.pop();
+    const foundationModel = inferenceProfile?.models?.[0]?.modelArn?.split('/')?.pop();
     return foundationModel;
   } catch (error) {
     return null;

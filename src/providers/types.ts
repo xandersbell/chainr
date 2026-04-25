@@ -1,50 +1,47 @@
-// 从 Portkey 的 src/providers/types.ts 适配而来
-// 移除了 Hono Context 依赖和 Batch/Finetune/File 相关类型
+// Adapted from Portkey's src/providers/types.ts
+// Removed Hono Context dependency and Batch/Finetune/File related types
 
-import { Message, Options, Params } from '../types/requestBody';
-import { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import {
-  BEDROCK_CONVERSE_STOP_REASON,
-  TITAN_STOP_REASON,
-} from './bedrock/types';
-import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
-import { DEEPSEEK_STOP_REASON } from './deepseek/types';
-import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
-import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
-import { COHERE_STOP_REASON } from './cohere/types';
-import { LATITUDE_STOP_REASON } from './latitude/types';
+import type { Message, Options, Params } from '../types/requestBody';
+import type { ANTHROPIC_STOP_REASON } from './anthropic/types';
+import type { BEDROCK_CONVERSE_STOP_REASON, TITAN_STOP_REASON } from './bedrock/types';
+import type { COHERE_STOP_REASON } from './cohere/types';
+import type { DEEPSEEK_STOP_REASON } from './deepseek/types';
+import type { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
+import type { LATITUDE_STOP_REASON } from './latitude/types';
+import type { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
+import type { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 
 /**
- * 参数配置接口
+ * Parameter configuration interface
  */
 export interface ParameterConfig {
-  /** provider 转换后的参数键名 */
+  /** Parameter key name after provider transformation */
   param: string;
-  /** 默认值 */
+  /** Default value */
   default?: any;
-  /** 最小值 */
+  /** Minimum value */
   min?: number;
-  /** 最大值 */
+  /** Maximum value */
   max?: number;
-  /** 是否必需 */
+  /** Whether the parameter is required */
   required?: boolean;
-  /** 参数值转换函数 */
+  /** Parameter value transform function */
   transform?: (params: any, providerOptions: Options) => any;
 }
 
 /**
- * 单个 Provider 的参数映射配置
+ * Parameter mapping config for a single provider
  */
 export interface ProviderConfig {
   [key: string]: ParameterConfig | ParameterConfig[];
 }
 
 /**
- * Provider API 配置接口
- * 注意：相比 Portkey 移除了所有 `c: Context` (Hono) 参数
+ * Provider API configuration interface
+ * Note: All `c: Context` (Hono) parameters have been removed compared to Portkey
  */
 export interface ProviderAPIConfig {
-  /** 生成请求头 */
+  /** Generate request headers */
   headers: (args: {
     providerOptions: Options;
     fn: string;
@@ -54,7 +51,7 @@ export interface ProviderAPIConfig {
     headers?: Record<string, string>;
   }) => Promise<Record<string, any>> | Record<string, any>;
 
-  /** 生成 baseURL */
+  /** Generate baseURL */
   getBaseURL: (args: {
     providerOptions: Options;
     fn?: endpointStrings;
@@ -63,7 +60,7 @@ export interface ProviderAPIConfig {
     params?: Params;
   }) => Promise<string> | string;
 
-  /** 生成 endpoint 路径 */
+  /** Generate endpoint path */
   getEndpoint: (args: {
     providerOptions: Options;
     fn: endpointStrings;
@@ -72,7 +69,7 @@ export interface ProviderAPIConfig {
     gatewayRequestURL: string;
   }) => string;
 
-  /** 是否需要转换为 FormData */
+  /** Whether to transform request body to FormData */
   transformToFormData?: (args: { gatewayRequestBody: Params }) => boolean;
 
   getProxyEndpoint?: (args: {
@@ -82,7 +79,7 @@ export interface ProviderAPIConfig {
   }) => string;
 }
 
-// Priorai 只保留推理相关的 endpoint 类型
+// Priorai only retains inference-related endpoint types
 export type endpointStrings =
   | 'complete'
   | 'chatComplete'
@@ -121,35 +118,28 @@ export type endpointStrings =
   | 'getBatchOutput';
 
 /**
- * Provider API 配置集合
+ * Collection of Provider API configurations
  */
 export interface ProviderAPIConfigs {
   [key: string]: ProviderAPIConfig;
 }
 
-export type RequestHandler<
-  T = Params | FormData | ArrayBuffer | ReadableStream,
-> = (args: {
+export type RequestHandler<T = Params | FormData | ArrayBuffer | ReadableStream> = (args: {
   providerOptions: Options;
   requestURL: string;
   requestHeaders: Record<string, string>;
   requestBody: T;
 }) => Promise<Response>;
 
-export type RequestHandlers = Partial<
-  Record<endpointStrings, RequestHandler<any>>
->;
+export type RequestHandlers = Partial<Record<endpointStrings, RequestHandler<any>>>;
 
 /**
- * Provider 完整配置导出（每个 provider 的 index.ts 导出此类型）
+ * Complete provider config export (each provider's index.ts exports this type)
  */
 export interface ProviderConfigs {
   [key: string]: any;
   requestHandlers?: RequestHandlers;
-  getConfig?: (args: {
-    params: Params;
-    providerOptions: Options;
-  }) => any;
+  getConfig?: (args: { params: Params; providerOptions: Options }) => any;
 }
 
 export interface BaseResponse {
@@ -158,7 +148,7 @@ export interface BaseResponse {
 }
 
 /**
- * 基础 completion 响应
+ * Base completion response
  */
 export interface CResponse extends BaseResponse {
   id: string;
@@ -184,7 +174,7 @@ export interface CResponse extends BaseResponse {
 }
 
 /**
- * completions 响应
+ * Completions response
  */
 export interface CompletionResponse extends CResponse {
   choices: {
@@ -215,7 +205,7 @@ export interface GroundingMetadata {
 }
 
 /**
- * chat completion 响应中的 choice
+ * Choice within a chat completion response
  */
 export interface ChatChoice {
   index: number;
@@ -237,7 +227,7 @@ export interface Logprobs {
 }
 
 /**
- * chat completion 响应
+ * Chat completion response
  */
 export interface ChatCompletionResponse extends CResponse {
   choices: ChatChoice[];
@@ -246,7 +236,7 @@ export interface ChatCompletionResponse extends CResponse {
 }
 
 /**
- * 错误响应
+ * Error response
  */
 export interface ErrorResponse {
   error: {
@@ -259,7 +249,7 @@ export interface ErrorResponse {
 }
 
 /**
- * 图像生成响应
+ * Image generation response
  */
 export interface ImageGenerateResponse {
   created: number;
@@ -277,7 +267,7 @@ export interface StreamContentBlock {
   };
 }
 
-// ===== Finish Reason 映射 =====
+// ===== Finish Reason mappings =====
 
 export enum FINISH_REASON {
   stop = 'stop',
@@ -287,7 +277,7 @@ export enum FINISH_REASON {
   function_call = 'function_call',
 }
 
-// Priorai 没有独立的 google 目录，将 Google 的 finish reason 内联在此
+// Priorai has no standalone google directory, so Google's finish reason is inlined here
 export enum GOOGLE_GENERATE_CONTENT_FINISH_REASON {
   FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',
   STOP = 'STOP',
@@ -316,7 +306,7 @@ export type PROVIDER_FINISH_REASON =
   | LATITUDE_STOP_REASON;
 
 /**
- * 微调请求参数接口（从 Portkey 适配）
+ * Finetune request parameter interface (adapted from Portkey)
  */
 export interface FinetuneRequest {
   model: string;

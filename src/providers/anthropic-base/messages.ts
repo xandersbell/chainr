@@ -1,4 +1,4 @@
-import { ParameterConfig, ProviderConfig } from '../types';
+import type { ParameterConfig, ProviderConfig } from '../types';
 
 export const messagesBaseConfig: ProviderConfig = {
   model: {
@@ -72,10 +72,7 @@ export const getMessagesConfig = ({
   extra = {},
 }: {
   exclude?: string[];
-  defaultValues?: Record<
-    keyof typeof messagesBaseConfig,
-    string | number | boolean
-  >;
+  defaultValues?: Record<keyof typeof messagesBaseConfig, string | number | boolean>;
   extra?: ProviderConfig;
 }): ProviderConfig => {
   const baseParams = { ...messagesBaseConfig };

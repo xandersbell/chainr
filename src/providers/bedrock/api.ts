@@ -1,14 +1,14 @@
-import { Options } from '../../types/requestBody';
-import { endpointStrings, ProviderAPIConfig } from '../types';
+import { GatewayError } from '../../errors/GatewayError';
+import type { Options } from '../../types/requestBody';
+import type { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
-  getAwsEndpointDomain,
   generateAWSHeaders,
+  getAwsEndpointDomain,
+  getBedrockModelWithoutRegion,
   getFoundationModelFromInferenceProfile,
   providerAssumedRoleCredentials,
-  getBedrockModelWithoutRegion,
 } from './utils';
-import { GatewayError } from '../../errors/GatewayError';
 
 const AWS_CONTROL_PLANE_ENDPOINTS: endpointStrings[] = [
   'createBatch',
@@ -57,7 +57,7 @@ const ENDPOINTS_TO_ROUTE_TO_S3 = [
 
 const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
   if (fn === 'proxy') {
-    // proxy 模式默认使用 POST，不再依赖 Hono Context
+    // Proxy mode defaults to POST, no longer depends on Hono Context
     return 'POST';
   }
   if (fn === 'uploadFile') {
@@ -68,15 +68,13 @@ const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
 };
 
 const getService = (fn: endpointStrings) => {
-  return ENDPOINTS_TO_ROUTE_TO_S3.includes(fn as endpointStrings)
-    ? 's3'
-    : 'bedrock';
+  return ENDPOINTS_TO_ROUTE_TO_S3.includes(fn as endpointStrings) ? 's3' : 'bedrock';
 };
 
 const setRouteSpecificHeaders = (
   fn: string,
   headers: Record<string, string>,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   if (fn === 'retrieveFile') {
     headers['x-amz-object-attributes'] = 'ObjectSize';
@@ -88,8 +86,7 @@ const setRouteSpecificHeaders = (
       headers['x-amz-server-side-encryption'] = 'aws:kms';
     }
     if (providerOptions.awsServerSideEncryption) {
-      headers['x-amz-server-side-encryption'] =
-        providerOptions.awsServerSideEncryption;
+      headers['x-amz-server-side-encryption'] = providerOptions.awsServerSideEncryption;
     }
   }
 };
@@ -100,32 +97,24 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     if (model.includes('arn:aws') && params) {
       const foundationModel = model.includes('foundation-model/')
         ? model.split('/').pop()
-        : await getFoundationModelFromInferenceProfile(
-            model,
-            providerOptions
-          );
+        : await getFoundationModelFromInferenceProfile(model, providerOptions);
       if (foundationModel) {
         providerOptions.foundationModel = foundationModel;
       }
     }
     if (fn === 'retrieveFile') {
-      const s3URL = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
-      );
+      const s3URL = decodeURIComponent(gatewayRequestURL.split('/v1/files/')[1]);
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
       return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
     }
     if (fn === 'retrieveFileContent') {
-      const s3URL = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
-      );
+      const s3URL = decodeURIComponent(gatewayRequestURL.split('/v1/files/')[1]);
       const bucketName = s3URL.replace('s3://', '').split('/')[0];
       return `https://${bucketName}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
     }
     if (fn === 'uploadFile')
       return `https://${providerOptions.awsS3Bucket}.s3.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
-    const isAWSControlPlaneEndpoint =
-      fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
+    const isAWSControlPlaneEndpoint = fn && AWS_CONTROL_PLANE_ENDPOINTS.includes(fn);
     return `https://${isAWSControlPlaneEndpoint ? 'bedrock' : 'bedrock-runtime'}.${providerOptions.awsRegion || 'us-east-1'}.${getAwsEndpointDomain()}`;
   },
   headers: async ({
@@ -133,11 +122,11 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
-    gatewayRequestBody, // proxy 模式直接透传请求体
+    gatewayRequestBody, // Proxy mode passes through request body directly
     headers: requestHeaders,
   }) => {
     const { awsAuthType, awsService } = providerOptions;
-    // 直接通过 fn 计算 HTTP 方法，不再依赖 Hono Context
+    // Compute HTTP method directly from fn, no longer depends on Hono Context
     const method = getMethod(fn as endpointStrings, transformedRequestUrl);
     const service = awsService || getService(fn as endpointStrings);
 
@@ -166,8 +155,7 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       return headers;
     }
 
-    let finalRequestBody =
-      fn === 'proxy' ? gatewayRequestBody : transformedRequestBody;
+    let finalRequestBody = fn === 'proxy' ? gatewayRequestBody : transformedRequestBody;
 
     if (['cancelFinetune', 'cancelBatch'].includes(fn as endpointStrings)) {
       // Cancel doesn't require any body, but fetch is sending empty body, to match the signature this block is required.
@@ -183,30 +171,19 @@ const BedrockAPIConfig: ProviderAPIConfig = {
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
       providerOptions.awsSecretAccessKey || '',
-      providerOptions.awsSessionToken || ''
+      providerOptions.awsSessionToken || '',
     );
   },
-  getEndpoint: ({
-    fn,
-    gatewayRequestBodyJSON: gatewayRequestBody,
-    gatewayRequestURL,
-  }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody, gatewayRequestURL }) => {
     if (fn === 'retrieveFile') {
-      const fileId = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
-      );
+      const fileId = decodeURIComponent(gatewayRequestURL.split('/v1/files/')[1]);
       const s3ObjectKeyParts = fileId.replace('s3://', '').split('/');
       const s3ObjectKey = s3ObjectKeyParts.slice(1).join('/');
       return `/${s3ObjectKey}?attributes`;
     }
     if (fn === 'retrieveFileContent') {
-      const fileId = decodeURIComponent(
-        gatewayRequestURL.split('/v1/files/')[1]
-      );
-      const s3ObjectKeyParts = fileId
-        .replace('s3://', '')
-        .replace('/content', '')
-        .split('/');
+      const fileId = decodeURIComponent(gatewayRequestURL.split('/v1/files/')[1]);
+      const s3ObjectKeyParts = fileId.replace('s3://', '').replace('/content', '').split('/');
       const s3ObjectKey = s3ObjectKeyParts.slice(1).join('/');
       return `/${s3ObjectKey}`;
     }

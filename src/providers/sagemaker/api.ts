@@ -1,37 +1,30 @@
 import { GatewayError } from '../../errors/GatewayError';
-import {
-  generateAWSHeaders,
-  getAssumedRoleCredentials,
-} from '../bedrock/utils';
-import { ProviderAPIConfig } from '../types';
+import { generateAWSHeaders, getAssumedRoleCredentials } from '../bedrock/utils';
+import type { ProviderAPIConfig } from '../types';
 
 const SagemakerAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     return `https://runtime.sagemaker.${providerOptions.awsRegion}.amazonaws.com`;
   },
-  headers: async ({
-    providerOptions,
-    transformedRequestBody,
-    transformedRequestUrl,
-  }) => {
+  headers: async ({ providerOptions, transformedRequestBody, transformedRequestUrl }) => {
     const headers: Record<string, string> = {
       'content-type': 'application/json',
     };
 
     if (providerOptions.awsAuthType === 'assumedRole') {
       try {
-        // 先在源账号中 assume role，获取临时凭证
+        // First assume role in the source account to obtain temporary credentials
         const sourceRoleCredentials = await getAssumedRoleCredentials(
-          process.env.AWS_ASSUME_ROLE_SOURCE_ARN || '', // 源账号中的 Role ARN
-          process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // 源角色的外部 ID（如需要）
-          providerOptions.awsRegion || ''
+          process.env.AWS_ASSUME_ROLE_SOURCE_ARN || '', // Role ARN in the source account
+          process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
+          providerOptions.awsRegion || '',
         );
 
         if (!sourceRoleCredentials) {
           throw new Error('Server Error while assuming internal role');
         }
 
-        // 使用第一步获取的临时凭证，在目标账号中 assume role
+        // Assume role in destination account using temporary creds obtained in first step
         const { accessKeyId, secretAccessKey, sessionToken } =
           (await getAssumedRoleCredentials(
             providerOptions.awsRoleArn || '',
@@ -41,7 +34,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
               accessKeyId: sourceRoleCredentials.accessKeyId,
               secretAccessKey: sourceRoleCredentials.secretAccessKey,
               sessionToken: sourceRoleCredentials.sessionToken,
-            }
+            },
           )) || {};
         providerOptions.awsAccessKeyId = accessKeyId;
         providerOptions.awsSecretAccessKey = secretAccessKey;
@@ -60,7 +53,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
       providerOptions.awsSecretAccessKey || '',
-      providerOptions.awsSessionToken || ''
+      providerOptions.awsSessionToken || '',
     );
 
     if (providerOptions.amznSagemakerCustomAttributes) {
@@ -69,13 +62,11 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerTargetModel) {
-      awsHeaders['x-amzn-sagemaker-target-model'] =
-        providerOptions.amznSagemakerTargetModel;
+      awsHeaders['x-amzn-sagemaker-target-model'] = providerOptions.amznSagemakerTargetModel;
     }
 
     if (providerOptions.amznSagemakerTargetVariant) {
-      awsHeaders['x-amzn-sagemaker-target-variant'] =
-        providerOptions.amznSagemakerTargetVariant;
+      awsHeaders['x-amzn-sagemaker-target-variant'] = providerOptions.amznSagemakerTargetVariant;
     }
 
     if (providerOptions.amznSagemakerTargetContainerHostname) {
@@ -84,8 +75,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerInferenceId) {
-      awsHeaders['x-amzn-sagemaker-inference-id'] =
-        providerOptions.amznSagemakerInferenceId;
+      awsHeaders['x-amzn-sagemaker-inference-id'] = providerOptions.amznSagemakerInferenceId;
     }
 
     if (providerOptions.amznSagemakerEnableExplanations) {
@@ -99,8 +89,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerSessionId) {
-      awsHeaders['x-amzn-sagemaker-session-id'] =
-        providerOptions.amznSagemakerSessionId;
+      awsHeaders['x-amzn-sagemaker-session-id'] = providerOptions.amznSagemakerSessionId;
     }
     return awsHeaders;
   },

@@ -348,9 +348,7 @@ export interface ThinkingConfigDisabled {
   type: 'disabled';
 }
 
-export type ThinkingConfigParam =
-  | ThinkingConfigEnabled
-  | ThinkingConfigDisabled;
+export type ThinkingConfigParam = ThinkingConfigEnabled | ThinkingConfigDisabled;
 
 /**
  * The model will use any available tools.
@@ -703,11 +701,7 @@ export type ToolUnion =
  * How the model should use the provided tools. The model can use a specific tool,
  * any available tool, decide by itself, or not use tools at all.
  */
-export type ToolChoice =
-  | ToolChoiceAuto
-  | ToolChoiceAny
-  | ToolChoiceTool
-  | ToolChoiceNone;
+export type ToolChoice = ToolChoiceAuto | ToolChoiceAny | ToolChoiceTool | ToolChoiceNone;
 
 export interface MessageCreateParamsBase {
   /**

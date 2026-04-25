@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DeepInfraApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.deepinfra.com/v1/openai',

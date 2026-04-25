@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const upstageAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.upstage.ai/v1/solar',

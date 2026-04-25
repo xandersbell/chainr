@@ -1,10 +1,6 @@
 import { SILICONFLOW } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateErrorResponse } from '../utils';
 
 export const SiliconFlowChatCompleteConfig: ProviderConfig = {
@@ -70,19 +66,19 @@ export const SiliconFlowChatCompleteConfig: ProviderConfig = {
 
 export const SiliconFlowErrorResponseTransform: (
   response: ErrorResponse,
-  provider: string
+  provider: string,
 ) => ErrorResponse = (response, provider) => {
   return generateErrorResponse(
     {
       ...response.error,
     },
-    provider
+    provider,
   );
 };
 
 export const SiliconFlowChatCompleteResponseTransform: (
   response: ChatCompletionResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return SiliconFlowErrorResponseTransform(response, SILICONFLOW);
@@ -99,7 +95,7 @@ export const SiliconFlowChatCompleteResponseTransform: (
  */
 export const SiliconFlowChatCompleteJSONToStreamResponseTransform: (
   response: ChatCompletionResponse,
-  provider: string
+  provider: string,
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, choices } = response;
@@ -107,8 +103,7 @@ export const SiliconFlowChatCompleteJSONToStreamResponseTransform: (
   const { prompt_tokens, completion_tokens } = response.usage || {};
 
   let total_tokens;
-  if (prompt_tokens && completion_tokens)
-    total_tokens = prompt_tokens + completion_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -124,11 +119,7 @@ export const SiliconFlowChatCompleteJSONToStreamResponseTransform: (
   };
 
   for (const [index, choice] of choices.entries()) {
-    if (
-      choice.message &&
-      choice.message.content &&
-      typeof choice.message.content === 'string'
-    ) {
+    if (choice.message?.content && typeof choice.message.content === 'string') {
       const inidividualWords: Array<string> = [];
       for (let i = 0; i < choice.message.content.length; i += 4) {
         inidividualWords.push(choice.message.content.slice(i, i + 4));
@@ -146,7 +137,7 @@ export const SiliconFlowChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       });
     }
@@ -161,7 +152,7 @@ export const SiliconFlowChatCompleteJSONToStreamResponseTransform: (
             finish_reason: choice.finish_reason,
           },
         ],
-      })}\n\n`
+      })}\n\n`,
     );
   }
 

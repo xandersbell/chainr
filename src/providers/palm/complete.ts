@@ -1,11 +1,8 @@
 import { PALM } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { PalmCompleteResponse } from '../../types/responseBody';
-import {
-  GoogleErrorResponse,
-  GoogleErrorResponseTransform,
-} from '../google/chatComplete';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { PalmCompleteResponse } from '../../types/responseBody';
+import { type GoogleErrorResponse, GoogleErrorResponseTransform } from '../google/chatComplete';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -63,13 +60,10 @@ export const PalmCompleteConfig: ProviderConfig = {
 
 export const PalmCompleteResponseTransform: (
   response: PalmCompleteResponse | GoogleErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse,
-      PALM
-    );
+    const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
     if (errorResponse) return errorResponse;
   }
 

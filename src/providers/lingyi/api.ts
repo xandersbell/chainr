@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const LingYiAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.lingyiwanwu.com',

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const NCompassApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.ncompass.tech/v1',

@@ -1,4 +1,4 @@
-import { MessageCreateParamsBase } from '../../types/MessagesRequest';
+import type { MessageCreateParamsBase } from '../../types/MessagesRequest';
 
 interface BedrockBatch {
   clientRequestToken: string;

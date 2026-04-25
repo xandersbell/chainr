@@ -1,10 +1,6 @@
 import { FEATHERLESS_AI } from '../../globals';
-import {
-  chatCompleteParams,
-  completeParams,
-  responseTransformers,
-} from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import { chatCompleteParams, completeParams, responseTransformers } from '../open-ai-base';
+import type { ProviderConfigs } from '../types';
 import { featherlessAIAPIConfig } from './api';
 
 export const FeatherlessAIConfig: ProviderConfigs = {

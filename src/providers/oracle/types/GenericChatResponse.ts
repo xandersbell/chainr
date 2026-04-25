@@ -280,12 +280,7 @@ export interface ChatChoice {
    * The index of the chat. Note: Numbers greater than Number.MAX_SAFE_INTEGER will result in rounding issues.
    */
   index: number;
-  message:
-    | SystemMessage
-    | AssistantMessage
-    | UserMessage
-    | ToolMessage
-    | DeveloperMessage;
+  message: SystemMessage | AssistantMessage | UserMessage | ToolMessage | DeveloperMessage;
   /**
     * The reason why the model stopped generating tokens.
 * <p>
@@ -303,10 +298,7 @@ Stops if the model hits a natural stop point or a provided stop sequence. Return
 }
 
 export namespace GenericChatResponse {
-  export function getJsonObj(
-    obj: GenericChatResponse,
-    isParentJsonObj?: boolean
-  ): object {
+  export function getJsonObj(obj: GenericChatResponse, isParentJsonObj?: boolean): object {
     const jsonObj = {
       ...(isParentJsonObj ? obj : (obj as GenericChatResponse)),
       ...{
@@ -320,7 +312,7 @@ export namespace GenericChatResponse {
   export const apiFormat = 'GENERIC';
   export function getDeserializedJsonObj(
     obj: GenericChatResponse,
-    isParentJsonObj?: boolean
+    isParentJsonObj?: boolean,
   ): object {
     const jsonObj = {
       ...(isParentJsonObj ? obj : (obj as GenericChatResponse)),

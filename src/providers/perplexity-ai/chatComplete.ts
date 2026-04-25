@@ -1,14 +1,7 @@
 import { PERPLEXITY_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -141,12 +134,12 @@ export const PerplexityAIChatCompleteResponseTransform: (
   response: PerplexityAIChatCompleteResponse | PerplexityAIErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   _responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance
+  strictOpenAiCompliance,
 ) => {
   if ('error' in response) {
     return generateErrorResponse(
@@ -156,7 +149,7 @@ export const PerplexityAIChatCompleteResponseTransform: (
         param: null,
         code: response.error.code.toString(),
       },
-      PERPLEXITY_AI
+      PERPLEXITY_AI,
     );
   }
 
@@ -196,19 +189,14 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: any,
-  strictOpenAiCompliance: boolean
-) => string = (
-  responseChunk,
-  _fallbackId,
-  _streamState,
-  strictOpenAiCompliance
-) => {
+  strictOpenAiCompliance: boolean,
+) => string = (responseChunk, _fallbackId, _streamState, strictOpenAiCompliance) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
 
   const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
-  let returnChunk =
+  const returnChunk =
     `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,
@@ -232,8 +220,7 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
         parsedChunk.choices[0]?.finish_reason && { usage: parsedChunk.usage }),
     })}` + '\n\n';
 
-  if (parsedChunk.choices[0]?.finish_reason)
-    return returnChunk + `data: [DONE]\n\n`;
+  if (parsedChunk.choices[0]?.finish_reason) return returnChunk + `data: [DONE]\n\n`;
 
   return returnChunk;
 };

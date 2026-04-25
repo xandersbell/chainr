@@ -1,12 +1,13 @@
 /**
- * LoadBalance 策略 — 按权重随机选择一个 target
- * 支持嵌套：选中的 target 可以是叶节点或子策略组
+ * LoadBalance strategy — randomly select a target based on weights
+ * Supports nesting: the selected target can be a leaf node or a sub-strategy group
  */
-import type { Params } from '../../types/requestBody';
+
 import type { endpointStrings } from '../../providers/types';
+import type { Params } from '../../types/requestBody';
+import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
-import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
 export class LoadBalanceStrategy {
   async execute(
@@ -14,7 +15,7 @@ export class LoadBalanceStrategy {
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number,
-    endpoint?: endpointStrings
+    endpoint?: endpointStrings,
   ): Promise<StrategyResult> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
@@ -30,7 +31,7 @@ export class LoadBalanceStrategy {
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number,
-    endpoint?: endpointStrings
+    endpoint?: endpointStrings,
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (targets.length === 0) {
       throw new Error('No targets provided for load balance');
@@ -42,9 +43,7 @@ export class LoadBalanceStrategy {
   }
 
   private selectByWeight(targets: TargetConfig[]): TargetConfig {
-    const totalWeight = targets.reduce(
-      (sum, t) => sum + ((t.weight as number) ?? 1), 0
-    );
+    const totalWeight = targets.reduce((sum, t) => sum + ((t.weight as number) ?? 1), 0);
     const rand = Math.random() * totalWeight;
     let cumulative = 0;
     for (const target of targets) {

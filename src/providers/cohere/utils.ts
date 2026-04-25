@@ -1,6 +1,6 @@
 import { COHERE } from '../../globals';
 import { generateErrorResponse } from '../utils';
-import { CohereErrorResponse } from './types';
+import type { CohereErrorResponse } from './types';
 
 export const CohereErrorResponseTransform = (response: CohereErrorResponse) => {
   return generateErrorResponse(
@@ -10,6 +10,6 @@ export const CohereErrorResponseTransform = (response: CohereErrorResponse) => {
       param: null,
       code: null,
     },
-    COHERE
+    COHERE,
   );
 };

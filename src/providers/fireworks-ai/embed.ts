@@ -1,10 +1,10 @@
 import { FIREWORKS_AI } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  FireworksAIValidationErrorResponse,
   FireworksAIErrorResponseTransform,
+  type FireworksAIValidationErrorResponse,
 } from './chatComplete';
 
 export const FireworksAIEmbedConfig: ProviderConfig = {
@@ -33,7 +33,7 @@ interface FireworksAIEmbedResponse extends EmbedResponse {}
 
 export const FireworksAIEmbedResponseTransform: (
   response: FireworksAIEmbedResponse | FireworksAIValidationErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if ('fault' in response && responseStatus !== 200) {
     return FireworksAIErrorResponseTransform(response);

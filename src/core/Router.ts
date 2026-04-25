@@ -1,10 +1,30 @@
-import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams, TranslationParams } from '../types/requestBody';
-import type { PrioraiConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
-import type { ChatCompletionChunk } from './types/streaming';
 import type { MessagesResponse } from '../types/messagesResponse';
-import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy, ConditionalStrategy } from './strategies';
+import type {
+  EmbedParams,
+  ImageGenerateParams,
+  Params,
+  SpeechParams,
+  TranscriptionParams,
+  TranslationParams,
+} from '../types/requestBody';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
 import { fetchWithTimeout } from './RetryHandler';
+import {
+  ConditionalStrategy,
+  FallbackStrategy,
+  LoadBalanceStrategy,
+  SingleStrategy,
+} from './strategies';
+import type {
+  EmbedResponse,
+  ImageGenerateResponse,
+  PrioraiConfig,
+  SpeechResponse,
+  StrategyResult,
+  TargetConfig,
+  TranscriptionResponse,
+} from './types';
+import type { ChatCompletionChunk } from './types/streaming';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
@@ -23,17 +43,20 @@ export class Priorai {
     if (!config.targets || config.targets.length === 0) {
       throw new Error('At least one target is required');
     }
-    // 递归验证所有 target（conditional 策略下 target 可以没有 provider，只需有 name）
+    // Recursively validate all targets (under conditional strategy, targets may omit provider — only name is required)
     if (config.strategy !== 'conditional') {
       this.validateTargets(config.targets, 'targets');
     }
-    // conditional 策略需要 conditions 配置
+    // Conditional strategy requires conditions configuration
     if (config.strategy === 'conditional') {
       if (!config.conditions || config.conditions.length === 0) {
         throw new Error('conditional strategy requires non-empty "conditions" array');
       }
     }
-    if (config.timeout !== undefined && (typeof config.timeout !== 'number' || config.timeout <= 0)) {
+    if (
+      config.timeout !== undefined &&
+      (typeof config.timeout !== 'number' || config.timeout <= 0)
+    ) {
       throw new Error('timeout must be a positive number (milliseconds)');
     }
     if (config.retry) {
@@ -41,7 +64,14 @@ export class Priorai {
         throw new Error('retry.attempts must be a positive integer');
       }
     }
-    for (const key of ['embedTargets', 'imageTargets', 'audioTargets', 'speechTargets', 'messagesTargets', 'responsesTargets'] as const) {
+    for (const key of [
+      'embedTargets',
+      'imageTargets',
+      'audioTargets',
+      'speechTargets',
+      'messagesTargets',
+      'responsesTargets',
+    ] as const) {
       const targets = config[key];
       if (targets) {
         for (const target of targets) {
@@ -54,8 +84,8 @@ export class Priorai {
   }
 
   /**
-   * 递归验证 target 列表
-   * 叶节点必须有 provider，嵌套策略组必须有 strategy + 非空 targets
+   * Recursively validate target list
+   * Leaf nodes must have provider; nested strategy groups must have strategy + non-empty targets
    */
   private validateTargets(targets: TargetConfig[], path: string): void {
     for (let i = 0; i < targets.length; i++) {
@@ -63,7 +93,7 @@ export class Priorai {
       const targetPath = `${path}[${i}]`;
 
       if (target.strategy || target.targets) {
-        // 嵌套策略组
+        // Nested strategy group
         if (!target.strategy) {
           throw new Error(`${targetPath} has "targets" but missing "strategy" field`);
         }
@@ -71,12 +101,14 @@ export class Priorai {
           throw new Error(`${targetPath} has unknown strategy: ${target.strategy}`);
         }
         if (!Array.isArray(target.targets) || target.targets.length === 0) {
-          throw new Error(`${targetPath} strategy "${target.strategy}" requires non-empty "targets" array`);
+          throw new Error(
+            `${targetPath} strategy "${target.strategy}" requires non-empty "targets" array`,
+          );
         }
-        // 递归验证子 targets
+        // Recursively validate child targets
         this.validateTargets(target.targets, `${targetPath}.targets`);
       } else {
-        // 叶节点
+        // Leaf node
         if (!target.provider) {
           throw new Error(`${targetPath} must have a "provider" field`);
         }
@@ -84,7 +116,9 @@ export class Priorai {
     }
   }
 
-  private createStrategy(mode: string): FallbackStrategy | LoadBalanceStrategy | SingleStrategy | ConditionalStrategy {
+  private createStrategy(
+    mode: string,
+  ): FallbackStrategy | LoadBalanceStrategy | SingleStrategy | ConditionalStrategy {
     switch (mode) {
       case 'fallback':
         return new FallbackStrategy();
@@ -102,7 +136,7 @@ export class Priorai {
   chat = {
     completions: {
       create: (
-        params: Params
+        params: Params,
       ): Promise<ChatCompletionResponse | ErrorResponse | ReadableStream<ChatCompletionChunk>> => {
         if (params.stream === true) {
           return this.executeChatCompletionsStreaming(params);
@@ -152,23 +186,21 @@ export class Priorai {
   };
 
   /**
-   * Anthropic Messages API — 原生格式透传
-   * 请求/响应都是 Anthropic 原生格式，不做 OpenAI 兼容转换
-   * 支持 fallback/loadbalance/single 路由策略
+   * Anthropic Messages API — native format passthrough
+   * Both request and response use Anthropic native format, no OpenAI compatibility conversion
+   * Supports fallback/loadbalance/single routing strategies
    */
   messages = {
-    create: (
-      params: Params
-    ): Promise<MessagesResponse | ErrorResponse | ReadableStream> => {
+    create: (params: Params): Promise<MessagesResponse | ErrorResponse | ReadableStream> => {
       if (params.stream === true) {
         return this.executeMessagesStreaming(params);
       }
       return this.executeMessages(params);
     },
     /**
-     * Anthropic Messages Count Tokens — 预估 input token 数量
+     * Anthropic Messages Count Tokens — estimate input token count
      * POST /v1/messages/count_tokens
-     * 支持 Anthropic 直连、Bedrock、Vertex AI
+     * Supports Anthropic direct, Bedrock, Vertex AI
      */
     countTokens: async (params: Params): Promise<Record<string, unknown>> => {
       const targets = this.config.messagesTargets || this.config.targets;
@@ -177,14 +209,12 @@ export class Priorai {
   };
 
   /**
-   * OpenAI Responses API — /v1/responses 端点
-   * 使用 input/instructions 替代 messages/system，支持 tool calling、reasoning 等
-   * 支持 fallback/loadbalance/single 路由策略
+   * OpenAI Responses API — /v1/responses endpoint
+   * Uses input/instructions instead of messages/system, supports tool calling, reasoning, etc.
+   * Supports fallback/loadbalance/single routing strategies
    */
   responses = {
-    create: (
-      params: Params
-    ): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
+    create: (params: Params): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
       if (params.stream === true) {
         return this.executeResponsesStreaming(params);
       }
@@ -193,23 +223,25 @@ export class Priorai {
   };
 
   /**
-   * Legacy text completion API — /v1/completions 端点
-   * 通过策略系统路由，支持 fallback/loadbalance/single
+   * Legacy text completion API — /v1/completions endpoint
+   * Routed through the strategy system, supports fallback/loadbalance/single
    */
   completions = {
-    create: (
-      params: Params
-    ): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
+    create: (params: Params): Promise<Record<string, unknown> | ErrorResponse | ReadableStream> => {
       if (params.stream === true) {
-        return this.executeStrategyStream(this.config.targets, params, 'complete') as Promise<ReadableStream>;
+        return this.executeStrategyStream(
+          this.config.targets,
+          params,
+          'complete',
+        ) as Promise<ReadableStream>;
       }
       return this.executeCompletions(params);
     },
   };
 
   /**
-   * 文件操作 API — upload/list/delete/retrieve
-   * 使用简单循环模式（管理类端点，不需要策略路由）
+   * File operations API — upload/list/delete/retrieve
+   * Uses simple loop pattern (management endpoints, no strategy routing needed)
    */
   files = {
     upload: async (params: Params): Promise<Record<string, unknown>> => {
@@ -230,7 +262,7 @@ export class Priorai {
   };
 
   /**
-   * Batch API — 批量推理
+   * Batch API — batch inference
    */
   batches = {
     create: async (params: Params): Promise<Record<string, unknown>> => {
@@ -248,7 +280,7 @@ export class Priorai {
   };
 
   /**
-   * Fine-tune API — 微调管理
+   * Fine-tune API — fine-tuning management
    */
   fineTuning = {
     create: async (params: Params): Promise<Record<string, unknown>> => {
@@ -265,25 +297,33 @@ export class Priorai {
     },
   };
 
-  private async executeChatCompletions(params: Params): Promise<ChatCompletionResponse | ErrorResponse> {
-    const result: StrategyResult = await this.executeStrategy(this.config.targets, params, 'chatComplete');
+  private async executeChatCompletions(
+    params: Params,
+  ): Promise<ChatCompletionResponse | ErrorResponse> {
+    const result: StrategyResult = await this.executeStrategy(
+      this.config.targets,
+      params,
+      'chatComplete',
+    );
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
       'chatComplete',
       200,
       {},
-      params.model as string
+      params.model as string,
     );
     return transformed as ChatCompletionResponse | ErrorResponse;
   }
 
-  private async executeChatCompletionsStreaming(params: Params): Promise<ReadableStream<ChatCompletionChunk>> {
+  private async executeChatCompletionsStreaming(
+    params: Params,
+  ): Promise<ReadableStream<ChatCompletionChunk>> {
     return this.executeStrategyStream(this.config.targets, params, 'chatComplete');
   }
 
   /**
-   * Anthropic Messages API — 非流式
+   * Anthropic Messages API — non-streaming
    */
   private async executeMessages(params: Params): Promise<MessagesResponse | ErrorResponse> {
     const targets = this.config.messagesTargets || this.config.targets;
@@ -294,13 +334,13 @@ export class Priorai {
       'messages',
       200,
       {},
-      params.model as string
+      params.model as string,
     );
     return transformed as MessagesResponse | ErrorResponse;
   }
 
   /**
-   * Anthropic Messages API — 流式
+   * Anthropic Messages API — streaming
    */
   private async executeMessagesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.messagesTargets || this.config.targets;
@@ -308,24 +348,28 @@ export class Priorai {
   }
 
   /**
-   * OpenAI Responses API — 非流式
+   * OpenAI Responses API — non-streaming
    */
   private async executeResponses(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
     const targets = this.config.responsesTargets || this.config.targets;
-    const result: StrategyResult = await this.executeStrategy(targets, params, 'createModelResponse');
+    const result: StrategyResult = await this.executeStrategy(
+      targets,
+      params,
+      'createModelResponse',
+    );
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
       'createModelResponse',
       200,
       {},
-      params.model as string
+      params.model as string,
     );
     return transformed as Record<string, unknown> | ErrorResponse;
   }
 
   /**
-   * OpenAI Responses API — 流式
+   * OpenAI Responses API — streaming
    */
   private async executeResponsesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.responsesTargets || this.config.targets;
@@ -333,84 +377,124 @@ export class Priorai {
   }
 
   /**
-   * 统一策略执行入口 — 处理 conditional 策略的额外参数
+   * Unified strategy execution entry point — handles conditional strategy extra params
    */
   private async executeStrategy(
     targets: TargetConfig[],
     params: Params,
-    endpoint: import('../providers/types').endpointStrings
+    endpoint: import('../providers/types').endpointStrings,
   ): Promise<StrategyResult> {
     if (this.config.strategy === 'conditional') {
       return (this.strategy as ConditionalStrategy).execute(
-        targets, params, this.config.retry, this.config.timeout, endpoint,
-        this.config.conditions, this.config.conditionalDefault, this.config.metadata
+        targets,
+        params,
+        this.config.retry,
+        this.config.timeout,
+        endpoint,
+        this.config.conditions,
+        this.config.conditionalDefault,
+        this.config.metadata,
       );
     }
     return this.strategy.execute(targets, params, this.config.retry, this.config.timeout, endpoint);
   }
 
   /**
-   * 统一流式策略执行入口
+   * Unified streaming strategy execution entry point
    */
   private async executeStrategyStream(
     targets: TargetConfig[],
     params: Params,
-    endpoint: import('../providers/types').endpointStrings
+    endpoint: import('../providers/types').endpointStrings,
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (this.config.strategy === 'conditional') {
       return (this.strategy as ConditionalStrategy).executeStream(
-        targets, params, this.config.retry, this.config.timeout, endpoint,
-        this.config.conditions, this.config.conditionalDefault, this.config.metadata
+        targets,
+        params,
+        this.config.retry,
+        this.config.timeout,
+        endpoint,
+        this.config.conditions,
+        this.config.conditionalDefault,
+        this.config.metadata,
       );
     }
-    return this.strategy.executeStream(targets, params, this.config.retry, this.config.timeout, endpoint);
+    return this.strategy.executeStream(
+      targets,
+      params,
+      this.config.retry,
+      this.config.timeout,
+      endpoint,
+    );
   }
 
   /**
-   * Legacy text completion — 非流式
-   * 通过策略系统路由，使用 'complete' endpoint 配置
+   * Legacy text completion — non-streaming
+   * Routed through the strategy system, uses 'complete' endpoint config
    */
-  private async executeCompletions(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
-    const result: StrategyResult = await this.executeStrategy(this.config.targets, params, 'complete');
+  private async executeCompletions(
+    params: Params,
+  ): Promise<Record<string, unknown> | ErrorResponse> {
+    const result: StrategyResult = await this.executeStrategy(
+      this.config.targets,
+      params,
+      'complete',
+    );
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
       'complete',
       200,
       {},
-      params.model as string
+      params.model as string,
     );
     return transformed as Record<string, unknown> | ErrorResponse;
   }
 
   /**
-   * 通用简单端点执行 — 管理类 API（文件、批量、微调、图片编辑等）
-   * 使用简单循环模式，逐个 target 尝试直到成功
+   * Generic simple endpoint execution — management APIs (files, batches, fine-tuning, image edit, etc.)
+   * Uses simple loop pattern, tries each target in order until success
    */
   private async executeSimpleEndpoint(
     targets: TargetConfig[],
     params: Params,
-    endpoint: import('../providers/types').endpointStrings
+    endpoint: import('../providers/types').endpointStrings,
   ): Promise<Record<string, unknown>> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params, provider, target, endpoint);
+        const { body, headers, url } = await buildProviderRequest(
+          params,
+          provider,
+          target,
+          endpoint,
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: body instanceof FormData ? body : JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: body instanceof FormData ? body : JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, endpoint, 200, {}, params.model as string);
+        const transformed = transformProviderResponse(
+          data,
+          provider,
+          endpoint,
+          200,
+          {},
+          params.model as string,
+        );
         return transformed as Record<string, unknown>;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -422,27 +506,43 @@ export class Priorai {
 
   private async executeEmbeddings(
     targets: Array<Record<string, unknown>>,
-    params: EmbedParams
+    params: EmbedParams,
   ): Promise<EmbedResponse> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'embed');
+        const { body, headers, url } = await buildProviderRequest(
+          params as unknown as Params,
+          provider,
+          target,
+          'embed',
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, 'embed', 200, {}, params.model as string);
+        const transformed = transformProviderResponse(
+          data,
+          provider,
+          'embed',
+          200,
+          {},
+          params.model as string,
+        );
         return transformed as unknown as EmbedResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -454,27 +554,43 @@ export class Priorai {
 
   private async executeImageGeneration(
     targets: Array<Record<string, unknown>>,
-    params: ImageGenerateParams
+    params: ImageGenerateParams,
   ): Promise<ImageGenerateResponse> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'imageGenerate');
+        const { body, headers, url } = await buildProviderRequest(
+          params as unknown as Params,
+          provider,
+          target,
+          'imageGenerate',
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, 'imageGenerate', 200, {}, (params as any).model as string);
+        const transformed = transformProviderResponse(
+          data,
+          provider,
+          'imageGenerate',
+          200,
+          {},
+          (params as any).model as string,
+        );
         return transformed as unknown as ImageGenerateResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -486,20 +602,29 @@ export class Priorai {
 
   private async executeAudioTranscription(
     targets: Array<Record<string, unknown>>,
-    params: TranscriptionParams
+    params: TranscriptionParams,
   ): Promise<TranscriptionResponse> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranscription');
+        const { body, headers, url } = await buildProviderRequest(
+          params as unknown as Params,
+          provider,
+          target,
+          'createTranscription',
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -517,20 +642,29 @@ export class Priorai {
 
   private async executeSpeechSynthesis(
     targets: Array<Record<string, unknown>>,
-    params: SpeechParams
+    params: SpeechParams,
   ): Promise<SpeechResponse> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createSpeech');
+        const { body, headers, url } = await buildProviderRequest(
+          params as unknown as Params,
+          provider,
+          target,
+          'createSpeech',
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -553,20 +687,29 @@ export class Priorai {
 
   private async executeAudioTranslation(
     targets: Array<Record<string, unknown>>,
-    params: TranslationParams
+    params: TranslationParams,
   ): Promise<TranscriptionResponse> {
     let lastError: string | undefined;
 
     for (const target of targets) {
       try {
         const provider = (target['provider'] as string) || 'openai';
-        const { body, headers, url } = await buildProviderRequest(params as unknown as Params, provider, target, 'createTranslation');
+        const { body, headers, url } = await buildProviderRequest(
+          params as unknown as Params,
+          provider,
+          target,
+          'createTranslation',
+        );
 
-        const response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }, this.config.timeout ?? 30000);
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          },
+          this.config.timeout ?? 30000,
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

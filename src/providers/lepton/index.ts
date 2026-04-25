@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import LeptonAPIConfig from './api';
 import {
   LeptonChatCompleteConfig,
@@ -10,6 +10,7 @@ import {
   LeptonCompleteResponseTransform,
   LeptonCompleteStreamChunkTransform,
 } from './complete';
+
 const LeptonConfig: ProviderConfigs = {
   chatComplete: LeptonChatCompleteConfig,
   complete: LeptonCompleteConfig,

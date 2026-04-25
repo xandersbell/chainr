@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Priorai } from '../../src';
 import type { PrioraiConfig } from '../../src/core/types';
 
@@ -9,7 +9,7 @@ function getEnv(key: string): string | undefined {
 }
 
 function skipIfNoKey(provider: string, keys: string[]): void {
-  const missing = keys.filter(k => !getEnv(k));
+  const missing = keys.filter((k) => !getEnv(k));
   if (missing.length > 0) {
     console.log(`Skipping ${provider} test - missing: ${missing.join(', ')}`);
   }
@@ -17,340 +17,396 @@ function skipIfNoKey(provider: string, keys: string[]): void {
 
 describe('Real HTTP Integration Tests', () => {
   describe('OpenAI', () => {
-    it('should make a real request to OpenAI API', async () => {
-      const apiKey = getEnv('OPENAI_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should make a real request to OpenAI API',
+      async () => {
+        const apiKey = getEnv('OPENAI_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'openai', api_key: apiKey }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'openai', api_key: apiKey }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
-        max_tokens: 10,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
+          max_tokens: 10,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-      expect(response.choices[0].message.content!.length).toBeGreaterThan(0);
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+        expect(response.choices[0].message.content!.length).toBeGreaterThan(0);
+      },
+      { timeout: 30000 },
+    );
 
-    it('should handle OpenAI error response', async () => {
-      const apiKey = getEnv('OPENAI_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should handle OpenAI error response',
+      async () => {
+        const apiKey = getEnv('OPENAI_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'openai', api_key: 'invalid-key-for-testing' }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'openai', api_key: 'invalid-key-for-testing' }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: 'Hello' }],
-        max_tokens: 5,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: 'Hello' }],
+          max_tokens: 5,
+        });
 
-      // Should return error response, not throw
-      expect(response).toHaveProperty('error');
-    }, { timeout: 15000 });
+        // Should return error response, not throw
+        expect(response).toHaveProperty('error');
+      },
+      { timeout: 15000 },
+    );
   });
 
   describe('Anthropic', () => {
-    it('should make a real request to Anthropic API with system message', async () => {
-      const apiKey = getEnv('ANTHROPIC_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should make a real request to Anthropic API with system message',
+      async () => {
+        const apiKey = getEnv('ANTHROPIC_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'anthropic', api_key: apiKey }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'anthropic', api_key: apiKey }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'claude-3-5-haiku-20241022',
-        messages: [
-          { role: 'system', content: 'You are a pirate. Speak in pirate dialect only.' },
-          { role: 'user', content: 'Say hello' },
-        ],
-        max_tokens: 50,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'claude-3-5-haiku-20241022',
+          messages: [
+            { role: 'system', content: 'You are a pirate. Speak in pirate dialect only.' },
+            { role: 'user', content: 'Say hello' },
+          ],
+          max_tokens: 50,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-      const content = response.choices[0].message.content!;
-      console.log('Anthropic response:', content);
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+        const content = response.choices[0].message.content!;
+        console.log('Anthropic response:', content);
+      },
+      { timeout: 30000 },
+    );
 
-    it('should handle Anthropic system message extraction', async () => {
-      const apiKey = getEnv('ANTHROPIC_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should handle Anthropic system message extraction',
+      async () => {
+        const apiKey = getEnv('ANTHROPIC_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'anthropic', api_key: apiKey }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'anthropic', api_key: apiKey }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'claude-3-5-haiku-20241022',
-        messages: [
-          { role: 'system', content: 'Respond with exactly 3 words.' },
-          { role: 'system', content: 'Be very brief.' },
-          { role: 'user', content: 'What is 2+2?' },
-        ],
-        max_tokens: 20,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'claude-3-5-haiku-20241022',
+          messages: [
+            { role: 'system', content: 'Respond with exactly 3 words.' },
+            { role: 'system', content: 'Be very brief.' },
+            { role: 'user', content: 'What is 2+2?' },
+          ],
+          max_tokens: 20,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
   });
 
   describe('Vertex AI', () => {
-    it('should make a real request to Vertex AI', async () => {
-      const apiKey = getEnv('VERTEX_API_KEY');
-      const projectId = getEnv('VERTEX_PROJECT_ID');
-      if (!apiKey || !projectId) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should make a real request to Vertex AI',
+      async () => {
+        const apiKey = getEnv('VERTEX_API_KEY');
+        const projectId = getEnv('VERTEX_PROJECT_ID');
+        if (!apiKey || !projectId) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{
-          provider: 'vertex-ai',
-          api_key: apiKey,
-          providerOptions: {
-            vertexProjectId: projectId,
-            vertexRegion: 'us-central1',
-          },
-        }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [
+            {
+              provider: 'vertex-ai',
+              api_key: apiKey,
+              providerOptions: {
+                vertexProjectId: projectId,
+                vertexRegion: 'us-central1',
+              },
+            },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gemini-1.5-flash',
-        messages: [{ role: 'user', content: 'Say "hello" in one word' }],
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gemini-1.5-flash',
+          messages: [{ role: 'user', content: 'Say "hello" in one word' }],
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
 
-    it('should handle Vertex AI systemInstruction', async () => {
-      const apiKey = getEnv('VERTEX_API_KEY');
-      const projectId = getEnv('VERTEX_PROJECT_ID');
-      if (!apiKey || !projectId) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should handle Vertex AI systemInstruction',
+      async () => {
+        const apiKey = getEnv('VERTEX_API_KEY');
+        const projectId = getEnv('VERTEX_PROJECT_ID');
+        if (!apiKey || !projectId) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{
-          provider: 'vertex-ai',
-          api_key: apiKey,
-          providerOptions: {
-            vertexProjectId: projectId,
-            vertexRegion: 'us-central1',
-          },
-        }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [
+            {
+              provider: 'vertex-ai',
+              api_key: apiKey,
+              providerOptions: {
+                vertexProjectId: projectId,
+                vertexRegion: 'us-central1',
+              },
+            },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gemini-1.5-flash',
-        messages: [
-          { role: 'system', content: 'You are a mathematician. Give precise answers.' },
-          { role: 'user', content: 'What is 1+1?' },
-        ],
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gemini-1.5-flash',
+          messages: [
+            { role: 'system', content: 'You are a mathematician. Give precise answers.' },
+            { role: 'user', content: 'What is 1+1?' },
+          ],
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
 
-    it('should handle Vertex AI generationConfig', async () => {
-      const apiKey = getEnv('VERTEX_API_KEY');
-      const projectId = getEnv('VERTEX_PROJECT_ID');
-      if (!apiKey || !projectId) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should handle Vertex AI generationConfig',
+      async () => {
+        const apiKey = getEnv('VERTEX_API_KEY');
+        const projectId = getEnv('VERTEX_PROJECT_ID');
+        if (!apiKey || !projectId) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{
-          provider: 'vertex-ai',
-          api_key: apiKey,
-          providerOptions: {
-            vertexProjectId: projectId,
-            vertexRegion: 'us-central1',
-          },
-        }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [
+            {
+              provider: 'vertex-ai',
+              api_key: apiKey,
+              providerOptions: {
+                vertexProjectId: projectId,
+                vertexRegion: 'us-central1',
+              },
+            },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gemini-1.5-flash',
-        messages: [{ role: 'user', content: 'Give me a random number between 1 and 10' }],
-        temperature: 0.9,
-        max_tokens: 5,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gemini-1.5-flash',
+          messages: [{ role: 'user', content: 'Give me a random number between 1 and 10' }],
+          temperature: 0.9,
+          max_tokens: 5,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
   });
 
   describe('OpenRouter', () => {
-    it('should make a real request to OpenRouter', async () => {
-      const apiKey = getEnv('OPENROUTER_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should make a real request to OpenRouter',
+      async () => {
+        const apiKey = getEnv('OPENROUTER_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'openrouter', api_key: apiKey }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'openrouter', api_key: apiKey }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'openrouter/auto',
-        messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
-        max_tokens: 10,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'openrouter/auto',
+          messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
+          max_tokens: 10,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
 
-    it('should use X-OpenRouter-Title header', async () => {
-      const apiKey = getEnv('OPENROUTER_API_KEY');
-      if (!apiKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should use X-OpenRouter-Title header',
+      async () => {
+        const apiKey = getEnv('OPENROUTER_API_KEY');
+        if (!apiKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'single',
-        targets: [{ provider: 'openrouter', api_key: apiKey }],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'single',
+          targets: [{ provider: 'openrouter', api_key: apiKey }],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'openrouter/auto',
-        messages: [{ role: 'user', content: 'What model are you using?' }],
-        max_tokens: 50,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'openrouter/auto',
+          messages: [{ role: 'user', content: 'What model are you using?' }],
+          max_tokens: 50,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
   });
 
   describe('Fallback Strategy', () => {
-    it('should fallback to second provider when first fails', async () => {
-      const openaiKey = getEnv('OPENAI_API_KEY');
-      const anthropicKey = getEnv('ANTHROPIC_API_KEY');
+    it(
+      'should fallback to second provider when first fails',
+      async () => {
+        const openaiKey = getEnv('OPENAI_API_KEY');
+        const anthropicKey = getEnv('ANTHROPIC_API_KEY');
 
-      if (!openaiKey || !anthropicKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+        if (!openaiKey || !anthropicKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'fallback',
-        targets: [
-          { provider: 'openai', api_key: 'invalid-key-for-testing-12345' },
-          { provider: 'anthropic', api_key: anthropicKey },
-        ],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'fallback',
+          targets: [
+            { provider: 'openai', api_key: 'invalid-key-for-testing-12345' },
+            { provider: 'anthropic', api_key: anthropicKey },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'claude-3-5-haiku-20241022',
-        messages: [{ role: 'user', content: 'Say "fallback works" in 2 words' }],
-        max_tokens: 20,
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'claude-3-5-haiku-20241022',
+          messages: [{ role: 'user', content: 'Say "fallback works" in 2 words' }],
+          max_tokens: 20,
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 60000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 60000 },
+    );
   });
 
   describe('Load Balance Strategy', () => {
-    it('should distribute requests across multiple providers', async () => {
-      const openaiKey = getEnv('OPENAI_API_KEY');
-      const anthropicKey = getEnv('ANTHROPIC_API_KEY');
+    it(
+      'should distribute requests across multiple providers',
+      async () => {
+        const openaiKey = getEnv('OPENAI_API_KEY');
+        const anthropicKey = getEnv('ANTHROPIC_API_KEY');
 
-      if (!openaiKey || !anthropicKey) {
-        console.log(SKIP_REASON);
-        return;
-      }
+        if (!openaiKey || !anthropicKey) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config: PrioraiConfig = {
-        strategy: 'loadbalance',
-        targets: [
-          { provider: 'openai', api_key: openaiKey, weight: 0.5 },
-          { provider: 'anthropic', api_key: anthropicKey, weight: 0.5 },
-        ],
-      };
+        const config: PrioraiConfig = {
+          strategy: 'loadbalance',
+          targets: [
+            { provider: 'openai', api_key: openaiKey, weight: 0.5 },
+            { provider: 'anthropic', api_key: anthropicKey, weight: 0.5 },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const results: string[] = [];
+        const priorai = new Priorai(config);
+        const results: string[] = [];
 
-      for (let i = 0; i < 4; i++) {
-        const response = await priorai.chat.completions.create({
-          model: i % 2 === 0 ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022',
-          messages: [{ role: 'user', content: `Respond with just the number ${i}` }],
-          max_tokens: 5,
-        });
-        results.push(response.choices[0].message.content!);
-      }
+        for (let i = 0; i < 4; i++) {
+          const response = await priorai.chat.completions.create({
+            model: i % 2 === 0 ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022',
+            messages: [{ role: 'user', content: `Respond with just the number ${i}` }],
+            max_tokens: 5,
+          });
+          results.push(response.choices[0].message.content!);
+        }
 
-      // All requests should succeed
-      expect(results.every(r => r && r.length > 0)).toBe(true);
-    }, { timeout: 120000 });
+        // All requests should succeed
+        expect(results.every((r) => r && r.length > 0)).toBe(true);
+      },
+      { timeout: 120000 },
+    );
   });
 
   describe('Provider Alias', () => {
-    it('should handle google-vertexai alias', async () => {
-      const apiKey = getEnv('VERTEX_API_KEY');
-      const projectId = getEnv('VERTEX_PROJECT_ID');
-      if (!apiKey || !projectId) {
-        console.log(SKIP_REASON);
-        return;
-      }
+    it(
+      'should handle google-vertexai alias',
+      async () => {
+        const apiKey = getEnv('VERTEX_API_KEY');
+        const projectId = getEnv('VERTEX_PROJECT_ID');
+        if (!apiKey || !projectId) {
+          console.log(SKIP_REASON);
+          return;
+        }
 
-      const config = {
-        strategy: 'single' as const,
-        targets: [{
-          provider: 'google-vertexai' as any,
-          api_key: apiKey,
-          providerOptions: {
-            vertexProjectId: projectId,
-            vertexRegion: 'us-central1',
-          },
-        }],
-      };
+        const config = {
+          strategy: 'single' as const,
+          targets: [
+            {
+              provider: 'google-vertexai' as any,
+              api_key: apiKey,
+              providerOptions: {
+                vertexProjectId: projectId,
+                vertexRegion: 'us-central1',
+              },
+            },
+          ],
+        };
 
-      const priorai = new Priorai(config);
-      const response = await priorai.chat.completions.create({
-        model: 'gemini-1.5-flash',
-        messages: [{ role: 'user', content: 'Say "alias works" in 2 words' }],
-      });
+        const priorai = new Priorai(config);
+        const response = await priorai.chat.completions.create({
+          model: 'gemini-1.5-flash',
+          messages: [{ role: 'user', content: 'Say "alias works" in 2 words' }],
+        });
 
-      expect(response.choices[0].message.content).toBeDefined();
-    }, { timeout: 30000 });
+        expect(response.choices[0].message.content).toBeDefined();
+      },
+      { timeout: 30000 },
+    );
   });
 });

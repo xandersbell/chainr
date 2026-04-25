@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import AI302APIConfig from './api';
 import {
   AI302ChatCompleteConfig,

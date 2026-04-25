@@ -1,10 +1,6 @@
 import { DASHSCOPE } from '../../globals';
-import {
-  chatCompleteParams,
-  embedParams,
-  responseTransformers,
-} from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import { chatCompleteParams, embedParams, responseTransformers } from '../open-ai-base';
+import type { ProviderConfigs } from '../types';
 import { dashscopeAPIConfig } from './api';
 
 export const DashScopeConfig: ProviderConfigs = {
@@ -30,7 +26,7 @@ export const DashScopeConfig: ProviderConfigs = {
       thinking_budget: {
         param: 'thinking_budget',
       },
-    }
+    },
   ),
   embed: embedParams([], { model: 'text-embedding-v1' }),
   api: dashscopeAPIConfig,

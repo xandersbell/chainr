@@ -1,12 +1,9 @@
 import { WORKERS_AI } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import {
-  WorkersAiErrorResponse,
-  WorkersAiErrorResponseTransform,
-} from './utils';
+import { type WorkersAiErrorResponse, WorkersAiErrorResponseTransform } from './utils';
 
 export const WorkersAiEmbedConfig: ProviderConfig = {
   input: {
@@ -42,19 +39,17 @@ export const WorkersAiEmbedResponseTransform: (
   _responseHeaders: Headers,
   _strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = WorkersAiErrorResponseTransform(
-      response as WorkersAiErrorResponse
-    );
+    const errorResponse = WorkersAiErrorResponseTransform(response as WorkersAiErrorResponse);
     if (errorResponse) return errorResponse;
   }
 

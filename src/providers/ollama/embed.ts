@@ -1,11 +1,8 @@
 import { OLLAMA } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -32,19 +29,19 @@ export const OllamaEmbedResponseTransform: (
   _responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   _responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if ('error' in response) {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },
-      OLLAMA
+      OLLAMA,
     );
   }
 

@@ -1,10 +1,7 @@
 import { JINA } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const JinaEmbedConfig: ProviderConfig = {
   model: {
@@ -32,7 +29,7 @@ interface JinaErrorResponse {
 
 export const JinaEmbedResponseTransform: (
   response: JinaEmbedResponse | JinaErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'detail' in response) {
     return generateErrorResponse(
@@ -42,7 +39,7 @@ export const JinaEmbedResponseTransform: (
         param: null,
         code: null,
       },
-      JINA
+      JINA,
     );
   }
 

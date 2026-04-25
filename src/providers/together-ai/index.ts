@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import TogetherAIApiConfig from './api';
 import {
   TogetherAIChatCompleteConfig,
@@ -10,10 +10,7 @@ import {
   TogetherAICompleteResponseTransform,
   TogetherAICompleteStreamChunkTransform,
 } from './complete';
-import {
-  TogetherAIEmbedConfig,
-  TogetherAIEmbedResponseTransform,
-} from './embed';
+import { TogetherAIEmbedConfig, TogetherAIEmbedResponseTransform } from './embed';
 
 const TogetherAIConfig: ProviderConfigs = {
   complete: TogetherAICompleteConfig,

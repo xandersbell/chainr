@@ -1,70 +1,70 @@
-import {
+import type {
   OpenAIResponse,
-  ResponseCreatedEvent,
-  ResponseFunctionCallArgumentsDeltaEvent,
-  ResponseFunctionCallArgumentsDoneEvent,
-  ResponseInProgressEvent,
-  ResponseOutputItemAddedEvent,
-  ResponseOutputItemDoneEvent,
-  ResponseOutputItem,
-  ResponseFunctionToolCall,
   ResponseCompletedEvent,
-  ResponseFunctionWebSearch,
-  ResponseWebSearchCallInProgressEvent,
-  ResponseWebSearchCallSearchingEvent,
-  ResponseWebSearchCallCompletedEvent,
-  ResponseOutputMessage,
-  ResponseFileSearchToolCall,
-  ResponseFileSearchCallInProgressEvent,
-  ResponseFileSearchCallSearchingEvent,
-  ResponseFileSearchCallCompletedEvent,
-  ResponseOutputText,
+  ResponseComputerToolCall,
   ResponseContentPartAddedEvent,
   ResponseContentPartDoneEvent,
-  ResponseTextDeltaEvent,
-  ResponseTextDoneEvent,
-  ResponseOutputRefusal,
-  ResponseRefusalDeltaEvent,
-  ResponseRefusalDoneEvent,
+  ResponseCreatedEvent,
   ResponseError,
   ResponseErrorEvent,
   ResponseFailedEvent,
+  ResponseFileSearchCallCompletedEvent,
+  ResponseFileSearchCallInProgressEvent,
+  ResponseFileSearchCallSearchingEvent,
+  ResponseFileSearchToolCall,
+  ResponseFunctionCallArgumentsDeltaEvent,
+  ResponseFunctionCallArgumentsDoneEvent,
+  ResponseFunctionToolCall,
+  ResponseFunctionWebSearch,
   ResponseIncompleteEvent,
-  ResponseComputerToolCall,
+  ResponseInProgressEvent,
+  ResponseOutputItem,
+  ResponseOutputItemAddedEvent,
+  ResponseOutputItemDoneEvent,
   ResponseOutputItemReasoning,
+  ResponseOutputMessage,
+  ResponseOutputRefusal,
+  ResponseOutputText,
+  ResponseRefusalDeltaEvent,
+  ResponseRefusalDoneEvent,
+  ResponseTextDeltaEvent,
+  ResponseTextDoneEvent,
+  ResponseWebSearchCallCompletedEvent,
+  ResponseWebSearchCallInProgressEvent,
+  ResponseWebSearchCallSearchingEvent,
 } from '../../types/modelResponses';
 import {
   RESPONSE_CREATED_EVENT,
+  RESPONSE_ERROR_EVENT,
   RESPONSE_IN_PROGRESS_EVENT,
+  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT,
+  RESPONSE_OUTPUT_FILE_SEARCH_CALL_COMPLETED_EVENT,
+  RESPONSE_OUTPUT_FILE_SEARCH_CALL_IN_PROGRESS_EVENT,
+  RESPONSE_OUTPUT_FILE_SEARCH_CALL_SEARCHING_EVENT,
+  RESPONSE_OUTPUT_FILE_SEARCH_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT,
   RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DELTA_EVENT,
   RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DONE_EVENT,
   RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_ADDED_EVENT,
   RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_DONE_EVENT,
-  RESPONSE_OUTPUT_MESSAGE_ITEM_DONE_EVENT,
   RESPONSE_OUTPUT_MESSAGE_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_MESSAGE_ITEM_DONE_EVENT,
+  RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_ADDED_EVENT,
+  RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_DONE_EVENT,
+  RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_ADDED_EVENT,
+  RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_DONE_EVENT,
+  RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT,
+  RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT,
+  RESPONSE_OUTPUT_REFUSAL_DELTA_EVENT,
+  RESPONSE_OUTPUT_REFUSAL_DONE_EVENT,
+  RESPONSE_OUTPUT_TEXT_DELTA_EVENT,
+  RESPONSE_OUTPUT_TEXT_DONE_EVENT,
   RESPONSE_OUTPUT_WEB_SEARCH_CALL_COMPLETED_EVENT,
   RESPONSE_OUTPUT_WEB_SEARCH_CALL_IN_PROGRESS_EVENT,
   RESPONSE_OUTPUT_WEB_SEARCH_CALL_SEARCHING_EVENT,
   RESPONSE_OUTPUT_WEB_SEARCH_ITEM_ADDED_EVENT,
   RESPONSE_OUTPUT_WEB_SEARCH_ITEM_DONE_EVENT,
-  RESPONSE_OUTPUT_FILE_SEARCH_ITEM_ADDED_EVENT,
-  RESPONSE_OUTPUT_FILE_SEARCH_CALL_IN_PROGRESS_EVENT,
-  RESPONSE_OUTPUT_FILE_SEARCH_CALL_SEARCHING_EVENT,
-  RESPONSE_OUTPUT_FILE_SEARCH_CALL_COMPLETED_EVENT,
-  RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT,
-  RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_ADDED_EVENT,
-  RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_DONE_EVENT,
-  RESPONSE_OUTPUT_TEXT_DELTA_EVENT,
-  RESPONSE_OUTPUT_TEXT_DONE_EVENT,
-  RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_ADDED_EVENT,
-  RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_DONE_EVENT,
-  RESPONSE_OUTPUT_REFUSAL_DELTA_EVENT,
-  RESPONSE_OUTPUT_REFUSAL_DONE_EVENT,
-  RESPONSE_ERROR_EVENT,
-  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT,
-  RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT,
-  RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT,
-  RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT,
 } from './constants';
 
 export const getRandomId = () => {
@@ -88,9 +88,7 @@ export const getResponseFailedEvent = (response: OpenAIResponse): string => {
   return `event: response.failed\ndata: ${JSON.stringify(chunk)}\n\n`;
 };
 
-export const getResponseIncompleteEvent = (
-  response: OpenAIResponse
-): string => {
+export const getResponseIncompleteEvent = (response: OpenAIResponse): string => {
   const chunk: ResponseIncompleteEvent = {
     type: 'response.incomplete',
     response: { ...response },
@@ -103,7 +101,7 @@ export const getResponseIncompleteEvent = (
 // response.created
 export const getResponseCreatedEvent = (
   finalResponse: OpenAIResponse,
-  responseId: string
+  responseId: string,
 ): string => {
   const template: ResponseCreatedEvent = {
     ...RESPONSE_CREATED_EVENT,
@@ -118,7 +116,7 @@ export const getResponseCreatedEvent = (
 // response.in_progress
 export const getResponseInProgressEvent = (
   finalResponse: OpenAIResponse,
-  responseId: string
+  responseId: string,
 ): string => {
   const template: ResponseInProgressEvent = {
     ...RESPONSE_IN_PROGRESS_EVENT,
@@ -133,7 +131,7 @@ export const getResponseInProgressEvent = (
 // response.completed
 export const getResponseCompletedEvent = (
   finalResponse: OpenAIResponse,
-  responseId: string
+  responseId: string,
 ): string => {
   const template: ResponseCompletedEvent = {
     type: 'response.completed',
@@ -147,7 +145,7 @@ export const getResponseCompletedEvent = (
 // response.output_item.added message
 export const getResponseOutputMessageItemAddedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_ITEM_ADDED_EVENT,
@@ -161,7 +159,7 @@ export const getResponseOutputMessageItemAddedEvent = (
 export const getResponseOutputMessageOutputTextContentPartAddedEvent = (
   index: number,
   outputItemId: string,
-  contentPartIndex: number
+  contentPartIndex: number,
 ): string => {
   const template: ResponseContentPartAddedEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_ADDED_EVENT,
@@ -176,7 +174,7 @@ export const getResponseOutputMessageOutputTextContentPartDeltaEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  delta: string
+  delta: string,
 ): string => {
   const template: ResponseTextDeltaEvent = {
     ...RESPONSE_OUTPUT_TEXT_DELTA_EVENT,
@@ -192,7 +190,7 @@ export const getResponseOutputTextDoneEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  contentPart: ResponseOutputText
+  contentPart: ResponseOutputText,
 ): string => {
   const template: ResponseTextDoneEvent = {
     ...RESPONSE_OUTPUT_TEXT_DONE_EVENT,
@@ -208,7 +206,7 @@ export const getResponseOutputMessageOutputTextContentPartDoneEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  contentPart: ResponseOutputText
+  contentPart: ResponseOutputText,
 ): string => {
   const template: ResponseContentPartDoneEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_DONE_EVENT,
@@ -223,7 +221,7 @@ export const getResponseOutputMessageOutputTextContentPartDoneEvent = (
 export const getResponseOutputMessageRefusalContentPartAddedEvent = (
   index: number,
   outputItemId: string,
-  contentPartIndex: number
+  contentPartIndex: number,
 ): string => {
   const template: ResponseContentPartAddedEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_ADDED_EVENT,
@@ -238,7 +236,7 @@ export const getResponseOutputMessageRefusalContentPartDeltaEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  delta: string
+  delta: string,
 ): string => {
   const template: ResponseRefusalDeltaEvent = {
     ...RESPONSE_OUTPUT_REFUSAL_DELTA_EVENT,
@@ -254,7 +252,7 @@ export const getResponseOutputMessageRefusalDoneEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  contentPart: ResponseOutputRefusal
+  contentPart: ResponseOutputRefusal,
 ): string => {
   const template: ResponseRefusalDoneEvent = {
     ...RESPONSE_OUTPUT_REFUSAL_DONE_EVENT,
@@ -270,7 +268,7 @@ export const getResponseOutputMessageRefusalContentPartDoneEvent = (
   index: number,
   outputItemId: string,
   contentPartIndex: number,
-  contentPart: ResponseOutputRefusal
+  contentPart: ResponseOutputRefusal,
 ): string => {
   const template: ResponseContentPartDoneEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_REFUSAL_CONTENT_PART_DONE_EVENT,
@@ -286,7 +284,7 @@ export const getResponseOutputMessageRefusalContentPartDoneEvent = (
 export const getResponseOutputMessageItemDoneEvent = (
   index: number,
   outputItemId: string,
-  contentItem: ResponseOutputMessage
+  contentItem: ResponseOutputMessage,
 ): string => {
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_MESSAGE_ITEM_DONE_EVENT,
@@ -303,15 +301,14 @@ export const getResponseOutputFunctionCallItemAddedEvent = (
   index: number,
   outputItemId: string,
   functionCallId: string,
-  outputItem: ResponseOutputItem
+  outputItem: ResponseOutputItem,
 ): string => {
   if (outputItem.type !== 'function_call') return '\n\n'; // TOOD: this is for type safety, make it prettier
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_ADDED_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFunctionToolCall =
-    template.item as ResponseFunctionToolCall;
+  const item: ResponseFunctionToolCall = template.item as ResponseFunctionToolCall;
   item.id = outputItemId;
   item.call_id = functionCallId;
   item.name = outputItem.name;
@@ -323,7 +320,7 @@ export const getResponseOutputFunctionCallItemAddedEvent = (
 export const getResponseFunctionCallArgumentsDeltaEvents = (
   index: number,
   itemId: string,
-  contentItem: ResponseFunctionToolCall
+  contentItem: ResponseFunctionToolCall,
 ): string => {
   const template: ResponseFunctionCallArgumentsDeltaEvent = {
     ...RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DELTA_EVENT,
@@ -338,7 +335,7 @@ export const getResponseFunctionCallArgumentsDeltaEvents = (
 export const getResponseFunctionCallArgumentsDoneEvent = (
   index: number,
   itemId: string,
-  contentItem: ResponseFunctionToolCall
+  contentItem: ResponseFunctionToolCall,
 ): string => {
   const template: ResponseFunctionCallArgumentsDoneEvent = {
     ...RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DONE_EVENT,
@@ -354,15 +351,14 @@ export const getResponseOutputFunctionCallItemDoneEvent = (
   index: number,
   outputItemId: string,
   functionCallId: string,
-  contentItem: ResponseOutputItem
+  contentItem: ResponseOutputItem,
 ): string => {
   if (contentItem.type !== 'function_call') return '\n\n'; // TOOD: this is for type safety, make it prettier
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_DONE_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFunctionToolCall =
-    template.item as ResponseFunctionToolCall;
+  const item: ResponseFunctionToolCall = template.item as ResponseFunctionToolCall;
   item.id = outputItemId;
   item.call_id = functionCallId;
   item.name = contentItem.name;
@@ -373,14 +369,13 @@ export const getResponseOutputFunctionCallItemDoneEvent = (
 // response.output_item.added web_search
 export const getResponseOutputWebSearchItemAddedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_WEB_SEARCH_ITEM_ADDED_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFunctionWebSearch =
-    template.item as ResponseFunctionWebSearch;
+  const item: ResponseFunctionWebSearch = template.item as ResponseFunctionWebSearch;
   item.id = outputItemId;
   return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
 };
@@ -388,7 +383,7 @@ export const getResponseOutputWebSearchItemAddedEvent = (
 // response.web_search_call.in_progress
 export const getResponseOutputWebSearchCallInProgressEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseWebSearchCallInProgressEvent = {
     ...RESPONSE_OUTPUT_WEB_SEARCH_CALL_IN_PROGRESS_EVENT,
@@ -401,7 +396,7 @@ export const getResponseOutputWebSearchCallInProgressEvent = (
 // response.web_search_call.searching
 export const getResponseOutputWebSearchCallSearchingEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseWebSearchCallSearchingEvent = {
     ...RESPONSE_OUTPUT_WEB_SEARCH_CALL_SEARCHING_EVENT,
@@ -414,7 +409,7 @@ export const getResponseOutputWebSearchCallSearchingEvent = (
 // response.web_search_call.completed
 export const getResponseOutputWebSearchCallCompletedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseWebSearchCallCompletedEvent = {
     ...RESPONSE_OUTPUT_WEB_SEARCH_CALL_COMPLETED_EVENT,
@@ -427,14 +422,13 @@ export const getResponseOutputWebSearchCallCompletedEvent = (
 // response.output_item.done web_search
 export const getResponseOutputWebSearchItemDoneEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_WEB_SEARCH_ITEM_DONE_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFunctionWebSearch =
-    template.item as ResponseFunctionWebSearch;
+  const item: ResponseFunctionWebSearch = template.item as ResponseFunctionWebSearch;
   item.id = outputItemId;
   return `event: response.output_item.done\ndata: ${JSON.stringify(template)}\n\n`;
 };
@@ -442,14 +436,13 @@ export const getResponseOutputWebSearchItemDoneEvent = (
 // response.output_item.added file_search
 export const getResponseOutputFileSearchItemAddedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_FILE_SEARCH_ITEM_ADDED_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFileSearchToolCall =
-    template.item as ResponseFileSearchToolCall;
+  const item: ResponseFileSearchToolCall = template.item as ResponseFileSearchToolCall;
   item.id = outputItemId;
   return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
 };
@@ -457,7 +450,7 @@ export const getResponseOutputFileSearchItemAddedEvent = (
 // response.file_search_call.in_progress
 export const getResponseOutputFileSearchCallInProgressEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseFileSearchCallInProgressEvent = {
     ...RESPONSE_OUTPUT_FILE_SEARCH_CALL_IN_PROGRESS_EVENT,
@@ -470,7 +463,7 @@ export const getResponseOutputFileSearchCallInProgressEvent = (
 // response.file_search_call.searching
 export const getResponseOutputFileSearchCallSearchingEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseFileSearchCallSearchingEvent = {
     ...RESPONSE_OUTPUT_FILE_SEARCH_CALL_SEARCHING_EVENT,
@@ -483,7 +476,7 @@ export const getResponseOutputFileSearchCallSearchingEvent = (
 // response.file_search_call.completed
 export const getResponseOutputFileSearchCallCompletedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseFileSearchCallCompletedEvent = {
     ...RESPONSE_OUTPUT_FILE_SEARCH_CALL_COMPLETED_EVENT,
@@ -497,15 +490,14 @@ export const getResponseOutputFileSearchCallCompletedEvent = (
 export const getResponseOutputFileSearchItemDoneEvent = (
   index: number,
   outputItemId: string,
-  contentItem: ResponseOutputItem
+  contentItem: ResponseOutputItem,
 ): string => {
   if (contentItem.type !== 'file_search_call') return '\n\n'; // TOOD: this is for type safety, make it prettier
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT,
   };
   template.output_index = index;
-  const item: ResponseFileSearchToolCall =
-    template.item as ResponseFileSearchToolCall;
+  const item: ResponseFileSearchToolCall = template.item as ResponseFileSearchToolCall;
   item.id = outputItemId;
   item.queries = contentItem.queries;
   item.results = contentItem.results;
@@ -515,14 +507,13 @@ export const getResponseOutputFileSearchItemDoneEvent = (
 // response.output_item.added computer_call
 export const getResponseOutputComputerCallItemAddedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT,
   };
   template.output_index = index;
-  const item: ResponseComputerToolCall =
-    template.item as ResponseComputerToolCall;
+  const item: ResponseComputerToolCall = template.item as ResponseComputerToolCall;
   item.id = outputItemId;
   return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
 };
@@ -531,15 +522,14 @@ export const getResponseOutputComputerCallItemAddedEvent = (
 export const getResponseOutputComputerCallItemDoneEvent = (
   index: number,
   outputItemId: string,
-  contentItem: ResponseOutputItem
+  contentItem: ResponseOutputItem,
 ): string => {
   if (contentItem.type !== 'computer_call') return '\n\n'; // TOOD: this is for type safety, make it prettier
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT,
   };
   template.output_index = index;
-  const item: ResponseComputerToolCall =
-    template.item as ResponseComputerToolCall;
+  const item: ResponseComputerToolCall = template.item as ResponseComputerToolCall;
   item.id = outputItemId;
   item.call_id = contentItem.call_id;
   item.action = contentItem.action;
@@ -550,14 +540,13 @@ export const getResponseOutputComputerCallItemDoneEvent = (
 // response.output_item.added reasoning
 export const getResponseOutputReasoningItemAddedEvent = (
   index: number,
-  outputItemId: string
+  outputItemId: string,
 ): string => {
   const template: ResponseOutputItemAddedEvent = {
     ...RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT,
   };
   template.output_index = index;
-  const item: ResponseOutputItemReasoning =
-    template.item as ResponseOutputItemReasoning;
+  const item: ResponseOutputItemReasoning = template.item as ResponseOutputItemReasoning;
   item.id = outputItemId;
   return `event: response.output_item.added\ndata: ${JSON.stringify(template)}\n\n`;
 };
@@ -566,15 +555,14 @@ export const getResponseOutputReasoningItemAddedEvent = (
 export const getResponseOutputReasoningItemDoneEvent = (
   index: number,
   outputItemId: string,
-  contentItem: ResponseOutputItem
+  contentItem: ResponseOutputItem,
 ): string => {
   if (contentItem.type !== 'reasoning') return '\n\n'; // TOOD: this is for type safety, make it prettier
   const template: ResponseOutputItemDoneEvent = {
     ...RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT,
   };
   template.output_index = index;
-  const item: ResponseOutputItemReasoning =
-    template.item as ResponseOutputItemReasoning;
+  const item: ResponseOutputItemReasoning = template.item as ResponseOutputItemReasoning;
   item.id = outputItemId;
   item.summary = contentItem.summary;
   return `event: response.output_item.done\ndata: ${JSON.stringify(template)}\n\n`;

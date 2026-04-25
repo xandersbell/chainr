@@ -1,17 +1,13 @@
 import { DEEPSEEK } from '../../globals';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { DEEPSEEK_STOP_REASON } from './types';
+import type { DEEPSEEK_STOP_REASON } from './types';
 
 export const DeepSeekChatCompleteConfig: ProviderConfig = {
   model: {
@@ -85,7 +81,7 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 20,
   },
-  // DeepSeek 兼容 OpenAI 格式，tools 和 tool_choice 直接透传
+  // DeepSeek is OpenAI-compatible; tools and tool_choice are passed through directly
   tools: {
     param: 'tools',
   },
@@ -128,7 +124,7 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
-      // tool calling 流式响应
+      // tool calling in streaming response
       tool_calls?: {
         index: number;
         id?: string;
@@ -145,12 +141,12 @@ export const DeepSeekChatCompleteResponseTransform: (
   response: DeepSeekChatCompleteResponse | DeepSeekErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance
+  strictOpenAiCompliance,
 ) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -160,7 +156,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      DEEPSEEK
+      DEEPSEEK,
     );
   }
 
@@ -176,12 +172,12 @@ export const DeepSeekChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
-          // tool calling 响应透传
+          // pass through tool calling response
           ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
         },
         finish_reason: transformFinishReason(
           c.finish_reason as DEEPSEEK_STOP_REASON,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
         ),
       })),
       usage: {
@@ -200,13 +196,13 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: any,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   _fallbackId,
   _streamState,
   strictOpenAiCompliance,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -218,7 +214,7 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
   const finishReason = parsedChunk.choices[0].finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason as DEEPSEEK_STOP_REASON,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
       )
     : null;
   return (

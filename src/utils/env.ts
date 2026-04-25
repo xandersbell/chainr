@@ -1,20 +1,16 @@
-// 从 Portkey 的 src/utils/env.ts 适配而来
-// 移除了 Hono Context 依赖，Priorai 是纯 Node.js SDK，直接读 process.env
+// Adapted from Portkey's src/utils/env.ts
+// Removed Hono Context dependency - Priorai is a pure Node.js SDK, reads process.env directly
 
-// 如果值看起来像文件路径，尝试读取文件内容
+// If value looks like a file path, attempt to read file contents
 function getValueOrFileContents(value?: string, ignore?: boolean): string | undefined {
   if (!value || ignore) return value;
 
   try {
-    if (
-      value.startsWith('/') ||
-      value.startsWith('./') ||
-      value.startsWith('../')
-    ) {
+    if (value.startsWith('/') || value.startsWith('./') || value.startsWith('../')) {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const fs = require('fs');
+      const fs = require('node:fs');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const path = require('path');
+      const path = require('node:path');
       const resolvedPath = path.resolve(value);
       if (fs.existsSync(resolvedPath)) {
         return fs.readFileSync(resolvedPath, 'utf8').trim();
@@ -26,20 +22,30 @@ function getValueOrFileContents(value?: string, ignore?: boolean): string | unde
   }
 }
 
-// Priorai 不需要 Hono Context，直接从 process.env 读取
+// Priorai does not need Hono Context - read directly from process.env
 export const Environment = () => ({
   AWS_ACCESS_KEY_ID: getValueOrFileContents(process.env.AWS_ACCESS_KEY_ID),
   AWS_SECRET_ACCESS_KEY: getValueOrFileContents(process.env.AWS_SECRET_ACCESS_KEY),
   AWS_SESSION_TOKEN: getValueOrFileContents(process.env.AWS_SESSION_TOKEN),
   AWS_ROLE_ARN: getValueOrFileContents(process.env.AWS_ROLE_ARN),
   AWS_PROFILE: getValueOrFileContents(process.env.AWS_PROFILE, true),
-  AWS_WEB_IDENTITY_TOKEN_FILE: getValueOrFileContents(process.env.AWS_WEB_IDENTITY_TOKEN_FILE, true),
-  AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: getValueOrFileContents(process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI, true),
+  AWS_WEB_IDENTITY_TOKEN_FILE: getValueOrFileContents(
+    process.env.AWS_WEB_IDENTITY_TOKEN_FILE,
+    true,
+  ),
+  AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: getValueOrFileContents(
+    process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI,
+    true,
+  ),
   AWS_ASSUME_ROLE_ACCESS_KEY_ID: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_ACCESS_KEY_ID),
-  AWS_ASSUME_ROLE_SECRET_ACCESS_KEY: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SECRET_ACCESS_KEY),
+  AWS_ASSUME_ROLE_SECRET_ACCESS_KEY: getValueOrFileContents(
+    process.env.AWS_ASSUME_ROLE_SECRET_ACCESS_KEY,
+  ),
   AWS_ASSUME_ROLE_REGION: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_REGION),
   AWS_ASSUME_ROLE_SOURCE_ARN: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SOURCE_ARN),
-  AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID: getValueOrFileContents(process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID),
+  AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID: getValueOrFileContents(
+    process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID,
+  ),
   AWS_REGION: getValueOrFileContents(process.env.AWS_REGION),
   AWS_ENDPOINT_DOMAIN: getValueOrFileContents(process.env.AWS_ENDPOINT_DOMAIN),
   AWS_IMDS_V1: getValueOrFileContents(process.env.AWS_IMDS_V1),

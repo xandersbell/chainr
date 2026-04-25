@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { retryRequest } from '../../src/core/RetryHandler';
 
 function createSuccessResponse(status: number, data: Record<string, unknown>): Response {
@@ -30,7 +30,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Success Path', () => {
-    it('fetch 返回 ok=true (200-299) 时返回 success=true 和 response', async () => {
+    it('returns success=true and response when fetch returns ok=true (200-299)', async () => {
       const mockData = { id: 'test-123', choices: [] };
       const mockResponse = createSuccessResponse(200, mockData);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
@@ -45,7 +45,7 @@ describe('RetryHandler', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('response 包含 status code 和 parsed JSON data', async () => {
+    it('response includes status code and parsed JSON data', async () => {
       const mockData = { result: 'success', value: 42 };
       const mockResponse = createSuccessResponse(201, mockData);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
@@ -61,7 +61,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Retry on Rate Limit (429)', () => {
-    it('429 时重试 attempts 次后返回失败', async () => {
+    it('retries attempts times on 429 then returns failure', async () => {
       const mockResponse429 = createErrorResponse(429, { error: 'Rate limited' });
       const mockResponse200 = createSuccessResponse(200, { success: true });
 
@@ -77,7 +77,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -89,7 +89,7 @@ describe('RetryHandler', () => {
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
 
-    it('重试间隔为指数退避: delay = 100ms * 2^attempt', async () => {
+    it('retry interval uses exponential backoff: delay = 100ms * 2^attempt', async () => {
       const mockResponse429 = createErrorResponse(429);
       const mockResponse200 = createSuccessResponse(200, {});
 
@@ -104,7 +104,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.advanceTimersByTimeAsync(0);
@@ -124,7 +124,7 @@ describe('RetryHandler', () => {
       expect(result.success).toBe(true);
     });
 
-    it('最大重试后返回 success=false 和 error="HTTP 429"', async () => {
+    it('returns success=false and error="HTTP 429" after max retries', async () => {
       const mockResponse429 = createErrorResponse(429);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse429);
       vi.stubGlobal('fetch', fetchMock);
@@ -132,7 +132,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -145,7 +145,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Retry on Server Error (5xx)', () => {
-    it('500 错误重试3次后返回失败', async () => {
+    it('500 error retries 3 times then returns failure', async () => {
       const mockResponse500 = createErrorResponse(500, { error: 'Internal Server Error' });
       const fetchMock = vi.fn().mockResolvedValue(mockResponse500);
       vi.stubGlobal('fetch', fetchMock);
@@ -153,7 +153,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -163,7 +163,7 @@ describe('RetryHandler', () => {
       expect(result.error).toBe('HTTP 500');
     });
 
-    it('502 错误重试3次后返回失败', async () => {
+    it('502 error retries 3 times then returns failure', async () => {
       const mockResponse502 = createErrorResponse(502);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse502);
       vi.stubGlobal('fetch', fetchMock);
@@ -171,7 +171,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -181,7 +181,7 @@ describe('RetryHandler', () => {
       expect(result.error).toBe('HTTP 502');
     });
 
-    it('503 错误重试3次后返回失败', async () => {
+    it('503 error retries 3 times then returns failure', async () => {
       const mockResponse503 = createErrorResponse(503);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse503);
       vi.stubGlobal('fetch', fetchMock);
@@ -189,7 +189,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -199,7 +199,7 @@ describe('RetryHandler', () => {
       expect(result.error).toBe('HTTP 503');
     });
 
-    it('504 错误重试3次后返回失败', async () => {
+    it('504 error retries 3 times then returns failure', async () => {
       const mockResponse504 = createErrorResponse(504);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse504);
       vi.stubGlobal('fetch', fetchMock);
@@ -207,7 +207,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -219,7 +219,7 @@ describe('RetryHandler', () => {
   });
 
   describe('No Retry on Client Error (4xx)', () => {
-    it('400 立即返回失败不重试', async () => {
+    it('400 returns failure immediately without retry', async () => {
       const mockResponse400 = createErrorResponse(400, { error: 'Bad Request' });
       const fetchMock = vi.fn().mockResolvedValue(mockResponse400);
       vi.stubGlobal('fetch', fetchMock);
@@ -227,7 +227,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -235,7 +235,7 @@ describe('RetryHandler', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it('401 立即返回失败不重试', async () => {
+    it('401 returns failure immediately without retry', async () => {
       const mockResponse401 = createErrorResponse(401, { error: 'Unauthorized' });
       const fetchMock = vi.fn().mockResolvedValue(mockResponse401);
       vi.stubGlobal('fetch', fetchMock);
@@ -243,7 +243,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -251,7 +251,7 @@ describe('RetryHandler', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it('404 立即返回失败不重试', async () => {
+    it('404 returns failure immediately without retry', async () => {
       const mockResponse404 = createErrorResponse(404, { error: 'Not Found' });
       const fetchMock = vi.fn().mockResolvedValue(mockResponse404);
       vi.stubGlobal('fetch', fetchMock);
@@ -259,7 +259,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       expect(result.success).toBe(false);
@@ -269,7 +269,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Network Error', () => {
-    it('网络错误时使用指数退避重试', async () => {
+    it('retries with exponential backoff on network error', async () => {
       const fetchMock = vi
         .fn()
         .mockRejectedValueOnce(new Error('Network failure'))
@@ -281,7 +281,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.advanceTimersByTimeAsync(0);
@@ -302,14 +302,14 @@ describe('RetryHandler', () => {
       expect(result.error).toBe('Network failure');
     });
 
-    it('最大重试后返回网络错误信息', async () => {
+    it('returns network error message after max retries', async () => {
       const fetchMock = vi.fn().mockRejectedValue(new Error('Connection reset'));
       vi.stubGlobal('fetch', fetchMock);
 
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -319,14 +319,14 @@ describe('RetryHandler', () => {
       expect(result.error).toBe('Connection reset');
     });
 
-    it('非 Error 对象转换为字符串', async () => {
+    it('converts non-Error objects to string', async () => {
       const fetchMock = vi.fn().mockRejectedValue('Unknown error string');
       vi.stubGlobal('fetch', fetchMock);
 
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3 }
+        { attempts: 3 },
       );
 
       await vi.runAllTimersAsync();
@@ -338,7 +338,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Default Config', () => {
-    it('默认 attempts 为 3', async () => {
+    it('default attempts is 3', async () => {
       const mockResponse429 = createErrorResponse(429);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse429);
       vi.stubGlobal('fetch', fetchMock);
@@ -351,7 +351,7 @@ describe('RetryHandler', () => {
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
 
-    it('默认 retry status codes 为 [429, 500, 502, 503, 504]', async () => {
+    it('default retry status codes are [429, 500, 502, 503, 504]', async () => {
       const mockResponse429 = createErrorResponse(429);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse429);
       vi.stubGlobal('fetch', fetchMock);
@@ -374,7 +374,7 @@ describe('RetryHandler', () => {
       expect(fetchMock500).toHaveBeenCalledTimes(3);
     });
 
-    it('默认 timeout 为 30000ms', async () => {
+    it('default timeout is 30000ms', async () => {
       const mockResponse = createSuccessResponse(200, { success: true });
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
       vi.stubGlobal('fetch', fetchMock);
@@ -386,7 +386,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Response Parsing', () => {
-    it('JSON 解析失败时 data 为空对象', async () => {
+    it('data is empty object when JSON parsing fails', async () => {
       const mockResponse = {
         ok: true,
         status: 200,
@@ -402,7 +402,7 @@ describe('RetryHandler', () => {
       expect(result.response).toEqual({ status: 200, data: {} });
     });
 
-    it('成功解析 JSON 响应', async () => {
+    it('successfully parses JSON response', async () => {
       const mockData = { id: 'chatcmpl-123', choices: [{ message: { content: 'Hello' } }] };
       const mockResponse = createSuccessResponse(200, mockData);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
@@ -416,7 +416,7 @@ describe('RetryHandler', () => {
   });
 
   describe('Custom Config', () => {
-    it('自定义 attempts 覆盖默认值', async () => {
+    it('custom attempts overrides default value', async () => {
       const mockResponse429 = createErrorResponse(429);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse429);
       vi.stubGlobal('fetch', fetchMock);
@@ -424,7 +424,7 @@ describe('RetryHandler', () => {
       const promise = retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 5 }
+        { attempts: 5 },
       );
 
       await vi.runAllTimersAsync();
@@ -434,7 +434,7 @@ describe('RetryHandler', () => {
       expect(result.success).toBe(false);
     });
 
-    it('自定义 onStatusCodes 覆盖默认重试状态码', async () => {
+    it('custom onStatusCodes overrides default retry status codes', async () => {
       const mockResponse429 = createErrorResponse(429);
       const fetchMock = vi.fn().mockResolvedValue(mockResponse429);
       vi.stubGlobal('fetch', fetchMock);
@@ -442,7 +442,7 @@ describe('RetryHandler', () => {
       const result = await retryRequest(
         'https://api.example.com/test',
         { method: 'GET' },
-        { attempts: 3, onStatusCodes: [500] }
+        { attempts: 3, onStatusCodes: [500] },
       );
 
       expect(result.success).toBe(false);
@@ -450,17 +450,12 @@ describe('RetryHandler', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it('自定义 timeoutMs 正常工作', async () => {
+    it('custom timeoutMs works correctly', async () => {
       const mockResponse = createSuccessResponse(200, {});
       const fetchMock = vi.fn().mockResolvedValue(mockResponse);
       vi.stubGlobal('fetch', fetchMock);
 
-      await retryRequest(
-        'https://api.example.com/test',
-        { method: 'GET' },
-        undefined,
-        5000
-      );
+      await retryRequest('https://api.example.com/test', { method: 'GET' }, undefined, 5000);
 
       expect(fetchMock).toHaveBeenCalled();
     });

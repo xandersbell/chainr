@@ -1,15 +1,8 @@
 import { AI21 } from '../../globals';
-import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
-import { AI21ErrorResponse } from './complete';
+import { type Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
+import type { AI21ErrorResponse } from './complete';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [
@@ -21,9 +14,7 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
 
         if (
           params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(
-            params.messages?.[0]?.role as 'system' | 'developer'
-          )
+          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role as 'system' | 'developer')
         ) {
           inputMessages = params.messages.slice(1);
         } else if (params.messages) {
@@ -42,9 +33,7 @@ export const AI21ChatCompleteConfig: ProviderConfig = {
       transform: (params: Params) => {
         if (
           params.messages?.[0]?.role &&
-          SYSTEM_MESSAGE_ROLES.includes(
-            params.messages?.[0]?.role as 'system' | 'developer'
-          )
+          SYSTEM_MESSAGE_ROLES.includes(params.messages?.[0]?.role as 'system' | 'developer')
         ) {
           return params.messages?.[0].content;
         }
@@ -126,12 +115,12 @@ interface AI21ChatCompleteResponse {
 }
 
 export const AI21ErrorResponseTransform: (
-  response: AI21ErrorResponse
+  response: AI21ErrorResponse,
 ) => ErrorResponse | undefined = (response) => {
   if ('detail' in response) {
     return generateErrorResponse(
       { message: response.detail, type: null, param: null, code: null },
-      AI21
+      AI21,
     );
   }
 
@@ -140,12 +129,10 @@ export const AI21ErrorResponseTransform: (
 
 export const AI21ChatCompleteResponseTransform: (
   response: AI21ChatCompleteResponse | AI21ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AI21ErrorResponseTransform(
-      response as AI21ErrorResponse
-    );
+    const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
     if (errorResposne) return errorResposne;
   }
 

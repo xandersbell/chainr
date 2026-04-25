@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const LemonfoxAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.lemonfox.ai/v1',
@@ -6,8 +6,7 @@ const LemonfoxAIAPIConfig: ProviderAPIConfig = {
     const headersObj: Record<string, string> = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
-    if (fn === 'createTranscription')
-      headersObj['content-type'] = 'multipart/form-data';
+    if (fn === 'createTranscription') headersObj['content-type'] = 'multipart/form-data';
     return headersObj;
   },
   getEndpoint: ({ fn }) => {

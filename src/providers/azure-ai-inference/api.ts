@@ -5,7 +5,7 @@ import {
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
 } from '../azure-openai/utils';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const NON_INFERENCE_ENDPOINTS = [
   'createBatch',
@@ -50,8 +50,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     } = providerOptions;
 
     const isAnthropicModel =
-      azureFoundryUrl?.includes('anthropic') ||
-      urlToFetch?.includes('anthropic');
+      azureFoundryUrl?.includes('anthropic') || urlToFetch?.includes('anthropic');
     if (isAnthropicModel && !providerOptions.anthropicVersion) {
       providerOptions.anthropicVersion = '2023-06-01';
     }
@@ -64,12 +63,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       ...(azureDeploymentName && {
         'azureml-model-deployment': azureDeploymentName,
       }),
-      ...([
-        'createTranscription',
-        'createTranslation',
-        'uploadFile',
-        'imageEdit',
-      ].includes(fn)
+      ...(['createTranscription', 'createTranslation', 'uploadFile', 'imageEdit'].includes(fn)
         ? {
             'Content-Type': 'multipart/form-data',
           }
@@ -79,27 +73,21 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       if (isAnthropicModel) {
         headers['x-api-key'] = `${apiKey}`;
       } else {
-        headers['Authorization'] =
-          `Bearer ${azureAdToken?.replace('Bearer ', '')}`;
+        headers['Authorization'] = `Bearer ${azureAdToken?.replace('Bearer ', '')}`;
       }
       return headers;
     }
 
     if (azureAuthMode === 'entra') {
-      const {
-        azureEntraTenantId,
-        azureEntraClientId,
-        azureEntraClientSecret,
-        azureEntraScope,
-      } = providerOptions;
+      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret, azureEntraScope } =
+        providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
-        const scope =
-          azureEntraScope ?? 'https://cognitiveservices.azure.com/.default';
+        const scope = azureEntraScope ?? 'https://cognitiveservices.azure.com/.default';
         const accessToken = await getAccessTokenFromEntraId(
           azureEntraTenantId,
           azureEntraClientId,
           azureEntraClientSecret,
-          scope
+          scope,
         );
         if (isAnthropicModel) {
           headers['x-api-key'] = `${apiKey}`;
@@ -111,12 +99,8 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     }
     if (azureAuthMode === 'managed') {
       const { azureManagedClientId, azureEntraScope } = providerOptions;
-      const resource =
-        azureEntraScope || 'https://cognitiveservices.azure.com/';
-      const accessToken = await getAzureManagedIdentityToken(
-        resource,
-        azureManagedClientId
-      );
+      const resource = azureEntraScope || 'https://cognitiveservices.azure.com/';
+      const accessToken = await getAzureManagedIdentityToken(resource, azureManagedClientId);
       if (isAnthropicModel) {
         headers['x-api-key'] = `${apiKey}`;
       } else {
@@ -134,18 +118,17 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       const federatedTokenFile = Environment().AZURE_FEDERATED_TOKEN_FILE;
 
       if (authorityHost && tenantId && clientId && federatedTokenFile) {
-        const fs = await import('fs');
+        const fs = await import('node:fs');
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
 
         if (federatedToken) {
-          const scope =
-            azureEntraScope || 'https://cognitiveservices.azure.com/.default';
+          const scope = azureEntraScope || 'https://cognitiveservices.azure.com/.default';
           const accessToken = await getAzureWorkloadIdentityToken(
             authorityHost,
             tenantId,
             clientId,
             federatedToken,
-            scope
+            scope,
           );
           if (isAnthropicModel) return { 'x-api-key': `${apiKey}` };
           return {
@@ -168,8 +151,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
     const { azureApiVersion, urlToFetch, azureFoundryUrl } = providerOptions;
     const isAnthropicModel =
-      azureFoundryUrl?.includes('anthropic') ||
-      urlToFetch?.includes('anthropic');
+      azureFoundryUrl?.includes('anthropic') || urlToFetch?.includes('anthropic');
     let mappedFn = fn;
 
     const urlObj = new URL(gatewayRequestURL);

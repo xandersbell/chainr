@@ -1,24 +1,22 @@
 /**
- * Conditional routing 条件路由测试
- * 验证 MongoDB 风格查询运算符和条件匹配逻辑
+ * Conditional routing strategy tests
+ * Verify MongoDB-style query operators and condition matching logic
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConditionalStrategy } from '../../../src/core/strategies/ConditionalStrategy';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConditionConfig } from '../../../src/core/strategies/ConditionalStrategy';
+import { ConditionalStrategy } from '../../../src/core/strategies/ConditionalStrategy';
 import type { TargetConfig } from '../../../src/core/types';
 import type { Params } from '../../../src/types/requestBody';
 
-// mock tryTarget 模块，避免实际发起 HTTP 请求
+// Mock tryTarget module to avoid actual HTTP requests
 vi.mock('../../../src/core/tryTarget', () => ({
   executeTarget: vi.fn().mockResolvedValue({
     success: true,
     response: { status: 200, data: { id: 'test' } },
     provider: 'openai',
   }),
-  executeTargetStream: vi.fn().mockResolvedValue(
-    new ReadableStream()
-  ),
-  buildInheritedConfig: vi.fn((target: any, parent: any) => parent),
+  executeTargetStream: vi.fn().mockResolvedValue(new ReadableStream()),
+  buildInheritedConfig: vi.fn((_target: any, parent: any) => parent),
   isNestedTarget: vi.fn(() => false),
   tryLeafTarget: vi.fn(),
   tryLeafTargetStream: vi.fn(),
@@ -45,11 +43,14 @@ describe('ConditionalStrategy', () => {
     vi.clearAllMocks();
   });
 
-  describe('基本条件匹配', () => {
-    it('$eq — 精确匹配 model 字段', async () => {
+  describe('basic condition matching', () => {
+    it('$eq — exact match on model field', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $eq: 'gpt-4o' } }, then: 'openai-target' },
-        { query: { 'params.model': { $eq: 'claude-sonnet-4-20250514' } }, then: 'anthropic-target' },
+        {
+          query: { 'params.model': { $eq: 'claude-sonnet-4-20250514' } },
+          then: 'anthropic-target',
+        },
       ];
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
@@ -57,11 +58,11 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
-    it('直接值匹配（无运算符）', async () => {
+    it('direct value matching (no operator)', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': 'deepseek-chat' }, then: 'deepseek-target' },
         { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
@@ -69,15 +70,15 @@ describe('ConditionalStrategy', () => {
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
 
-      // 第一个条件不匹配，第二个匹配
+      // First condition does not match, second matches
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
-    it('$ne — 不等于', async () => {
+    it('$ne — not equal', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $ne: 'gpt-4o' } }, then: 'anthropic-target' },
         { query: { 'params.model': { $ne: 'claude-sonnet-4-20250514' } }, then: 'openai-target' },
@@ -85,23 +86,23 @@ describe('ConditionalStrategy', () => {
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
 
-      // 第一个条件 model !== 'gpt-4o' 为 false，跳过
-      // 第二个条件 model !== 'claude-sonnet-4-20250514' 为 true
+      // First condition model !== 'gpt-4o' is false, skip
+      // Second condition model !== 'claude-sonnet-4-20250514' is true
       expect(executeTarget).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
 
-  describe('数值比较运算符', () => {
+  describe('numeric comparison operators', () => {
     const paramsWithTemp: Params = {
       ...baseParams,
       temperature: 0.8,
     };
 
-    it('$gt — 大于', async () => {
+    it('$gt — greater than', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.temperature': { $gt: 0.5 } }, then: 'openai-target' },
       ];
@@ -110,7 +111,7 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(targets[0], paramsWithTemp, expect.any(Object));
     });
 
-    it('$lte — 小于等于', async () => {
+    it('$lte — less than or equal', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.temperature': { $lte: 0.5 } }, then: 'anthropic-target' },
         { query: { 'params.temperature': { $lte: 0.8 } }, then: 'openai-target' },
@@ -122,8 +123,8 @@ describe('ConditionalStrategy', () => {
     });
   });
 
-  describe('集合运算符', () => {
-    it('$in — 值在数组中', async () => {
+  describe('set operators', () => {
+    it('$in — value in array', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $in: ['gpt-4o', 'gpt-4o-mini'] } }, then: 'openai-target' },
       ];
@@ -132,20 +133,26 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(targets[0], baseParams, expect.any(Object));
     });
 
-    it('$nin — 值不在数组中', async () => {
+    it('$nin — value not in array', async () => {
       const conditions: ConditionConfig[] = [
-        { query: { 'params.model': { $nin: ['gpt-4o', 'gpt-4o-mini'] } }, then: 'anthropic-target' },
-        { query: { 'params.model': { $nin: ['claude-sonnet-4-20250514'] } }, then: 'openai-target' },
+        {
+          query: { 'params.model': { $nin: ['gpt-4o', 'gpt-4o-mini'] } },
+          then: 'anthropic-target',
+        },
+        {
+          query: { 'params.model': { $nin: ['claude-sonnet-4-20250514'] } },
+          then: 'openai-target',
+        },
       ];
 
       await strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions);
-      // gpt-4o 在 $nin 列表中 → false，第二个条件匹配
+      // gpt-4o is in $nin list → false, second condition matches
       expect(executeTarget).toHaveBeenCalledWith(targets[0], baseParams, expect.any(Object));
     });
   });
 
-  describe('正则运算符', () => {
-    it('$regex — 正则匹配', async () => {
+  describe('regex operators', () => {
+    it('$regex — regex match', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $regex: '^gpt-' } }, then: 'openai-target' },
       ];
@@ -154,7 +161,7 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(targets[0], baseParams, expect.any(Object));
     });
 
-    it('$regex — 不匹配时跳过', async () => {
+    it('$regex — skip when no match', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': { $regex: '^claude-' } }, then: 'anthropic-target' },
         { query: { 'params.model': { $regex: '^gpt-' } }, then: 'openai-target' },
@@ -165,16 +172,13 @@ describe('ConditionalStrategy', () => {
     });
   });
 
-  describe('逻辑运算符', () => {
-    it('$and — 所有条件都满足', async () => {
+  describe('logical operators', () => {
+    it('$and — all conditions satisfied', async () => {
       const paramsWithTemp: Params = { ...baseParams, temperature: 0.8 };
       const conditions: ConditionConfig[] = [
         {
           query: {
-            $and: [
-              { 'params.model': { $regex: '^gpt-' } },
-              { 'params.temperature': { $gt: 0.5 } },
-            ],
+            $and: [{ 'params.model': { $regex: '^gpt-' } }, { 'params.temperature': { $gt: 0.5 } }],
           },
           then: 'openai-target',
         },
@@ -184,14 +188,11 @@ describe('ConditionalStrategy', () => {
       expect(executeTarget).toHaveBeenCalledWith(targets[0], paramsWithTemp, expect.any(Object));
     });
 
-    it('$or — 任一条件满足', async () => {
+    it('$or — any condition satisfied', async () => {
       const conditions: ConditionConfig[] = [
         {
           query: {
-            $or: [
-              { 'params.model': 'claude-sonnet-4-20250514' },
-              { 'params.model': 'gpt-4o' },
-            ],
+            $or: [{ 'params.model': 'claude-sonnet-4-20250514' }, { 'params.model': 'gpt-4o' }],
           },
           then: 'openai-target',
         },
@@ -202,16 +203,22 @@ describe('ConditionalStrategy', () => {
     });
   });
 
-  describe('metadata 上下文', () => {
-    it('根据 metadata 字段路由', async () => {
+  describe('metadata context', () => {
+    it('routes based on metadata field', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'metadata.region': 'us-east' }, then: 'openai-target' },
         { query: { 'metadata.region': 'eu-west' }, then: 'anthropic-target' },
       ];
 
       await strategy.execute(
-        targets, baseParams, undefined, undefined, undefined,
-        conditions, undefined, { region: 'eu-west' }
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        undefined,
+        { region: 'eu-west' },
       );
 
       expect(executeTarget).toHaveBeenCalledWith(targets[1], baseParams, expect.any(Object));
@@ -219,44 +226,49 @@ describe('ConditionalStrategy', () => {
   });
 
   describe('default target', () => {
-    it('所有条件不匹配时走 default', async () => {
+    it('falls back to default when no conditions match', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': 'nonexistent-model' }, then: 'anthropic-target' },
       ];
 
       await strategy.execute(
-        targets, baseParams, undefined, undefined, undefined,
-        conditions, 'openai-target'
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        'openai-target',
       );
 
       expect(executeTarget).toHaveBeenCalledWith(targets[0], baseParams, expect.any(Object));
     });
 
-    it('无 default 且无匹配时抛出错误', async () => {
+    it('throws error when no default and no conditions match', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': 'nonexistent-model' }, then: 'anthropic-target' },
       ];
 
       await expect(
-        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions)
+        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions),
       ).rejects.toThrow('Conditional routing did not resolve to any valid target');
     });
   });
 
-  describe('错误处理', () => {
-    it('无 conditions 时抛出错误', async () => {
-      await expect(
-        strategy.execute(targets, baseParams)
-      ).rejects.toThrow('No conditions provided for conditional routing');
+  describe('error handling', () => {
+    it('throws error when no conditions provided', async () => {
+      await expect(strategy.execute(targets, baseParams)).rejects.toThrow(
+        'No conditions provided for conditional routing',
+      );
     });
 
-    it('target name 不存在时抛出错误', async () => {
+    it('throws error when target name does not exist', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': 'gpt-4o' }, then: 'nonexistent-target' },
       ];
 
       await expect(
-        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions)
+        strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions),
       ).rejects.toThrow('Invalid target name in conditional routing: nonexistent-target');
     });
   });

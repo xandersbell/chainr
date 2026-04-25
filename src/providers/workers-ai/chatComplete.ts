@@ -1,15 +1,8 @@
 import { WORKERS_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import {
-  WorkersAiErrorResponse,
-  WorkersAiErrorResponseTransform,
-} from './utils';
+import { type WorkersAiErrorResponse, WorkersAiErrorResponseTransform } from './utils';
 
 export const WorkersAiChatCompleteConfig: ProviderConfig = {
   messages: {
@@ -58,19 +51,17 @@ export const WorkersAiChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = WorkersAiErrorResponseTransform(
-      response as WorkersAiErrorResponse
-    );
+    const errorResponse = WorkersAiErrorResponseTransform(response as WorkersAiErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -100,13 +91,13 @@ export const WorkersAiChatCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, boolean>,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
 

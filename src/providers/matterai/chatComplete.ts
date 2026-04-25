@@ -1,6 +1,6 @@
 import { MATTERAI } from '../../globals';
-import { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
+import type { ParameterConfig, ProviderConfig } from '../types';
 
 const matterAIModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;
 
@@ -28,9 +28,9 @@ interface MatterAIStreamChunk {
   system_fingerprint?: string | null;
 }
 
-export const MatterAIChatCompleteStreamChunkTransform: (
-  responseChunk: string
-) => string = (responseChunk) => {
+export const MatterAIChatCompleteStreamChunkTransform: (responseChunk: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
 
   if (!chunk) {

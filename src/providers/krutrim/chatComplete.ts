@@ -1,6 +1,6 @@
-import { ChatCompletionResponse, ErrorResponse } from '../types';
-import { generateErrorResponse } from '../utils';
 import { KRUTRIM } from '../../globals';
+import type { ChatCompletionResponse, ErrorResponse } from '../types';
+import { generateErrorResponse } from '../utils';
 
 interface KrutrimChatCompleteResponse extends ChatCompletionResponse {}
 interface KrutrimChatCompleteErrorResponse extends ErrorResponse {
@@ -8,7 +8,7 @@ interface KrutrimChatCompleteErrorResponse extends ErrorResponse {
 }
 export const KrutrimChatCompleteResponseTransform: (
   response: KrutrimChatCompleteResponse | KrutrimChatCompleteErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'html-message' in response) {
     // Handle Krutrim's error format
@@ -19,7 +19,7 @@ export const KrutrimChatCompleteResponseTransform: (
         param: null,
         code: String(responseStatus),
       },
-      KRUTRIM
+      KRUTRIM,
     );
   }
 

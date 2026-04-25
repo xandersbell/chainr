@@ -1,5 +1,5 @@
 import { POWERED_BY } from '../../globals';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const OpenrouterAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://openrouter.ai/api',

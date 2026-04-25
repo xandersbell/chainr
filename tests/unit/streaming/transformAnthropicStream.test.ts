@@ -1,5 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { isAnthropicProvider, createAnthropicStream } from '../../../src/core/transformAnthropicStream';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createAnthropicStream,
+  isAnthropicProvider,
+} from '../../../src/core/transformAnthropicStream';
 
 describe('transformAnthropicStream', () => {
   beforeEach(() => {
@@ -24,7 +27,11 @@ describe('transformAnthropicStream', () => {
     it('creates ReadableStream from mock Response', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: message_start\ndata: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant"}}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant"}}\n\n',
+            ),
+          );
           controller.close();
         },
       });
@@ -44,7 +51,11 @@ describe('transformAnthropicStream', () => {
     it('transforms message_start event to initial chunk with role', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: message_start\ndata: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","model":"claude-3"}}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","model":"claude-3"}}\n\n',
+            ),
+          );
           controller.close();
         },
       });
@@ -60,14 +71,18 @@ describe('transformAnthropicStream', () => {
       const { done, value } = await reader.read();
       expect(done).toBe(false);
       expect(value).toMatchObject({
-        choices: [{ delta: { role: 'assistant' } }]
+        choices: [{ delta: { role: 'assistant' } }],
       });
     });
 
     it('transforms content_block_delta text event to chunk with content', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}\n\n',
+            ),
+          );
           controller.close();
         },
       });
@@ -83,14 +98,18 @@ describe('transformAnthropicStream', () => {
       const { done, value } = await reader.read();
       expect(done).toBe(false);
       expect(value).toMatchObject({
-        choices: [{ delta: { content: 'Hello' } }]
+        choices: [{ delta: { content: 'Hello' } }],
       });
     });
 
     it('transforms message_delta event with finish_reason', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":10}}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'event: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":10}}\n\n',
+            ),
+          );
           controller.close();
         },
       });
@@ -106,7 +125,7 @@ describe('transformAnthropicStream', () => {
       const { done, value } = await reader.read();
       expect(done).toBe(false);
       expect(value).toMatchObject({
-        choices: [{ finish_reason: 'end_turn' }]
+        choices: [{ finish_reason: 'end_turn' }],
       });
     });
 
@@ -139,7 +158,9 @@ describe('transformAnthropicStream', () => {
       let chunksReceived = 0;
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: content_block_stop\ndata: {"index":0}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode('event: content_block_stop\ndata: {"index":0}\n\n'),
+          );
           controller.close();
         },
       });
@@ -188,7 +209,11 @@ describe('transformAnthropicStream', () => {
     it('handles error events', async () => {
       const mockStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(new TextEncoder().encode('event: error\ndata: {"type":"error","error":{"type":"rate_limit_error","message":"Rate limit exceeded"}}\n\n'));
+          controller.enqueue(
+            new TextEncoder().encode(
+              'event: error\ndata: {"type":"error","error":{"type":"rate_limit_error","message":"Rate limit exceeded"}}\n\n',
+            ),
+          );
           controller.close();
         },
       });

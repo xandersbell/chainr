@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import FireworksAIAPIConfig from './api';
 import {
   FireworksAIChatCompleteConfig,
@@ -10,10 +10,7 @@ import {
   FireworksAICompleteResponseTransform,
   FireworksAICompleteStreamChunkTransform,
 } from './complete';
-import {
-  FireworksAIEmbedConfig,
-  FireworksAIEmbedResponseTransform,
-} from './embed';
+import { FireworksAIEmbedConfig, FireworksAIEmbedResponseTransform } from './embed';
 
 const FireworksAIConfig: ProviderConfigs = {
   complete: FireworksAICompleteConfig,

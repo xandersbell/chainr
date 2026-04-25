@@ -1,7 +1,7 @@
 import { HUGGING_FACE } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import { HuggingfaceErrorResponse } from './types';
+import type { HuggingfaceErrorResponse } from './types';
 import { HuggingfaceErrorResponseTransform } from './utils';
 
 interface HuggingfaceCompleteResponse extends CompletionResponse {}
@@ -73,7 +73,7 @@ export const HuggingfaceCompleteConfig: ProviderConfig = {
 
 export const HuggingfaceCompleteResponseTransform: (
   response: HuggingfaceCompleteResponse | HuggingfaceErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
     return HuggingfaceErrorResponseTransform(response, responseStatus);
@@ -90,9 +90,9 @@ export const HuggingfaceCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, HUGGING_FACE);
 };
 
-export const HuggingfaceCompleteStreamChunkTransform: (
-  response: string
-) => string | undefined = (responseChunk) => {
+export const HuggingfaceCompleteStreamChunkTransform: (response: string) => string | undefined = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   if (chunk.startsWith('event: ping')) {
     return;

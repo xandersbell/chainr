@@ -1,10 +1,10 @@
 import { NOVITA_AI } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  NovitaAIErrorResponse,
+  type NovitaAIErrorResponse,
   NovitaAIErrorResponseTransform,
-  NovitaAIOpenAICompatibleErrorResponse,
+  type NovitaAIOpenAICompatibleErrorResponse,
 } from './chatComplete';
 
 export const NovitaAICompleteConfig: ProviderConfig = {
@@ -70,12 +70,10 @@ export const NovitaAICompleteResponseTransform: (
     | NovitaAICompleteResponse
     | NovitaAIErrorResponse
     | NovitaAIOpenAICompatibleErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = NovitaAIErrorResponseTransform(
-      response as NovitaAIErrorResponse
-    );
+    const errorResponse = NovitaAIErrorResponseTransform(response as NovitaAIErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -103,9 +101,9 @@ export const NovitaAICompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, NOVITA_AI);
 };
 
-export const NovitaAICompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const NovitaAICompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

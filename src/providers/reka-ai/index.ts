@@ -1,9 +1,6 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import RekaAIApiConfig from './api';
-import {
-  RekaAIChatCompleteConfig,
-  RekaAIChatCompleteResponseTransform,
-} from './chatComplete';
+import { RekaAIChatCompleteConfig, RekaAIChatCompleteResponseTransform } from './chatComplete';
 
 const RekaAIConfig: ProviderConfigs = {
   chatComplete: RekaAIChatCompleteConfig,

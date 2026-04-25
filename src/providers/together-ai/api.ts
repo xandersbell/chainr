@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const TogetherAIApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.together.xyz',

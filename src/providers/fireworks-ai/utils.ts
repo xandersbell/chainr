@@ -1,4 +1,4 @@
-import { FinetuneResponse, FinetuneState, FireworksFile } from './types';
+import { type FinetuneResponse, FinetuneState, type FireworksFile } from './types';
 
 export const fireworksDatasetToOpenAIFile = (dataset: FireworksFile) => {
   const name = dataset.displayName || dataset.name;
@@ -42,22 +42,18 @@ export const getUploadEndpoint = async ({
   };
 
   try {
-    const response = await fetch(
-      `${baseURL}/datasets/${datasetId}:getUploadEndpoint`,
-      {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body),
-      }
-    );
+    const response = await fetch(`${baseURL}/datasets/${datasetId}:getUploadEndpoint`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(body),
+    });
 
     if (!response.ok) {
       result.error = await response.text();
     }
 
     const responseJson = (await response.json()) as any;
-    result.endpoint =
-      responseJson?.filenameToSignedUrls?.[`${datasetId}.jsonl`];
+    result.endpoint = responseJson?.filenameToSignedUrls?.[`${datasetId}.jsonl`];
   } catch (error) {
     result.error = (error as Error).message;
   }
@@ -112,14 +108,11 @@ export const validateDataset = async ({
   headers: Record<string, string>;
   baseURL: string;
 }) => {
-  const response = await fetch(
-    `${baseURL}/datasets/${datasetId}:validateUpload`,
-    {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({}),
-    }
-  );
+  const response = await fetch(`${baseURL}/datasets/${datasetId}:validateUpload`, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({}),
+  });
 
   if (!response.ok) {
     return {
@@ -155,17 +148,14 @@ const finetuneStateMap = (state: FinetuneState) => {
   }
 };
 
-export const fireworkFinetuneToOpenAIFinetune = (
-  response: FinetuneResponse
-) => {
+export const fireworkFinetuneToOpenAIFinetune = (response: FinetuneResponse) => {
   const id = response?.name?.split('/').at(-1);
   const model = response?.baseModel?.split('/').at(-1);
   const trainingFile = response?.dataset?.split('/').at(-1);
   const validationFile = response?.evaluationDataset?.split('/').at(-1);
   const suffix = response?.outputModel;
   const createdAt = new Date(response?.createTime).getTime();
-  const completedAt =
-    response.completedTime && new Date(response.completedTime).getTime();
+  const completedAt = response.completedTime && new Date(response.completedTime).getTime();
   const hyperparameters = {
     n_epochs: response?.epochs,
     learning_rate: response?.learningRate,

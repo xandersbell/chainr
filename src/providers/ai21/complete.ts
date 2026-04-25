@@ -1,6 +1,6 @@
 import { AI21 } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
 
@@ -91,12 +91,10 @@ export interface AI21ErrorResponse {
 
 export const AI21CompleteResponseTransform: (
   response: AI21CompleteResponse | AI21ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AI21ErrorResponseTransform(
-      response as AI21ErrorResponse
-    );
+    const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
     if (errorResposne) return errorResposne;
   }
 

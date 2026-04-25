@@ -1,31 +1,37 @@
-# AGENTS.md — Priorai
+# Priorai Project Rules
 
-本项目，的目的是将不同的 LLM API 通过一套统一的接口方案调用
+Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
 
-## 参考项目 PortKey
+## Language Rules
 
-- portkey 的本地路径在 `./portkey`
-- 我们将其面板、管理等等功能全都彻底剥离掉
-- 只保留核心的 LLM 调用和转接能力
-- 需要同一模型不同 provider 的按优先级 fallback 能力
-- 需要其按权重分配的负载均衡能力
-- 能直接 cp 命令复制过来的代码就直接复制到本地再进行适配调整，比重写要快得多，成熟方案总比自己摸索要好
+All code in this project must be written in English, including:
 
-## 依赖策略
+- Code comments (inline and block)
+- Variable, function, class, and type names
+- Test descriptions (`describe`, `it`) and assertion messages
+- Error messages thrown in code
+- Console log output
+- JSDoc / TSDoc annotations
+- Commit messages
 
-- 成熟的、必要的外部依赖可以直接引入，不执着于零依赖
-- AWS 官方 SDK（@smithy/signature-v4、@aws-crypto/sha256-js）→ 直接使用，不自己实现签名
-- Hono 框架 → 必须剥离。Hono 是 Web 服务器框架，Priorai 是嵌入式 SDK，架构不匹配。用 providerOptions + process.env 替代 Hono Context
-- 判断标准：该依赖是否在 SDK 嵌入场景下合理？合理就用，不合理就剥离
+## Reference: Portkey
 
-## 执行中时刻记得
+- Portkey source is at `./portkey` for reference
+- Strip all dashboard, admin, and management features — keep only the core LLM routing and proxying layer
+- Priority-based fallback and weighted load balancing are the two key capabilities to preserve
+- When Portkey already has a working implementation, copy and adapt rather than rewrite
 
-- 一边工作一边更新相关文档，标记进度，记录差异等等
-- 更新文档时必须在顶部明确写入当前时间
-- 尽可能的主动完成工作，不要停下来等待
-- 这有一定工作量，但并不是一项艰难的科研级工作
-- 你有足够的智慧解决工作中遇到的所有问题，不要因为“繁琐”而退缩
-- 细心些，耐心些
-- 记得，如果遇到问题，先去看 portkey 那边已经成熟的实现，别一味的猛冲
-- 编写完善的测试确保业务健壮
-- 每个小任务结束后务必更新相关文档确保描述是最新的
+## Dependency Strategy
+
+- Use mature external dependencies when they make sense — no zero-dependency dogma
+- AWS SDK (`@smithy/signature-v4`, `@aws-crypto/sha256-js`) — use as-is
+- Hono — must be removed. Priorai is an embeddable SDK, not a web server. Replace Hono Context with `providerOptions` + `process.env`
+- Decision rule: does this dependency make sense in an embedded SDK? Yes → use it. No → strip it.
+
+## Working Guidelines
+
+- Keep documentation in sync as you work — update progress and record decisions after each subtask
+- Include a timestamp at the top of any doc you create or update
+- Drive work forward proactively; do not pause unnecessarily
+- When stuck, consult Portkey's implementation before attempting a novel solution
+- Write thorough tests for every feature

@@ -1,22 +1,16 @@
-import { ProviderConfigs } from '../types';
-import {
-  OpenAICompleteConfig,
-  OpenAICompleteResponseTransform,
-} from './complete';
-import { OpenAIEmbedConfig } from './embed';
-import OpenAIAPIConfig from './api';
-import {
-  OpenAIChatCompleteConfig,
-  OpenAIChatCompleteResponseTransform,
-} from './chatComplete';
+import { OPEN_AI } from '../../globals';
 import {
   createModelResponseParams,
   OpenAICreateModelResponseTransformer,
-  OpenAIGetModelResponseTransformer,
   OpenAIDeleteModelResponseTransformer,
+  OpenAIGetModelResponseTransformer,
   OpenAIListInputItemsResponseTransformer,
 } from '../open-ai-base';
-import { OPEN_AI } from '../../globals';
+import type { ProviderConfigs } from '../types';
+import OpenAIAPIConfig from './api';
+import { OpenAIChatCompleteConfig, OpenAIChatCompleteResponseTransform } from './chatComplete';
+import { OpenAICompleteConfig, OpenAICompleteResponseTransform } from './complete';
+import { OpenAIEmbedConfig } from './embed';
 
 const OpenAIConfig: ProviderConfigs = {
   complete: OpenAICompleteConfig,

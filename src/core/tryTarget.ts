@@ -1,23 +1,23 @@
 /**
- * 核心递归调度模块
- * 处理叶节点（直接发请求）和嵌套策略组（递归调度到子策略）
- * 同时负责配置继承：overrideParams 合并，retry/timeout 子级优先
+ * Core recursive dispatch module
+ * Handles leaf nodes (direct requests) and nested strategy groups (recursive dispatch to sub-strategies)
+ * Also responsible for config inheritance: overrideParams merging, retry/timeout child-priority
  */
 import type { Params } from '../types/requestBody';
-import type { StrategyResult, TargetConfig } from './types';
-import type { ChatCompletionChunk } from './types/streaming';
-import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { buildProviderRequest } from './providerRequest';
-import { createOpenAIStream, isOpenAICompatibleProvider } from './transformOpenAIStream';
+import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { createAnthropicStream, isAnthropicProvider } from './transformAnthropicStream';
-import { createGoogleStream, isGoogleProvider } from './transformGoogleStream';
-import { createCohereStream, isCohereProvider } from './transformCohereStream';
 import { createBedrockStream, isBedrockProvider } from './transformBedrockStream';
 import { createBytezStream, isBytezProvider } from './transformBytezStream';
+import { createCohereStream, isCohereProvider } from './transformCohereStream';
+import { createGoogleStream, isGoogleProvider } from './transformGoogleStream';
+import { createOpenAIStream, isOpenAICompatibleProvider } from './transformOpenAIStream';
+import type { StrategyResult, TargetConfig } from './types';
+import type { ChatCompletionChunk } from './types/streaming';
 
 /**
- * 继承配置 — 从父级向下传递的配置
- * endpoint: 指定当前请求的端点类型，决定使用哪个 ProviderConfig 映射
+ * Inherited config — passed down from parent level
+ * endpoint: specifies the endpoint type for the current request, determines which ProviderConfig mapping to use
  */
 export interface InheritedConfig {
   overrideParams?: Record<string, unknown>;
@@ -27,19 +27,19 @@ export interface InheritedConfig {
 }
 
 /**
- * 判断 target 是否为嵌套策略组（有 strategy + targets 字段）
+ * Check whether a target is a nested strategy group (has strategy + targets fields)
  */
 export function isNestedTarget(target: TargetConfig): boolean {
   return !!target.strategy && Array.isArray(target.targets) && target.targets.length > 0;
 }
 
 /**
- * 构建当前层级的继承配置
- * 规则：overrideParams 合并（父级铺底，当前覆盖），retry/timeout 当前优先
+ * Build the inherited config for the current level
+ * Rules: overrideParams merge (parent as base, current overrides), retry/timeout child-priority
  */
 export function buildInheritedConfig(
   target: TargetConfig,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): InheritedConfig {
   return {
     overrideParams: {
@@ -52,30 +52,35 @@ export function buildInheritedConfig(
         ? { ...parentConfig.retry }
         : undefined,
     timeout: target.timeout ?? parentConfig.timeout,
-    // endpoint 从父级继承，不被子 target 覆盖（由顶层 Router 决定）
+    // endpoint is inherited from parent, not overridden by child targets (determined by top-level Router)
     endpoint: parentConfig.endpoint,
   };
 }
 
 /**
- * 对叶节点发起实际 HTTP 请求（非流式）
+ * Send actual HTTP request to a leaf target (non-streaming)
  */
 export async function tryLeafTarget(
   target: TargetConfig,
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   const provider = (target.provider as string) || 'openai';
   const mergedParams = { ...params, ...(inherited.overrideParams || {}) };
 
   const endpoint = inherited.endpoint || 'chatComplete';
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
+  const { body, headers, url } = await buildProviderRequest(
+    mergedParams,
+    provider,
+    target,
+    endpoint,
+  );
 
   const retryResult = await retryRequest(
     url,
     { method: 'POST', headers, body: JSON.stringify(body) },
     inherited.retry,
-    inherited.timeout
+    inherited.timeout,
   );
 
   return {
@@ -87,12 +92,12 @@ export async function tryLeafTarget(
 }
 
 /**
- * 对叶节点发起实际 HTTP 请求（流式）
+ * Send actual HTTP request to a leaf target (streaming)
  */
 export async function tryLeafTargetStream(
   target: TargetConfig,
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const provider = (target.provider as string) || 'openai';
   const mergedParams = {
@@ -102,13 +107,18 @@ export async function tryLeafTargetStream(
   };
 
   const endpoint = inherited.endpoint || 'chatComplete';
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
+  const { body, headers, url } = await buildProviderRequest(
+    mergedParams,
+    provider,
+    target,
+    endpoint,
+  );
 
   const retryResult = await retryRequestForStream(
     url,
     { method: 'POST', headers, body: JSON.stringify(body) },
     inherited.retry,
-    inherited.timeout
+    inherited.timeout,
   );
 
   if (!retryResult.success || !retryResult.response) {
@@ -119,11 +129,11 @@ export async function tryLeafTargetStream(
 }
 
 /**
- * 根据 provider 类型创建对应的流式转换
+ * Create the appropriate stream transform based on provider type
  */
 export function createStreamForProvider(
   response: Response,
-  provider: string
+  provider: string,
 ): ReadableStream<ChatCompletionChunk> {
   if (isAnthropicProvider(provider)) return createAnthropicStream(response, provider);
   if (isGoogleProvider(provider)) return createGoogleStream(response, provider);
@@ -135,60 +145,50 @@ export function createStreamForProvider(
 }
 
 /**
- * 递归执行目标（非流式）
- * 如果 target 是嵌套策略组，递归调度到对应策略；否则直接发请求
+ * Recursively execute a target (non-streaming)
+ * If target is a nested strategy group, recursively dispatch to the corresponding strategy; otherwise send request directly
  */
 export async function executeTarget(
   target: TargetConfig,
   params: Params,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): Promise<StrategyResult> {
   const inherited = buildInheritedConfig(target, parentConfig);
 
   if (isNestedTarget(target)) {
-    // 嵌套策略组 — 递归调度
-    return executeNestedStrategy(
-      target.strategy!,
-      target.targets!,
-      params,
-      inherited
-    );
+    // Nested strategy group — recursive dispatch
+    return executeNestedStrategy(target.strategy!, target.targets!, params, inherited);
   }
 
-  // 叶节点 — 直接发请求
+  // Leaf node — send request directly
   return tryLeafTarget(target, params, inherited);
 }
 
 /**
- * 递归执行目标（流式）
+ * Recursively execute a target (streaming)
  */
 export async function executeTargetStream(
   target: TargetConfig,
   params: Params,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const inherited = buildInheritedConfig(target, parentConfig);
 
   if (isNestedTarget(target)) {
-    return executeNestedStrategyStream(
-      target.strategy!,
-      target.targets!,
-      params,
-      inherited
-    );
+    return executeNestedStrategyStream(target.strategy!, target.targets!, params, inherited);
   }
 
   return tryLeafTargetStream(target, params, inherited);
 }
 
 /**
- * 执行嵌套策略（非流式）— 根据 strategy 类型分发
+ * Execute nested strategy (non-streaming) — dispatch based on strategy type
  */
 function executeNestedStrategy(
   strategy: string,
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   switch (strategy) {
     case 'fallback':
@@ -203,13 +203,13 @@ function executeNestedStrategy(
 }
 
 /**
- * 执行嵌套策略（流式）
+ * Execute nested strategy (streaming)
  */
 function executeNestedStrategyStream(
   strategy: string,
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   switch (strategy) {
     case 'fallback':
@@ -223,12 +223,12 @@ function executeNestedStrategyStream(
   }
 }
 
-// --- 内联策略实现（避免循环依赖） ---
+// --- Inline strategy implementations (avoid circular dependencies) ---
 
 async function executeFallback(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   let lastError: string | undefined;
   for (const target of targets) {
@@ -246,7 +246,7 @@ async function executeFallback(
 async function executeFallbackStream(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   let lastError: string | undefined;
   for (const target of targets) {
@@ -260,9 +260,7 @@ async function executeFallbackStream(
 }
 
 function selectByWeight(targets: TargetConfig[]): TargetConfig {
-  const totalWeight = targets.reduce(
-    (sum, t) => sum + ((t.weight as number) ?? 1), 0
-  );
+  const totalWeight = targets.reduce((sum, t) => sum + ((t.weight as number) ?? 1), 0);
   const rand = Math.random() * totalWeight;
   let cumulative = 0;
   for (const target of targets) {
@@ -275,7 +273,7 @@ function selectByWeight(targets: TargetConfig[]): TargetConfig {
 async function executeLoadBalance(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   const selected = selectByWeight(targets);
   return executeTarget(selected, params, inherited);
@@ -284,7 +282,7 @@ async function executeLoadBalance(
 async function executeLoadBalanceStream(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const selected = selectByWeight(targets);
   return executeTargetStream(selected, params, inherited);

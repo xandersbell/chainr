@@ -1,6 +1,6 @@
 import { ZHIPU } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateErrorResponse } from '../utils';
 
 export const ZhipuEmbedConfig: ProviderConfig = {
@@ -19,7 +19,7 @@ interface ZhipuEmbedResponse extends EmbedResponse {}
 
 export const ZhipuEmbedResponseTransform: (
   response: ZhipuEmbedResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return generateErrorResponse(
@@ -29,7 +29,7 @@ export const ZhipuEmbedResponseTransform: (
         param: response.error.param,
         code: response.error.code,
       },
-      ZHIPU
+      ZHIPU,
     );
   }
 

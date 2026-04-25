@@ -1,16 +1,16 @@
-// Priorai - 全局常量与 Provider 定义
-// 对齐 Portkey 的 src/globals.ts，确保所有 provider 文件的 import 都能解析
+// Priorai - Global constants and provider definitions
+// Aligned with Portkey's src/globals.ts to ensure all provider file imports resolve
 
 import type { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'priorai';
 
-// 重试配置
+// Retry configuration
 export const MAX_RETRY_LIMIT_MS = 60 * 1000;
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 
-// Provider 名称常量（对齐 Portkey）
+// Provider name constants (aligned with Portkey)
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
@@ -85,14 +85,14 @@ export const OVHCLOUD: string = 'ovhcloud';
 export const DATABRICKS: string = 'databricks';
 export const LATITUDE: string = 'latitude';
 
-// 旧名称别名（向后兼容）
+// Legacy aliases for backward compatibility
 export const PERPLEXITY = PERPLEXITY_AI;
 export const LEMONFOX = LEMONFOX_AI;
 export const RECRAFT_AI = RECRAFTAI;
 export const WHISPER = 'whisper';
 export const TTS = 'tts';
 
-// Embeddings/Image/Audio 专用 URL 常量
+// Embeddings/Image/Audio specific URL constants
 export const JINA_URL = 'https://api.jina.ai';
 export const NOMIC_URL = 'https://api.nomic.ai';
 export const VOYAGE_URL = 'https://api.voyageai.com';
@@ -113,91 +113,91 @@ export const SILICONFLOW_EMBED_URL = 'https://api.siliconflow.cn/v1/embeddings';
 export const SILICONFLOW_IMAGE_URL = 'https://api.siliconflow.cn/v1/images/generations';
 export const NSCALE_URL = 'https://api.nscale.io';
 
-// OpenAI-compatible Provider URLs（provider 注册表使用）
+// OpenAI-compatible Provider URLs (used by provider registry)
 export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
-  'openai': 'https://api.openai.com/v1/chat/completions',
-  'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
+  openai: 'https://api.openai.com/v1/chat/completions',
+  openrouter: 'https://openrouter.ai/api/v1/chat/completions',
   'together-ai': 'https://api.together.ai/v1/chat/completions',
   'perplexity-ai': 'https://api.perplexity.ai/chat/completions',
-  'groq': 'https://api.groq.com/openai/v1/chat/completions',
-  'deepseek': 'https://api.deepseek.com/chat/completions',
+  groq: 'https://api.groq.com/openai/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/chat/completions',
   'mistral-ai': 'https://api.mistral.ai/v1/chat/completions',
-  'cohere': 'https://api.cohere.ai/compatibility/v2/chat',
-  'dashscope': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
-  'cerebras': 'https://api.cerebras.ai/v1/chat/completions',
-  'huggingface': 'https://api-inference.huggingface.co/v1/chat/completions',
-  'anyscale': 'https://api.endpoints.anyscale.com/v1/chat/completions',
-  'ollama': 'http://localhost:11434/v1/chat/completions',
+  cohere: 'https://api.cohere.ai/compatibility/v2/chat',
+  dashscope: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  cerebras: 'https://api.cerebras.ai/v1/chat/completions',
+  huggingface: 'https://api-inference.huggingface.co/v1/chat/completions',
+  anyscale: 'https://api.endpoints.anyscale.com/v1/chat/completions',
+  ollama: 'http://localhost:11434/v1/chat/completions',
   'fireworks-ai': 'https://api.fireworks.ai/v1/chat/completions',
   'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/chat/completions',
-  'moonshot': 'https://api.moonshot.cn/v1/chat/completions',
-  'lambda': 'https://api.lambda.ai/v1/chat/completions',
-  'lingyi': 'https://api.lingyiwanwu.com/v1/chat/completions',
-  'zhipu': 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+  moonshot: 'https://api.moonshot.cn/v1/chat/completions',
+  lambda: 'https://api.lambda.ai/v1/chat/completions',
+  lingyi: 'https://api.lingyiwanwu.com/v1/chat/completions',
+  zhipu: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
   'novita-ai': 'https://api.novita.ai/v3.5/chat/completions',
-  'predibase': 'https://serving.predibase.com/v3/chat/completions',
-  'sambanova': 'https://api.sambanova.ai/api/paa/v1/chat/completions',
-  'siliconflow': 'https://api.siliconflow.cn/v1/chat/completions',
+  predibase: 'https://serving.predibase.com/v3/chat/completions',
+  sambanova: 'https://api.sambanova.ai/api/paa/v1/chat/completions',
+  siliconflow: 'https://api.siliconflow.cn/v1/chat/completions',
   'lemonfox-ai': 'https://api.lemonfox.ai/v1/chat/completions',
-  'lepton': 'https://api.lepton.ai/api/v1/chat/completions',
-  'hyperbolic': 'https://api.hyperbolic.ai/v1/chat/completions',
+  lepton: 'https://api.lepton.ai/api/v1/chat/completions',
+  hyperbolic: 'https://api.hyperbolic.ai/v1/chat/completions',
   '302ai': 'https://api.302.ai/v1/chat/completions',
-  'oracle': 'https://inference.oracle.ai/v1/chat/completions',
-  'ovhcloud': 'https://auth.api.platform.ovh.net/chat/completions',
-  'ncompass': 'https://api.ncompass.com/v1/chat/completions',
-  'deepbricks': 'https://api.deepbricks.io/v1/chat/completions',
-  'deepinfra': 'https://api.deepinfra.com/v1/chat/completions',
+  oracle: 'https://inference.oracle.ai/v1/chat/completions',
+  ovhcloud: 'https://auth.api.platform.ovh.net/chat/completions',
+  ncompass: 'https://api.ncompass.com/v1/chat/completions',
+  deepbricks: 'https://api.deepbricks.io/v1/chat/completions',
+  deepinfra: 'https://api.deepinfra.com/v1/chat/completions',
   'azure-openai': '',
-  'nebius': 'https://api.nebius.ai/v1/chat/completions',
+  nebius: 'https://api.nebius.ai/v1/chat/completions',
   'featherless-ai': 'https://api.featherless.ai/v1/chat/completions',
-  'ai21': 'https://api.ai21.com/v1/chat/completions',
+  ai21: 'https://api.ai21.com/v1/chat/completions',
   'stability-ai': 'https://api.stability.ai/v1/chat/completions',
-  'triton': '',
-  'replicate': 'https://api.replicate.com/v1/chat/completions',
+  triton: '',
+  replicate: 'https://api.replicate.com/v1/chat/completions',
   'x-ai': 'https://api.x.ai/v1/chat/completions',
-  'modal': 'https://api.modal.com/v1/chat/completions',
-  'github': 'https://models.github.ai/inference/chat/completions',
+  modal: 'https://api.modal.com/v1/chat/completions',
+  github: 'https://models.github.ai/inference/chat/completions',
   'azure-ai': '',
-  'aibadgr': 'https://api.aibadgr.com/v1/chat/completions',
-  'bedrock': '',
-  'cometapi': 'https://api.comet.com/chat/completions',
-  'iointelligence': 'https://api.iointelligence.ai/v1/chat/completions',
+  aibadgr: 'https://api.aibadgr.com/v1/chat/completions',
+  bedrock: '',
+  cometapi: 'https://api.comet.com/chat/completions',
+  iointelligence: 'https://api.iointelligence.ai/v1/chat/completions',
   'kluster-ai': 'https://api.kluster.ai/v1/chat/completions',
-  'matterai': 'https://api.matter.ai/chat/completions',
-  'nextbit': 'https://api.nextbit.ai/v1/chat/completions',
-  'sagemaker': '',
-  'monsterapi': 'https://llm.monsterapi.ai/v1/chat/completions',
+  matterai: 'https://api.matter.ai/chat/completions',
+  nextbit: 'https://api.nextbit.ai/v1/chat/completions',
+  sagemaker: '',
+  monsterapi: 'https://llm.monsterapi.ai/v1/chat/completions',
   'z-ai': 'https://api.z.ai/api/paas/v4/chat/completions',
   'reka-ai': 'https://api.reka.ai/chat',
-  'krutrim': 'https://cloud.olakrutrim.com/v1/chat/completions',
-  'upstage': 'https://api.upstage.ai/v1/solar/chat/completions',
-  'cortex': '',
+  krutrim: 'https://cloud.olakrutrim.com/v1/chat/completions',
+  upstage: 'https://api.upstage.ai/v1/solar/chat/completions',
+  cortex: '',
 };
 
-// Embeddings/Image/Audio 专用 URL 映射（provider 注册表使用）
+// Embeddings/Image/Audio specific URL mappings (used by provider registry)
 export const OPENAI_COMPATIBLE_EMBED_URLS: Record<string, string> = {
-  'openai': 'https://api.openai.com/v1/embeddings',
+  openai: 'https://api.openai.com/v1/embeddings',
   'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/embeddings',
-  'siliconflow': 'https://api.siliconflow.cn/v1/embeddings',
-  'ai21': 'https://api.ai21.com/v1/embeddings',
+  siliconflow: 'https://api.siliconflow.cn/v1/embeddings',
+  ai21: 'https://api.ai21.com/v1/embeddings',
   'mistral-ai': 'https://api.mistral.ai/v1/embeddings',
   'together-ai': 'https://api.together.ai/v1/embeddings',
-  'anyscale': 'https://api.endpoints.anyscale.com/v1/embeddings',
+  anyscale: 'https://api.endpoints.anyscale.com/v1/embeddings',
   'fireworks-ai': 'https://api.fireworks.ai/v1/embeddings',
-  'deepbricks': 'https://api.deepbricks.io/v1/embeddings',
+  deepbricks: 'https://api.deepbricks.io/v1/embeddings',
 };
 
 export const OPENAI_COMPATIBLE_IMAGE_URLS: Record<string, string> = {
-  'openai': 'https://api.openai.com/v1/images/generations',
+  openai: 'https://api.openai.com/v1/images/generations',
   'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/images/generations',
-  'siliconflow': 'https://api.siliconflow.cn/v1/images/generations',
+  siliconflow: 'https://api.siliconflow.cn/v1/images/generations',
   'lemonfox-ai': 'https://api.lemonfox.ai/v1/images/generations',
-  'deepbricks': 'https://api.deepbricks.io/v1/images/generations',
-  'hyperbolic': 'https://api.hyperbolic.ai/v1/images/generations',
-  'nscale': 'https://api.nscale.io/v1/image/generate',
+  deepbricks: 'https://api.deepbricks.io/v1/images/generations',
+  hyperbolic: 'https://api.hyperbolic.ai/v1/images/generations',
+  nscale: 'https://api.nscale.io/v1/image/generate',
 };
 
-// Portkey 对齐的工具对象
+// Portkey-aligned content type constants
 export const CONTENT_TYPES = {
   APPLICATION_JSON: 'application/json',
   MULTIPART_FORM_DATA: 'multipart/form-data',

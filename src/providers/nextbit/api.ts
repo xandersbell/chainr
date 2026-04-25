@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const nextBitAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.nextbit256.com/v1',

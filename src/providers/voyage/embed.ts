@@ -1,10 +1,7 @@
 import { VOYAGE } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const VoyageEmbedConfig: ProviderConfig = {
   model: {
@@ -53,12 +50,12 @@ export interface VoyageValidationErrorResponse {
 }
 
 export const VoyageErrorResponseTransform: (
-  response: VoyageValidationErrorResponse | any
+  response: VoyageValidationErrorResponse | any,
 ) => ErrorResponse = (response) => {
-  let errorField: string | null = null;
+  const errorField: string | null = null;
 
-  let errorMessage = response.detail;
-  let errorType = 'Invalid Request';
+  const errorMessage = response.detail;
+  const errorType = 'Invalid Request';
 
   return generateErrorResponse(
     {
@@ -67,13 +64,13 @@ export const VoyageErrorResponseTransform: (
       param: null,
       code: null,
     },
-    VOYAGE
+    VOYAGE,
   );
 };
 
 export const VoyageEmbedResponseTransform: (
   response: VoyageEmbedResponse | VoyageValidationErrorResponse | any,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if ('detail' in response && responseStatus !== 200) {
     return VoyageErrorResponseTransform(response);

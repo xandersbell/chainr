@@ -1,5 +1,3 @@
-import { ProviderConfigs } from '../types';
-import CortexAPIConfig from './api';
 import { CORTEX } from '../../globals';
 import {
   chatCompleteParams,
@@ -7,6 +5,8 @@ import {
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
+import type { ProviderConfigs } from '../types';
+import CortexAPIConfig from './api';
 
 const CortexConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], { model: 'mistral-large' }),

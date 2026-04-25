@@ -1,10 +1,10 @@
 import { FIREWORKS_AI } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  FireworksAIErrorResponse,
+  type FireworksAIErrorResponse,
   FireworksAIErrorResponseTransform,
-  FireworksAIValidationErrorResponse,
+  type FireworksAIValidationErrorResponse,
 } from './chatComplete';
 
 export const FireworksAICompleteConfig: ProviderConfig = {
@@ -97,11 +97,11 @@ export const FireworksAICompleteResponseTransform: (
     | FireworksAICompleteResponse
     | FireworksAIValidationErrorResponse
     | FireworksAIErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return FireworksAIErrorResponseTransform(
-      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse
+      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse,
     );
   }
 
@@ -146,9 +146,9 @@ export interface FireworksAICompleteStreamChunk {
   };
 }
 
-export const FireworksAICompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const FireworksAICompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

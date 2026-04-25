@@ -5,7 +5,7 @@ import {
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import DatabricksAPIConfig from './api';
 
 const DatabricksConfig: ProviderConfigs = {
@@ -24,7 +24,7 @@ const DatabricksConfig: ProviderConfigs = {
         param: 'reasoning_effort',
         required: false,
       },
-    }
+    },
   ),
   responseTransforms: responseTransformers(DATABRICKS, {
     complete: true,

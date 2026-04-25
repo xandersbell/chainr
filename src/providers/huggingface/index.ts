@@ -1,15 +1,15 @@
-import { ProviderConfigs } from '../types';
-import {
-  HuggingfaceCompleteConfig,
-  HuggingfaceCompleteResponseTransform,
-  HuggingfaceCompleteStreamChunkTransform,
-} from './complete';
+import type { ProviderConfigs } from '../types';
 import HuggingfaceAPIConfig from './api';
 import {
   HuggingfaceChatCompleteConfig,
   HuggingfaceChatCompleteResponseTransform,
   HuggingfaceChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import {
+  HuggingfaceCompleteConfig,
+  HuggingfaceCompleteResponseTransform,
+  HuggingfaceCompleteStreamChunkTransform,
+} from './complete';
 
 const HuggingfaceConfig: ProviderConfigs = {
   complete: HuggingfaceCompleteConfig,

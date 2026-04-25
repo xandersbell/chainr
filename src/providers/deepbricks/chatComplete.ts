@@ -1,10 +1,6 @@
 import { DEEPBRICKS } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateErrorResponse } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -110,19 +106,19 @@ export interface DeepbricksChatCompleteResponse extends ChatCompletionResponse {
 
 export const DeepbricksErrorResponseTransform: (
   response: ErrorResponse,
-  provider: string
+  provider: string,
 ) => ErrorResponse = (response, provider) => {
   return generateErrorResponse(
     {
       ...response.error,
     },
-    provider
+    provider,
   );
 };
 
 export const DeepbricksChatCompleteResponseTransform: (
   response: DeepbricksChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return DeepbricksErrorResponseTransform(response, DEEPBRICKS);
@@ -140,7 +136,7 @@ export const DeepbricksChatCompleteResponseTransform: (
  */
 export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
   response: DeepbricksChatCompleteResponse,
-  provider: string
+  provider: string,
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices } = response;
@@ -148,8 +144,7 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
   const { prompt_tokens, completion_tokens } = response.usage || {};
 
   let total_tokens;
-  if (prompt_tokens && completion_tokens)
-    total_tokens = prompt_tokens + completion_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -166,15 +161,8 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
   };
 
   for (const [index, choice] of choices.entries()) {
-    if (
-      choice.message &&
-      choice.message.tool_calls &&
-      choice.message.tool_calls.length
-    ) {
-      for (const [
-        toolCallIndex,
-        toolCall,
-      ] of choice.message.tool_calls.entries()) {
+    if (choice.message?.tool_calls?.length) {
+      for (const [toolCallIndex, toolCall] of choice.message.tool_calls.entries()) {
         const toolCallNameChunk = {
           index: toolCallIndex,
           id: toolCall.id,
@@ -205,7 +193,7 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
 
         streamChunkArray.push(
@@ -220,16 +208,12 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       }
     }
 
-    if (
-      choice.message &&
-      choice.message.content &&
-      typeof choice.message.content === 'string'
-    ) {
+    if (choice.message?.content && typeof choice.message.content === 'string') {
       const inidividualWords: Array<string> = [];
       for (let i = 0; i < choice.message.content.length; i += 4) {
         inidividualWords.push(choice.message.content.slice(i, i + 4));
@@ -247,7 +231,7 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       });
     }
@@ -262,7 +246,7 @@ export const DeepbricksChatCompleteJSONToStreamResponseTransform: (
             finish_reason: choice.finish_reason,
           },
         ],
-      })}\n\n`
+      })}\n\n`,
     );
   }
 

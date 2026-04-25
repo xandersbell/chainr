@@ -1,11 +1,8 @@
 import { TOGETHER_AI } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import {
-  TogetherAIErrorResponse,
-  TogetherAIErrorResponseTransform,
-} from './chatComplete';
+import { type TogetherAIErrorResponse, TogetherAIErrorResponseTransform } from './chatComplete';
 
 export const TogetherAIEmbedConfig: ProviderConfig = {
   model: {
@@ -30,12 +27,10 @@ interface TogetherAIEmbedResponse extends EmbedResponse {}
 
 export const TogetherAIEmbedResponseTransform: (
   response: TogetherAIEmbedResponse | TogetherAIErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = TogetherAIErrorResponseTransform(
-      response as TogetherAIErrorResponse
-    );
+    const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
     if (errorResponse) return errorResponse;
   }
 

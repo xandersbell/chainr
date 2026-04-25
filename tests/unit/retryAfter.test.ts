@@ -1,17 +1,17 @@
 /**
- * retry-after header 支持测试
- * 验证 RetryHandler 正确解析 retry-after / retry-after-ms / x-ms-retry-after-ms
+ * retry-after header support test
+ * Verify RetryHandler correctly parses retry-after / retry-after-ms / x-ms-retry-after-ms
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { retryRequest } from '../../src/core/RetryHandler';
 
-describe('retry-after header 支持', () => {
+describe('retry-after header support', () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
-    // 加速测试：mock setTimeout 让 sleep 立即返回
+    // Speed up test: mock setTimeout so sleep returns immediately
     vi.useFakeTimers();
   });
 
@@ -29,7 +29,7 @@ describe('retry-after header 支持', () => {
     };
   }
 
-  it('429 响应带 retry-after-ms 头时使用该值作为等待时间', async () => {
+  it('uses retry-after-ms header value as wait time when 429 response has it', async () => {
     fetchSpy
       .mockResolvedValueOnce(makeResponse(429, { 'retry-after-ms': '500' }))
       .mockResolvedValueOnce(makeResponse(200));
@@ -37,10 +37,10 @@ describe('retry-after header 支持', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
-    // 推进 fake timer 让 sleep 完成
+    // advance fake timer to complete sleep
     await vi.advanceTimersByTimeAsync(500);
     const result = await promise;
 
@@ -48,7 +48,7 @@ describe('retry-after header 支持', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('429 响应带 x-ms-retry-after-ms 头时使用该值', async () => {
+  it('uses x-ms-retry-after-ms header value when 429 response has it', async () => {
     fetchSpy
       .mockResolvedValueOnce(makeResponse(429, { 'x-ms-retry-after-ms': '300' }))
       .mockResolvedValueOnce(makeResponse(200));
@@ -56,7 +56,7 @@ describe('retry-after header 支持', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     await vi.advanceTimersByTimeAsync(300);
@@ -66,7 +66,7 @@ describe('retry-after header 支持', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('429 响应带 retry-after 头（秒）时转换为毫秒', async () => {
+  it('converts retry-after header (seconds) to milliseconds when 429 response has it', async () => {
     fetchSpy
       .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '2' }))
       .mockResolvedValueOnce(makeResponse(200));
@@ -74,7 +74,7 @@ describe('retry-after header 支持', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
     // retry-after: 2 → 2000ms
@@ -85,47 +85,48 @@ describe('retry-after header 支持', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('retry-after-ms 优先于 retry-after', async () => {
+  it('retry-after-ms takes priority over retry-after', async () => {
     fetchSpy
-      .mockResolvedValueOnce(makeResponse(429, {
-        'retry-after-ms': '100',
-        'retry-after': '10', // 10s = 10000ms，但应被忽略
-      }))
+      .mockResolvedValueOnce(
+        makeResponse(429, {
+          'retry-after-ms': '100',
+          'retry-after': '10', // 10s = 10000ms, but should be ignored
+        }),
+      )
       .mockResolvedValueOnce(makeResponse(200));
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
-    // 应使用 100ms 而非 10000ms
+    // should use 100ms instead of 10000ms
     await vi.advanceTimersByTimeAsync(100);
     const result = await promise;
 
     expect(result.success).toBe(true);
   });
 
-  it('retry-after 超过 60s 预算时放弃重试', async () => {
-    fetchSpy
-      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '120' })); // 120s > 60s
+  it('gives up retry when retry-after exceeds 60s budget', async () => {
+    fetchSpy.mockResolvedValueOnce(makeResponse(429, { 'retry-after': '120' })); // 120s > 60s
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 3, onStatusCodes: [429] }
+      { attempts: 3, onStatusCodes: [429] },
     );
 
-    // 不需要等待，应立即放弃
+    // no waiting needed, should give up immediately
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
 
     expect(result.success).toBe(false);
-    // 只调用了一次，没有重试
+    // only called once, no retry
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('非 429 状态码不读取 retry-after，使用指数退避', async () => {
+  it('non-429 status codes ignore retry-after and use exponential backoff', async () => {
     fetchSpy
       .mockResolvedValueOnce(makeResponse(500, { 'retry-after-ms': '100' }))
       .mockResolvedValueOnce(makeResponse(200));
@@ -133,10 +134,10 @@ describe('retry-after header 支持', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [500] }
+      { attempts: 2, onStatusCodes: [500] },
     );
 
-    // 指数退避第一次：100ms (BASE_DELAY_MS * 2^0)
+    // exponential backoff first attempt: 100ms (BASE_DELAY_MS * 2^0)
     await vi.advanceTimersByTimeAsync(100);
     const result = await promise;
 
@@ -144,20 +145,20 @@ describe('retry-after header 支持', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('多次 429 累计 retry-after 超出预算时放弃', async () => {
+  it('gives up when cumulative retry-after across multiple 429s exceeds budget', async () => {
     fetchSpy
-      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '30' }))  // 30s
-      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '40' })); // 40s，累计 70s > 60s
+      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '30' })) // 30s
+      .mockResolvedValueOnce(makeResponse(429, { 'retry-after': '40' })); // 40s, cumulative 70s > 60s
 
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 3, onStatusCodes: [429] }
+      { attempts: 3, onStatusCodes: [429] },
     );
 
-    // 第一次等 30s
+    // wait first: 30s
     await vi.advanceTimersByTimeAsync(30000);
-    // 第二次 40s > 剩余 30s，放弃
+    // second: 40s > remaining 30s, give up
     await vi.advanceTimersByTimeAsync(0);
     const result = await promise;
 
@@ -165,7 +166,7 @@ describe('retry-after header 支持', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('retry-after 值无效时回退到指数退避', async () => {
+  it('falls back to exponential backoff when retry-after value is invalid', async () => {
     fetchSpy
       .mockResolvedValueOnce(makeResponse(429, { 'retry-after': 'invalid' }))
       .mockResolvedValueOnce(makeResponse(200));
@@ -173,10 +174,10 @@ describe('retry-after header 支持', () => {
     const promise = retryRequest(
       'https://api.example.com/v1/chat',
       { method: 'POST', headers: {}, body: '{}' },
-      { attempts: 2, onStatusCodes: [429] }
+      { attempts: 2, onStatusCodes: [429] },
     );
 
-    // 回退到指数退避：100ms
+    // fallback to exponential backoff: 100ms
     await vi.advanceTimersByTimeAsync(100);
     const result = await promise;
 

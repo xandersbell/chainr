@@ -1,5 +1,5 @@
 import { BEDROCK } from '../../globals';
-import {
+import type {
   DocumentBlockParam,
   ImageBlockParam,
   RedactedThinkingBlockParam,
@@ -8,13 +8,13 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
-import {
+import type {
   RawContentBlockDeltaEvent,
   RawContentBlockStartEvent,
   RawContentBlockStopEvent,
 } from '../../types/MessagesStreamResponse';
-import { Options, Params } from '../../types/requestBody';
+import type { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
+import type { Options, Params } from '../../types/requestBody';
 import {
   ANTHROPIC_CONTENT_BLOCK_START_EVENT,
   ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
@@ -22,18 +22,15 @@ import {
   ANTHROPIC_MESSAGE_START_EVENT,
   ANTHROPIC_MESSAGE_STOP_EVENT,
 } from '../anthropic-base/constants';
-import {
+import type {
   AnthropicMessageDeltaEvent,
   AnthropicMessageStartEvent,
 } from '../anthropic-base/types';
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateInvalidProviderResponseError,
-  transformToAnthropicStopReason,
-} from '../utils';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError, transformToAnthropicStopReason } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { BedrockErrorResponse } from './embed';
-import {
+import type { BedrockErrorResponse } from './embed';
+import type {
   BedrockChatCompleteStreamChunk,
   BedrockChatCompletionResponse,
   BedrockContentItem,
@@ -46,10 +43,7 @@ import {
   transformToolsConfig as transformToolConfig,
 } from './utils/messagesUtils';
 
-const appendTextBlock = (
-  transformedContent: any[],
-  textBlock: TextBlockParam
-) => {
+const appendTextBlock = (transformedContent: any[], textBlock: TextBlockParam) => {
   transformedContent.push({
     text: textBlock.text,
   });
@@ -62,10 +56,7 @@ const appendTextBlock = (
   }
 };
 
-const appendImageBlock = (
-  transformedContent: any[],
-  imageBlock: ImageBlockParam
-) => {
+const appendImageBlock = (transformedContent: any[], imageBlock: ImageBlockParam) => {
   if (imageBlock.source.type === 'base64') {
     transformedContent.push({
       image: {
@@ -105,13 +96,10 @@ const appendImageBlock = (
   }
 };
 
-const appendDocumentBlock = (
-  transformedContent: any[],
-  documentBlock: DocumentBlockParam
-) => {
-  // 文档名称：优先使用 title，否则生成随机 UUID
+const appendDocumentBlock = (transformedContent: any[], documentBlock: DocumentBlockParam) => {
+  // Document name: prefer title, otherwise generate random UUID
   const docName = (documentBlock as any).title || crypto.randomUUID();
-  // citations 透传
+  // Pass through citations
   const citations = (documentBlock as any).citations;
 
   if (documentBlock.source.type === 'base64') {
@@ -139,7 +127,7 @@ const appendDocumentBlock = (
       },
     });
   } else if ((documentBlock.source as any).type === 'text') {
-    // 新增 text 类型文档支持
+    // Added text type document support
     transformedContent.push({
       document: {
         format: 'txt',
@@ -151,7 +139,7 @@ const appendDocumentBlock = (
       },
     });
   }
-  // cache_control 统一处理，适用于所有 source 类型
+  // Unified cache_control handling, applies to all source types
   if (documentBlock.cache_control) {
     transformedContent.push({
       cachePoint: {
@@ -161,10 +149,7 @@ const appendDocumentBlock = (
   }
 };
 
-const appendThinkingBlock = (
-  transformedContent: any[],
-  thinkingBlock: ThinkingBlockParam
-) => {
+const appendThinkingBlock = (transformedContent: any[], thinkingBlock: ThinkingBlockParam) => {
   transformedContent.push({
     reasoningContent: {
       reasoningText: {
@@ -177,7 +162,7 @@ const appendThinkingBlock = (
 
 const appendRedactedThinkingBlock = (
   transformedContent: any[],
-  redactedThinkingBlock: RedactedThinkingBlockParam
+  redactedThinkingBlock: RedactedThinkingBlockParam,
 ) => {
   transformedContent.push({
     reasoningContent: {
@@ -186,10 +171,7 @@ const appendRedactedThinkingBlock = (
   });
 };
 
-const appendToolUseBlock = (
-  transformedContent: any[],
-  toolUseBlock: ToolUseBlockParam
-) => {
+const appendToolUseBlock = (transformedContent: any[], toolUseBlock: ToolUseBlockParam) => {
   transformedContent.push({
     toolUse: {
       input: toolUseBlock.input,
@@ -208,7 +190,7 @@ const appendToolUseBlock = (
 
 const appendToolResultBlock = (
   transformedContent: any[],
-  toolResultBlock: ToolResultBlockParam
+  toolResultBlock: ToolResultBlockParam,
 ) => {
   const content = toolResultBlock.content;
   const transformedToolResultContent: any[] = [];
@@ -289,7 +271,7 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
               appendToolResultBlock(transformedContent, content);
             }
           }
-          // Bedrock 要求有 document block 时必须有 text block
+          // Bedrock requires a text block when a document block is present
           if (hasDocumentBlock && !hasTextBlock) {
             transformedContent.unshift({ text: ' ' });
           }
@@ -411,9 +393,7 @@ export const AnthropicBedrockConverseMessagesConfig: ProviderConfig = {
   },
 };
 
-const transformContentBlocks = (
-  contentBlocks: BedrockContentItem[]
-): ContentBlock[] => {
+const transformContentBlocks = (contentBlocks: BedrockContentItem[]): ContentBlock[] => {
   const transformedContent: ContentBlock[] = [];
   for (const contentBlock of contentBlocks) {
     if (contentBlock.text) {
@@ -450,7 +430,7 @@ export const BedrockMessagesResponseTransform = (
   _responseHeaders: Headers,
   _strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
     return (
@@ -460,9 +440,7 @@ export const BedrockMessagesResponseTransform = (
   }
 
   if ('output' in response) {
-    const transformedContent = transformContentBlocks(
-      response.output.message.content
-    );
+    const transformedContent = transformContentBlocks(response.output.message.content);
     const responseObj: MessagesResponse = {
       // TODO: shorten this
       id: 'portkey-' + crypto.randomUUID(),
@@ -470,7 +448,9 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      stop_reason: transformToAnthropicStopReason(response.stopReason) as MessagesResponse['stop_reason'],
+      stop_reason: transformToAnthropicStopReason(
+        response.stopReason,
+      ) as MessagesResponse['stop_reason'],
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,
@@ -485,7 +465,7 @@ export const BedrockMessagesResponseTransform = (
 };
 
 const transformContentBlock = (
-  contentBlock: BedrockChatCompleteStreamChunk
+  contentBlock: BedrockChatCompleteStreamChunk,
 ): RawContentBlockDeltaEvent | undefined => {
   if (!contentBlock.delta || contentBlock.contentBlockIndex === undefined) {
     return undefined;
@@ -531,13 +511,13 @@ const transformContentBlock = (
 };
 
 function createContentBlockStartEvent(
-  parsedChunk: BedrockChatCompleteStreamChunk
+  parsedChunk: BedrockChatCompleteStreamChunk,
 ): RawContentBlockStartEvent {
   const contentBlockStartEvent: RawContentBlockStartEvent = JSON.parse(
-    ANTHROPIC_CONTENT_BLOCK_START_EVENT
+    ANTHROPIC_CONTENT_BLOCK_START_EVENT,
   );
 
-  if (parsedChunk.start?.toolUse && parsedChunk.start.toolUse.toolUseId) {
+  if (parsedChunk.start?.toolUse?.toolUseId) {
     contentBlockStartEvent.content_block = {
       type: 'tool_use',
       id: parsedChunk.start.toolUse.toolUseId,
@@ -565,7 +545,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   fallbackId: string,
   streamState: BedrockStreamState,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (streamState.currentContentBlockIndex === undefined) {
@@ -586,7 +566,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
     let returnChunk = '';
     if (streamState.currentContentBlockIndex !== -1) {
       const previousBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
-        ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
+        ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
       );
       previousBlockStopEvent.index = parsedChunk.contentBlockIndex - 1;
       returnChunk += `event: content_block_stop\ndata: ${JSON.stringify(previousBlockStopEvent)}\n\n`;
@@ -611,20 +591,14 @@ export const BedrockConverseMessagesStreamChunkTransform = (
   }
   // message delta and message stop events
   if (parsedChunk.usage) {
-    const messageDeltaEvent: AnthropicMessageDeltaEvent = JSON.parse(
-      ANTHROPIC_MESSAGE_DELTA_EVENT
-    );
+    const messageDeltaEvent: AnthropicMessageDeltaEvent = JSON.parse(ANTHROPIC_MESSAGE_DELTA_EVENT);
     messageDeltaEvent.usage.input_tokens = parsedChunk.usage.inputTokens;
     messageDeltaEvent.usage.output_tokens = parsedChunk.usage.outputTokens;
-    messageDeltaEvent.usage.cache_read_input_tokens =
-      parsedChunk.usage.cacheReadInputTokens;
-    messageDeltaEvent.usage.cache_creation_input_tokens =
-      parsedChunk.usage.cacheWriteInputTokens;
-    messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(
-      streamState.stopReason
-    );
+    messageDeltaEvent.usage.cache_read_input_tokens = parsedChunk.usage.cacheReadInputTokens;
+    messageDeltaEvent.usage.cache_creation_input_tokens = parsedChunk.usage.cacheWriteInputTokens;
+    messageDeltaEvent.delta.stop_reason = transformToAnthropicStopReason(streamState.stopReason);
     const contentBlockStopEvent: RawContentBlockStopEvent = JSON.parse(
-      ANTHROPIC_CONTENT_BLOCK_STOP_EVENT
+      ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
     );
     contentBlockStopEvent.index = streamState.currentContentBlockIndex;
     let returnChunk = `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStopEvent)}\n\n`;
@@ -636,9 +610,7 @@ export const BedrockConverseMessagesStreamChunkTransform = (
 };
 
 function getMessageStartEvent(fallbackId: string, gatewayRequest: Params) {
-  const messageStartEvent: AnthropicMessageStartEvent = JSON.parse(
-    ANTHROPIC_MESSAGE_START_EVENT
-  );
+  const messageStartEvent: AnthropicMessageStartEvent = JSON.parse(ANTHROPIC_MESSAGE_START_EVENT);
   messageStartEvent.message.id = fallbackId;
   messageStartEvent.message.model = gatewayRequest.model as string;
   return `event: message_start\ndata: ${JSON.stringify(messageStartEvent)}\n\n`;

@@ -1,14 +1,7 @@
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
 import { OLLAMA } from '../../globals';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {
@@ -107,7 +100,7 @@ export interface OllamaStreamChunk {
 
 export const OllamaChatCompleteResponseTransform: (
   response: OllamaChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return generateErrorResponse(
@@ -117,7 +110,7 @@ export const OllamaChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      OLLAMA
+      OLLAMA,
     );
   }
 
@@ -136,9 +129,9 @@ export const OllamaChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, OLLAMA);
 };
 
-export const OllamaChatCompleteStreamChunkTransform: (
-  reponse: string
-) => string = (responseChunk) => {
+export const OllamaChatCompleteStreamChunkTransform: (reponse: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

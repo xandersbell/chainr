@@ -1,14 +1,7 @@
 import { FIREWORKS_AI } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { Message, Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const FireworksAIChatCompleteConfig: ProviderConfig = {
   model: {
@@ -146,7 +139,7 @@ export interface FireworksAIStreamChunk {
 }
 
 export const FireworksAIErrorResponseTransform: (
-  response: FireworksAIValidationErrorResponse | FireworksAIErrorResponse
+  response: FireworksAIValidationErrorResponse | FireworksAIErrorResponse,
 ) => ErrorResponse = (response) => {
   if ('fault' in response) {
     return generateErrorResponse(
@@ -156,7 +149,7 @@ export const FireworksAIErrorResponseTransform: (
         param: null,
         code: response.fault.detail.errorcode,
       },
-      FIREWORKS_AI
+      FIREWORKS_AI,
     );
   } else if ('detail' in response) {
     return generateErrorResponse(
@@ -166,7 +159,7 @@ export const FireworksAIErrorResponseTransform: (
         param: null,
         code: null,
       },
-      FIREWORKS_AI
+      FIREWORKS_AI,
     );
   }
   return generateErrorResponse(response.error, FIREWORKS_AI);
@@ -177,11 +170,11 @@ export const FireworksAIChatCompleteResponseTransform: (
     | FireworksAIChatCompleteResponse
     | FireworksAIValidationErrorResponse
     | FireworksAIErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return FireworksAIErrorResponseTransform(
-      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse
+      response as FireworksAIValidationErrorResponse | FireworksAIErrorResponse,
     );
   }
 
@@ -212,9 +205,9 @@ export const FireworksAIChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, FIREWORKS_AI);
 };
 
-export const FireworksAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const FireworksAIChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

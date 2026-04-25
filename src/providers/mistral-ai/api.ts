@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const MistralAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.mistral.ai/v1',
@@ -6,7 +6,7 @@ const MistralAIAPIConfig: ProviderAPIConfig = {
     return { Authorization: `Bearer ${providerOptions.apiKey}` };
   },
   getEndpoint: ({ fn, providerOptions }) => {
-    let mappedfn = fn;
+    const mappedfn = fn;
     if (providerOptions.mistralFimCompletion === 'true') {
       return '/fim/completions';
     }

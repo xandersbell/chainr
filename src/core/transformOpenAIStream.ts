@@ -1,6 +1,6 @@
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 import { OPENAI_COMPATIBLE_PROVIDERS } from './types/streaming';
 
 export { OPENAI_COMPATIBLE_PROVIDERS };
@@ -9,10 +9,10 @@ export function isOpenAICompatibleProvider(provider: string): boolean {
   return OPENAI_COMPATIBLE_PROVIDERS.includes(provider);
 }
 
-function openAIStreamTransform(
+function openAiStreamTransform(
   chunk: string,
   _fallbackId: string,
-  _streamState: Record<string, unknown>
+  _streamState: Record<string, unknown>,
 ): string | undefined {
   const trimmed = chunk.trim();
   if (trimmed === '[DONE]') {
@@ -22,8 +22,8 @@ function openAIStreamTransform(
 }
 
 /**
- * Azure OpenAI 的 SSE 流在某些情况下会把多个 chunk 粘连发送
- * 不加延迟会导致客户端解析错误，对齐 Portkey 的 isSleepTimeRequired
+ * Azure OpenAI SSE streams may concatenate multiple chunks in a single send
+ * Without delay, client-side parsing errors can occur; aligned with Portkey's isSleepTimeRequired
  */
 function isAzureProvider(provider: string): boolean {
   return provider === 'azure-openai' || provider === 'azure-ai';
@@ -31,20 +31,14 @@ function isAzureProvider(provider: string): boolean {
 
 export function createOpenAIStream(
   response: Response,
-  provider: string
+  provider: string,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
   const reader = response.body!.getReader();
   const needsChunkDelay = isAzureProvider(provider);
 
-  const generator = parseSSEStream(
-    reader,
-    splitPattern,
-    openAIStreamTransform,
-    fallbackId,
-    {}
-  );
+  const generator = parseSSEStream(reader, splitPattern, openAiStreamTransform, fallbackId, {});
 
   let isFirstChunk = true;
 
@@ -53,12 +47,12 @@ export function createOpenAIStream(
       try {
         for await (const chunkStr of generator) {
           if (chunkStr) {
-            // 首 chunk 延迟 25ms（所有 provider），Azure 后续 chunk 延迟 1ms
+            // Delay 25ms on first chunk (all providers), 1ms on subsequent Azure chunks
             if (isFirstChunk) {
-              await new Promise(resolve => setTimeout(resolve, 25));
+              await new Promise((resolve) => setTimeout(resolve, 25));
               isFirstChunk = false;
             } else if (needsChunkDelay) {
-              await new Promise(resolve => setTimeout(resolve, 1));
+              await new Promise((resolve) => setTimeout(resolve, 1));
             }
             const parsedChunks = parseSSEDataMultiple<ChatCompletionChunk>(chunkStr);
             for (const parsed of parsedChunks) {
@@ -70,7 +64,7 @@ export function createOpenAIStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 
@@ -88,6 +82,6 @@ export function createPassthroughStream(response: Response): ReadableStream<Uint
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }

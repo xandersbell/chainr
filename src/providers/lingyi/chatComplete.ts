@@ -1,14 +1,7 @@
 import { LINGYI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const LingyiChatCompleteConfig: ProviderConfig = {
   model: {
@@ -91,7 +84,7 @@ interface LingyiStreamChunk {
 
 export const LingyiChatCompleteResponseTransform: (
   response: LingyiChatCompleteResponse | LingyiErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -101,7 +94,7 @@ export const LingyiChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      LINGYI
+      LINGYI,
     );
   }
 
@@ -131,9 +124,9 @@ export const LingyiChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, LINGYI);
 };
 
-export const LingyiChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const LingyiChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

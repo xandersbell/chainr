@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const NomicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api-atlas.nomic.ai/v1',

@@ -1,4 +1,4 @@
-import {
+import type {
   MessagesResponse,
   TextBlock,
   TextCitation,
@@ -39,10 +39,7 @@ const textContentBlockStartEvent = (index: number): string => {
   })}\n\n`;
 };
 
-const textContentBlockDeltaEvent = (
-  index: number,
-  textBlock: TextBlock
-): string => {
+const textContentBlockDeltaEvent = (index: number, textBlock: TextBlock): string => {
   return `event: content_block_delta\ndata: ${JSON.stringify({
     type: 'content_block_delta',
     index,
@@ -53,10 +50,7 @@ const textContentBlockDeltaEvent = (
   })}\n\n`;
 };
 
-const toolUseContentBlockStartEvent = (
-  index: number,
-  toolUseBlock: ToolUseBlock
-): string => {
+const toolUseContentBlockStartEvent = (index: number, toolUseBlock: ToolUseBlock): string => {
   return `event: content_block_start\ndata: ${JSON.stringify({
     type: 'content_block_start',
     index,
@@ -67,10 +61,7 @@ const toolUseContentBlockStartEvent = (
   })}\n\n`;
 };
 
-const toolUseContentBlockDeltaEvent = (
-  index: number,
-  toolUseBlock: ToolUseBlock
-): string => {
+const toolUseContentBlockDeltaEvent = (index: number, toolUseBlock: ToolUseBlock): string => {
   return `event: content_block_delta\ndata: ${JSON.stringify({
     type: 'content_block_delta',
     index,
@@ -93,10 +84,7 @@ const thinkingContentBlockStartEvent = (index: number): string => {
   })}\n\n`;
 };
 
-const thinkingContentBlockDeltaEvent = (
-  index: number,
-  thinkingBlock: ThinkingBlock
-): string => {
+const thinkingContentBlockDeltaEvent = (index: number, thinkingBlock: ThinkingBlock): string => {
   return `event: content_block_delta\ndata: ${JSON.stringify({
     type: 'content_block_delta',
     index,
@@ -107,10 +95,7 @@ const thinkingContentBlockDeltaEvent = (
   })}\n\n`;
 };
 
-const signatureContentBlockDeltaEvent = (
-  index: number,
-  thinkingBlock: ThinkingBlock
-): string => {
+const signatureContentBlockDeltaEvent = (index: number, thinkingBlock: ThinkingBlock): string => {
   return `event: content_block_delta\ndata: ${JSON.stringify({
     type: 'content_block_delta',
     index,
@@ -121,10 +106,7 @@ const signatureContentBlockDeltaEvent = (
   })}\n\n`;
 };
 
-const citationContentBlockDeltaEvent = (
-  index: number,
-  citation: TextCitation
-): string => {
+const citationContentBlockDeltaEvent = (index: number, citation: TextCitation): string => {
   return `event: content_block_delta\ndata: ${JSON.stringify({
     type: 'content_block_delta',
     index,
@@ -143,7 +125,7 @@ const contentBlockStopEvent = (index: number): string => {
 };
 
 export function* anthropicMessagesJsonToStreamGenerator(
-  response: MessagesResponse
+  response: MessagesResponse,
 ): Generator<string, void, unknown> {
   yield getMessageStartEvent(response);
 

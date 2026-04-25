@@ -15,23 +15,24 @@
       "recommended": true,
       "complexity": {
         "useOptionalChain": "warn",
-        "noForEach": "off"
+        "noForEach": "off",
+        "useLiteralKeys": "off",
+        "noStaticOnlyClass": "off"
       },
       "correctness": {
         "noUnusedVariables": "warn",
         "noUnusedImports": "error"
       },
       "style": {
-        "useNamingConvention": {
-          "level": "warn",
-          "options": {}
-        },
+        "useNamingConvention": "off",
         "noNonNullAssertion": "off",
-        "useNodejsImportProtocol": "warn"
+        "useNodejsImportProtocol": "warn",
+        "useTemplate": "off"
       },
       "suspicious": {
         "noDoubleEquals": "warn",
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off"
       }
     }
   },
@@ -49,7 +50,11 @@
             "noNonNullAssertion": "off"
           },
           "suspicious": {
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "noThenProperty": "off"
+          },
+          "complexity": {
+            "noBannedTypes": "off"
           }
         }
       }
@@ -66,11 +71,12 @@
             "noUnusedVariables": "off"
           },
           "style": {
-            "useNamingConvention": "off",
+            "useNodejsImportProtocol": "off",
             "noNonNullAssertion": "off"
           },
           "suspicious": {
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "noThenProperty": "off"
           }
         }
       }

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DEFAULT_MATTERAI_BASE_URL = 'https://api.matterai.so/v1';
 

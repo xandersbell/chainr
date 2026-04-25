@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DeepbricksAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.deepbricks.ai/v1',
@@ -7,8 +7,7 @@ const DeepbricksAPIConfig: ProviderAPIConfig = {
       Authorization: `Bearer ${providerOptions.apiKey}`,
     };
     if (providerOptions.openaiOrganization) {
-      headersObj['Deepbricks-Organization'] =
-        providerOptions.openaiOrganization;
+      headersObj['Deepbricks-Organization'] = providerOptions.openaiOrganization;
     }
 
     if (providerOptions.openaiProject) {

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const VoyageAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.voyageai.com/v1',

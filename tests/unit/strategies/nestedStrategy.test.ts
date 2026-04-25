@@ -1,8 +1,8 @@
 /**
- * 嵌套策略测试
- * 验证 fallback 内嵌 loadbalance、配置递归继承等场景
+ * Nested strategy tests
+ * Verify fallback-within-loadbalance, config recursive inheritance, etc.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../src/core/RetryHandler', () => ({
   retryRequest: vi.fn(),
@@ -13,14 +13,14 @@ vi.mock('../../../src/core/providerRequest', () => ({
   buildProviderRequest: vi.fn(),
 }));
 
+import { buildProviderRequest } from '../../../src/core/providerRequest';
+import { retryRequest } from '../../../src/core/RetryHandler';
+import { Priorai } from '../../../src/core/Router';
 import { FallbackStrategy } from '../../../src/core/strategies/FallbackStrategy';
 import { LoadBalanceStrategy } from '../../../src/core/strategies/LoadBalanceStrategy';
 import { SingleStrategy } from '../../../src/core/strategies/SingleStrategy';
-import { retryRequest } from '../../../src/core/RetryHandler';
-import { buildProviderRequest } from '../../../src/core/providerRequest';
-import { Priorai } from '../../../src/core/Router';
 
-describe('嵌套策略', () => {
+describe('Nested strategies', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(buildProviderRequest).mockResolvedValue({
@@ -30,8 +30,8 @@ describe('嵌套策略', () => {
     });
   });
 
-  describe('fallback 内嵌 loadbalance', () => {
-    it('第一个 loadbalance 组成功时直接返回', async () => {
+  describe('fallback with embedded loadbalance', () => {
+    it('returns immediately when first loadbalance group succeeds', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: { id: 'lb-hit' } },
@@ -40,7 +40,7 @@ describe('嵌套策略', () => {
       const strategy = new FallbackStrategy();
       const targets = [
         {
-          // 嵌套 loadbalance 组
+          // nested loadbalance group
           strategy: 'loadbalance' as const,
           targets: [
             { provider: 'openai', apiKey: 'key-1', weight: 1 },
@@ -55,11 +55,11 @@ describe('嵌套策略', () => {
 
       expect(result.success).toBe(true);
       expect(result.provider).toBe('openai');
-      // 只调用了一次（loadbalance 组内选了一个）
+      // called only once (loadbalance group selected one)
       expect(retryRequest).toHaveBeenCalledTimes(1);
     });
 
-    it('loadbalance 组失败后 fallback 到下一个叶节点', async () => {
+    it('falls back to next leaf node when loadbalance group fails', async () => {
       vi.mocked(retryRequest)
         .mockResolvedValueOnce({ success: false, error: 'HTTP 500' })
         .mockResolvedValueOnce({
@@ -71,9 +71,7 @@ describe('嵌套策略', () => {
       const targets = [
         {
           strategy: 'loadbalance' as const,
-          targets: [
-            { provider: 'openai', apiKey: 'key-1', weight: 1 },
-          ],
+          targets: [{ provider: 'openai', apiKey: 'key-1', weight: 1 }],
         },
         { provider: 'anthropic', apiKey: 'key-2' },
       ];
@@ -87,8 +85,8 @@ describe('嵌套策略', () => {
     });
   });
 
-  describe('loadbalance 内嵌 fallback', () => {
-    it('选中的 fallback 组内部按顺序尝试', async () => {
+  describe('loadbalance with embedded fallback', () => {
+    it('selected fallback group tries targets in order', async () => {
       vi.mocked(retryRequest)
         .mockResolvedValueOnce({ success: false, error: 'HTTP 500' })
         .mockResolvedValueOnce({
@@ -99,7 +97,7 @@ describe('嵌套策略', () => {
       const strategy = new LoadBalanceStrategy();
       const targets = [
         {
-          weight: 100, // 确保选中这个
+          weight: 100, // ensure this is selected
           strategy: 'fallback' as const,
           targets: [
             { provider: 'openai', apiKey: 'key-1' },
@@ -117,8 +115,8 @@ describe('嵌套策略', () => {
     });
   });
 
-  describe('三层嵌套', () => {
-    it('fallback → loadbalance → single 递归正确', async () => {
+  describe('Three-level nesting', () => {
+    it('fallback -> loadbalance -> single recursion works correctly', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: { id: 'deep-nested' } },
@@ -132,9 +130,7 @@ describe('嵌套策略', () => {
             {
               weight: 100,
               strategy: 'single' as const,
-              targets: [
-                { provider: 'openai', apiKey: 'key-deep' },
-              ],
+              targets: [{ provider: 'openai', apiKey: 'key-deep' }],
             },
           ],
         },
@@ -148,8 +144,8 @@ describe('嵌套策略', () => {
     });
   });
 
-  describe('配置继承', () => {
-    it('overrideParams 从父级向下合并，子级覆盖父级', async () => {
+  describe('Config inheritance', () => {
+    it('overrideParams merges top-down, child overrides parent', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: {} },
@@ -164,7 +160,7 @@ describe('嵌套策略', () => {
             {
               provider: 'openai',
               apiKey: 'key-1',
-              overrideParams: { temperature: 0.8 }, // 覆盖父级的 temperature
+              overrideParams: { temperature: 0.8 }, // override parent's temperature
             },
           ],
         },
@@ -173,20 +169,20 @@ describe('嵌套策略', () => {
 
       await strategy.execute(targets, params);
 
-      // buildProviderRequest 应收到合并后的 params
+      // buildProviderRequest should receive merged params
       expect(buildProviderRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4o',
-          temperature: 0.8,  // 子级覆盖
-          top_p: 0.9,        // 父级保留
+          temperature: 0.8, // child overrides
+          top_p: 0.9, // parent preserved
         }),
         'openai',
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
 
-    it('retry 配置子级优先于父级', async () => {
+    it('retry config child takes priority over parent', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: {} },
@@ -201,7 +197,7 @@ describe('嵌套策略', () => {
             {
               provider: 'openai',
               apiKey: 'key-1',
-              retry: { attempts: 2 }, // 子级覆盖
+              retry: { attempts: 2 }, // child overrides
             },
           ],
         },
@@ -213,12 +209,12 @@ describe('嵌套策略', () => {
       expect(retryRequest).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
-        { attempts: 2 }, // 子级的 retry
-        undefined
+        { attempts: 2 }, // child's retry
+        undefined,
       );
     });
 
-    it('timeout 子级优先于父级', async () => {
+    it('timeout child takes priority over parent', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: {} },
@@ -233,7 +229,7 @@ describe('嵌套策略', () => {
             {
               provider: 'openai',
               apiKey: 'key-1',
-              timeout: 5000, // 子级覆盖
+              timeout: 5000, // child overrides
             },
           ],
         },
@@ -246,11 +242,11 @@ describe('嵌套策略', () => {
         expect.anything(),
         expect.anything(),
         undefined,
-        5000 // 子级的 timeout
+        5000, // child's timeout
       );
     });
 
-    it('子级没有 timeout 时继承父级', async () => {
+    it('inherits parent timeout when child has no timeout', async () => {
       vi.mocked(retryRequest).mockResolvedValue({
         success: true,
         response: { status: 200, data: {} },
@@ -261,9 +257,7 @@ describe('嵌套策略', () => {
         {
           strategy: 'single' as const,
           timeout: 15000,
-          targets: [
-            { provider: 'openai', apiKey: 'key-1' },
-          ],
+          targets: [{ provider: 'openai', apiKey: 'key-1' }],
         },
       ];
       const params = { model: 'gpt-4o', messages: [] };
@@ -274,53 +268,59 @@ describe('嵌套策略', () => {
         expect.anything(),
         expect.anything(),
         undefined,
-        15000 // 继承父级
+        15000, // inherit from parent
       );
     });
   });
 
-  describe('Config 验证', () => {
-    it('嵌套 target 有 strategy 但没有 targets 时抛出错误', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { strategy: 'loadbalance' },
-        ],
-      })).toThrow('requires non-empty "targets" array');
+  describe('Config validation', () => {
+    it('throws when nested target has strategy but no targets', () => {
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ strategy: 'loadbalance' }],
+          }),
+      ).toThrow('requires non-empty "targets" array');
     });
 
-    it('嵌套 target 有 targets 但没有 strategy 时抛出错误', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { targets: [{ provider: 'openai' }] },
-        ],
-      })).toThrow('missing "strategy" field');
+    it('throws when nested target has targets but no strategy', () => {
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ targets: [{ provider: 'openai' }] }],
+          }),
+      ).toThrow('missing "strategy" field');
     });
 
-    it('嵌套 target 使用未知 strategy 时抛出错误', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          { strategy: 'roundrobin', targets: [{ provider: 'openai' }] },
-        ],
-      })).toThrow('unknown strategy: roundrobin');
+    it('throws when nested target uses unknown strategy', () => {
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
+            targets: [{ strategy: 'roundrobin', targets: [{ provider: 'openai' }] }],
+          }),
+      ).toThrow('unknown strategy: roundrobin');
     });
 
-    it('合法的嵌套配置不抛出错误', () => {
-      expect(() => new Priorai({
-        strategy: 'fallback',
-        targets: [
-          {
-            strategy: 'loadbalance',
+    it('valid nested config does not throw', () => {
+      expect(
+        () =>
+          new Priorai({
+            strategy: 'fallback',
             targets: [
-              { provider: 'openai', apiKey: 'key-1', weight: 3 },
-              { provider: 'openai', apiKey: 'key-2', weight: 1 },
+              {
+                strategy: 'loadbalance',
+                targets: [
+                  { provider: 'openai', apiKey: 'key-1', weight: 3 },
+                  { provider: 'openai', apiKey: 'key-2', weight: 1 },
+                ],
+              },
+              { provider: 'anthropic', apiKey: 'key-3' },
             ],
-          },
-          { provider: 'anthropic', apiKey: 'key-3' },
-        ],
-      })).not.toThrow();
+          }),
+      ).not.toThrow();
     });
   });
 });

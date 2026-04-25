@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DEFAULT_COMETAPI_BASE_URL = 'https://api.cometapi.com/v1';
 

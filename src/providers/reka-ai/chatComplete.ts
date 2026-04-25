@@ -1,14 +1,7 @@
 import { REKA_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 interface RekaMessageItem {
   text: string;
@@ -49,9 +42,7 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
             type: type === 'human' ? 'model' : 'human',
             text: 'Placeholder for alternation',
           };
-          media_url
-            ? messages.unshift(placeholder)
-            : messages.push(placeholder);
+          media_url ? messages.unshift(placeholder) : messages.push(placeholder);
         }
 
         // NOTE: image need to be first
@@ -60,8 +51,7 @@ export const RekaAIChatCompleteConfig: ProviderConfig = {
       };
 
       params.messages?.forEach((message) => {
-        const currentType: 'human' | 'model' =
-          message.role === 'user' ? 'human' : 'model';
+        const currentType: 'human' | 'model' = message.role === 'user' ? 'human' : 'model';
 
         if (!Array.isArray(message.content)) {
           addMessage({ type: currentType, text: message.content || '' });
@@ -147,7 +137,7 @@ export interface RekaAIErrorResponse {
 
 export const RekaAIChatCompleteResponseTransform: (
   response: RekaAIChatCompleteResponse | RekaAIErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response) => {
   if ('detail' in response) {
     return generateErrorResponse(
@@ -157,7 +147,7 @@ export const RekaAIChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      REKA_AI
+      REKA_AI,
     );
   }
 
@@ -182,8 +172,7 @@ export const RekaAIChatCompleteResponseTransform: (
       usage: {
         prompt_tokens: response.metadata.input_tokens,
         completion_tokens: response.metadata.generated_tokens,
-        total_tokens:
-          response.metadata.input_tokens + response.metadata.generated_tokens,
+        total_tokens: response.metadata.input_tokens + response.metadata.generated_tokens,
       },
     };
   }

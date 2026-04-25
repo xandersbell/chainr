@@ -1,5 +1,5 @@
 import { CONTENT_TYPES } from '../../globals';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import { isStabilityV1Model } from './utils';
 
 const StabilityAIAPIConfig: ProviderAPIConfig = {
@@ -16,11 +16,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestBodyJSON, providerOptions }) => {
     let mappedFn = fn;
     const { urlToFetch } = providerOptions;
-    if (
-      fn === 'proxy' &&
-      urlToFetch &&
-      urlToFetch?.indexOf('text-to-image') > -1
-    ) {
+    if (fn === 'proxy' && urlToFetch && urlToFetch?.indexOf('text-to-image') > -1) {
       mappedFn = 'imageGenerate';
     }
 

@@ -1,11 +1,10 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const AnthropicAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.anthropic.com/v1',
 
   headers: ({ providerOptions, fn: _fn, gatewayRequestBody }) => {
-    const apiKey =
-      providerOptions.apiKey || providerOptions.anthropicApiKey || '';
+    const apiKey = providerOptions.apiKey || providerOptions.anthropicApiKey || '';
     const headers: Record<string, string> = {
       'X-API-Key': apiKey,
     };

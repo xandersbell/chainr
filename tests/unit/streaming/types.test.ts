@@ -1,12 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type {
-  ChatCompletionChunk,
-  StreamUsage,
-  ChatCompletionChunkChoice,
-  ChatCompletionDelta,
-  ChatCompletionToolCallDelta,
-  ContentBlockDelta,
   AnthropicStreamState,
+  ChatCompletionChunk,
+  ChatCompletionDelta,
+  StreamUsage,
 } from '../../../src/core/types/streaming';
 
 describe('Streaming Types', () => {
@@ -108,9 +105,7 @@ describe('Streaming Types', () => {
 
     it('has optional content_blocks', () => {
       const delta: ChatCompletionDelta = {
-        content_blocks: [
-          { index: 0, delta: { text: 'Hello' } },
-        ],
+        content_blocks: [{ index: 0, delta: { text: 'Hello' } }],
       };
       expect(delta.content_blocks?.[0].delta.text).toBe('Hello');
     });
@@ -142,9 +137,9 @@ describe('Streaming Types', () => {
 });
 
 import {
-  PROVIDER_SPLIT_PATTERNS,
-  OPENAI_COMPATIBLE_PROVIDERS,
   isOpenAICompatibleProvider,
+  OPENAI_COMPATIBLE_PROVIDERS,
+  PROVIDER_SPLIT_PATTERNS,
 } from '../../../src/core/types/streaming';
 
 describe('Streaming Constants', () => {

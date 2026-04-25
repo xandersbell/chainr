@@ -1,11 +1,6 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
-const inferenceFunctions = [
-  'complete',
-  'chatComplete',
-  'embed',
-  'imageGenerate',
-];
+const inferenceFunctions = ['complete', 'chatComplete', 'embed', 'imageGenerate'];
 
 const FireworksAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ fn, providerOptions }) => {
@@ -21,11 +16,7 @@ const FireworksAIAPIConfig: ProviderAPIConfig = {
       Accept: 'application/json',
     };
   },
-  getEndpoint: ({
-    fn,
-    gatewayRequestBodyJSON: gatewayRequestBody,
-    gatewayRequestURL,
-  }) => {
+  getEndpoint: ({ fn, gatewayRequestBodyJSON: gatewayRequestBody, gatewayRequestURL }) => {
     const model = gatewayRequestBody?.model;
 
     const jobIdIndex = ['cancelFinetune'].includes(fn ?? '') ? -2 : -1;

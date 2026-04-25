@@ -1,13 +1,10 @@
 import { BEDROCK } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateInvalidProviderResponseError,
-  transformFinishReason,
-} from '../utils';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateInvalidProviderResponseError, transformFinishReason } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { BedrockErrorResponse } from './embed';
-import { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
+import type { BedrockErrorResponse } from './embed';
+import type { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
   prompt: {
@@ -258,19 +255,17 @@ export const BedrockLlamaCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
@@ -292,8 +287,7 @@ export const BedrockLlamaCompleteResponseTransform: (
       usage: {
         prompt_tokens: response.prompt_token_count,
         completion_tokens: response.generation_token_count,
-        total_tokens:
-          response.prompt_token_count + response.generation_token_count,
+        total_tokens: response.prompt_token_count + response.generation_token_count,
       },
     };
   }
@@ -319,13 +313,13 @@ export const BedrockLlamaCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
@@ -349,10 +343,8 @@ export const BedrockLlamaCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
           total_tokens:
             parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
             parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -394,19 +386,17 @@ export const BedrockTitanCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
@@ -424,10 +414,7 @@ export const BedrockTitanCompleteResponseTransform: (
         text: generation.outputText,
         index: index,
         logprobs: null,
-        finish_reason: transformFinishReason(
-          generation.completionReason,
-          strictOpenAiCompliance
-        ),
+        finish_reason: transformFinishReason(generation.completionReason, strictOpenAiCompliance),
       })),
       usage: {
         prompt_tokens: response.inputTextTokenCount,
@@ -458,22 +445,19 @@ export const BedrockTitanCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
   const parsedChunk: BedrockTitanStreamChunk = JSON.parse(chunk);
   const finishReason = parsedChunk.completionReason
-    ? transformFinishReason(
-        parsedChunk.completionReason,
-        _strictOpenAiCompliance
-      )
+    ? transformFinishReason(parsedChunk.completionReason, _strictOpenAiCompliance)
     : null;
 
   return [
@@ -507,10 +491,8 @@ export const BedrockTitanCompleteStreamChunkTransform: (
         },
       ],
       usage: {
-        prompt_tokens:
-          parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-        completion_tokens:
-          parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+        prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+        completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
         total_tokens:
           parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
           parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -546,27 +528,23 @@ export const BedrockAI21CompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
   if ('completions' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: response.id.toString(),
       object: 'text_completion',
@@ -602,27 +580,23 @@ export const BedrockAnthropicCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
   if ('completion' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: Date.now().toString(),
       object: 'text_completion',
@@ -665,15 +639,15 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
-  let chunk = responseChunk.trim();
+  const chunk = responseChunk.trim();
   const model = gatewayRequest.model ?? '';
 
   const parsedChunk: BedrockAnthropicStreamChunk = JSON.parse(chunk);
@@ -709,10 +683,8 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
           total_tokens:
             parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
             parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -754,27 +726,23 @@ export const BedrockCohereCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
   if ('generations' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: response.id,
       object: 'text_completion',
@@ -816,13 +784,13 @@ export const BedrockCohereCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -847,10 +815,8 @@ export const BedrockCohereCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
           total_tokens:
             parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
             parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -895,13 +861,13 @@ export const BedrockMistralCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.trim();
@@ -924,10 +890,8 @@ export const BedrockMistralCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
           total_tokens:
             parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
             parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -967,27 +931,23 @@ export const BedrockMistralCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResponse = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
   if ('outputs' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: Date.now().toString(),
       object: 'text_completion',

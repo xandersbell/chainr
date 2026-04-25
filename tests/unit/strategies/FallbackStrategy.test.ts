@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FallbackStrategy } from '../../../src/core/strategies/FallbackStrategy';
 
 vi.mock('../../../src/core/RetryHandler', () => ({
@@ -9,8 +9,8 @@ vi.mock('../../../src/core/providerRequest', () => ({
   buildProviderRequest: vi.fn(),
 }));
 
-import { retryRequest } from '../../../src/core/RetryHandler';
 import { buildProviderRequest } from '../../../src/core/providerRequest';
+import { retryRequest } from '../../../src/core/RetryHandler';
 
 const mockRetryResult = (overrides = {}) => ({
   success: false,
@@ -32,7 +32,7 @@ describe('FallbackStrategy', () => {
   describe('execute()', () => {
     it('returns success when first target succeeds', async () => {
       vi.mocked(retryRequest).mockResolvedValue(
-        mockRetryResult({ success: true, response: { status: 200, data: { id: 'test-123' } } })
+        mockRetryResult({ success: true, response: { status: 200, data: { id: 'test-123' } } }),
       );
 
       const strategy = new FallbackStrategy();
@@ -53,7 +53,9 @@ describe('FallbackStrategy', () => {
     it('falls back to second target when first fails', async () => {
       vi.mocked(retryRequest)
         .mockResolvedValueOnce(mockRetryResult({ success: false, error: 'HTTP 500' }))
-        .mockResolvedValueOnce(mockRetryResult({ success: true, response: { status: 200, data: { id: 'test-456' } } }));
+        .mockResolvedValueOnce(
+          mockRetryResult({ success: true, response: { status: 200, data: { id: 'test-456' } } }),
+        );
 
       const strategy = new FallbackStrategy();
       const targets = [
@@ -106,7 +108,12 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'anthropic', expect.anything(), expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'anthropic',
+        expect.anything(),
+        expect.anything(),
+      );
     });
 
     it('defaults to openai when no provider specified', async () => {
@@ -118,18 +125,25 @@ describe('FallbackStrategy', () => {
 
       await strategy.execute(targets, params);
 
-      expect(buildProviderRequest).toHaveBeenCalledWith(expect.anything(), 'openai', expect.anything(), expect.anything());
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'openai',
+        expect.anything(),
+        expect.anything(),
+      );
     });
 
     it('merges params with target.overrideParams', async () => {
       vi.mocked(retryRequest).mockResolvedValue(mockRetryResult({ success: true }));
 
       const strategy = new FallbackStrategy();
-      const targets = [{
-        provider: 'openai',
-        api_key: 'key-1',
-        overrideParams: { model: 'gpt-4o-mini', temperature: 0.7 },
-      }];
+      const targets = [
+        {
+          provider: 'openai',
+          api_key: 'key-1',
+          overrideParams: { model: 'gpt-4o-mini', temperature: 0.7 },
+        },
+      ];
       const params = { model: 'gpt-4o', messages: [{ role: 'user', content: 'hi' }] };
 
       await strategy.execute(targets, params);
@@ -142,7 +156,7 @@ describe('FallbackStrategy', () => {
         }),
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -153,7 +167,7 @@ describe('FallbackStrategy', () => {
         mockRetryResult({
           success: true,
           response: { status: 200, data: { id: 'chat-123' } },
-        })
+        }),
       );
 
       const strategy = new FallbackStrategy();
@@ -172,7 +186,7 @@ describe('FallbackStrategy', () => {
           success: false,
           error: 'HTTP 429',
           response: { status: 429, data: { error: 'Rate limited' } },
-        })
+        }),
       );
 
       const strategy = new FallbackStrategy();
@@ -199,7 +213,7 @@ describe('FallbackStrategy', () => {
         expect.anything(),
         expect.anything(),
         retryConfig,
-        undefined
+        undefined,
       );
     });
 
@@ -220,7 +234,7 @@ describe('FallbackStrategy', () => {
         expect.anything(),
         expect.anything(),
         { attempts: 2, onStatusCodes: [429] },
-        undefined
+        undefined,
       );
     });
 
@@ -237,7 +251,7 @@ describe('FallbackStrategy', () => {
         expect.anything(),
         expect.anything(),
         undefined,
-        undefined
+        undefined,
       );
     });
   });

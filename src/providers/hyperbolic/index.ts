@@ -1,6 +1,6 @@
 import { HYPERBOLIC } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import HyperbolicAPIConfig from './api';
 import { HyperbolicChatCompleteStreamChunkTransform } from './chatComplete';
 
@@ -12,7 +12,7 @@ const HyperbolicConfig: ProviderConfigs = {
       top_k: { param: 'top_k', default: -1 },
       min_p: { param: 'min_p', default: 0, min: 0, max: 1 },
       repetition_penalty: { param: 'repetition_penalty', default: 1 },
-    }
+    },
   ),
   api: HyperbolicAPIConfig,
   responseTransforms: {

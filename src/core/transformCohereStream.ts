@@ -1,6 +1,6 @@
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 
 interface CohereStreamState {
   generation_id: string;
@@ -9,7 +9,7 @@ interface CohereStreamState {
 
 function transformFinishReason(
   reason: string | null,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): string | null {
   if (!reason) return 'stop';
   if (!strictOpenAiCompliance) return reason;
@@ -29,7 +29,7 @@ function cohereStreamTransform(
   streamState: CohereStreamState,
   strictOpenAiCompliance?: boolean,
   provider?: string,
-  model?: string
+  model?: string,
 ): string | undefined {
   let trimmed = chunk.trim();
   trimmed = trimmed.replace(/^event:.*[\r\n]*/, '');
@@ -48,15 +48,15 @@ function cohereStreamTransform(
   }
 
   if (parsedChunk.type === 'message-end') {
-    const prompt_tokens =
+    const promptTokens =
       parsedChunk.delta?.usage?.tokens?.input_tokens ??
       parsedChunk.delta?.usage?.billed_units?.input_tokens ??
       0;
-    const completion_tokens =
+    const completionTokens =
       parsedChunk.delta?.usage?.tokens?.output_tokens ??
       parsedChunk.delta?.usage?.billed_units?.output_tokens ??
       0;
-    const total_tokens = prompt_tokens + completion_tokens;
+    const totalTokens = promptTokens + completionTokens;
 
     return (
       `data: ${JSON.stringify({
@@ -72,14 +72,14 @@ function cohereStreamTransform(
             logprobs: null,
             finish_reason: transformFinishReason(
               parsedChunk.delta?.finish_reason,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
             ),
           },
         ],
         usage: {
-          completion_tokens,
-          prompt_tokens,
-          total_tokens,
+          completion_tokens: completionTokens,
+          prompt_tokens: promptTokens,
+          total_tokens: totalTokens,
         },
       })}` +
       '\n\n' +
@@ -122,7 +122,7 @@ export function createCohereStream(
   response: Response,
   provider: string,
   model?: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider, '/chat');
   const fallbackId = getFallbackChunkId(provider);
@@ -139,10 +139,10 @@ export function createCohereStream(
         state as unknown as CohereStreamState,
         strictOpenAiCompliance,
         provider,
-        model
+        model,
       ),
     fallbackId,
-    streamState as unknown as Record<string, unknown>
+    streamState as unknown as Record<string, unknown>,
   );
 
   return new ReadableStream({
@@ -162,7 +162,7 @@ export function createCohereStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

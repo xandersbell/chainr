@@ -1,10 +1,10 @@
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { MessagesResponse } from '../../types/messagesResponse';
-import { Options, Params } from '../../types/requestBody';
-import { getMessagesConfig } from '../anthropic-base/messages';
-import { AnthropicErrorResponse } from '../anthropic/types';
+import type { MessagesResponse } from '../../types/messagesResponse';
+import type { Options, Params } from '../../types/requestBody';
+import type { AnthropicErrorResponse } from '../anthropic/types';
 import { AnthropicErrorResponseTransform } from '../anthropic/utils';
-import { ErrorResponse } from '../types';
+import { getMessagesConfig } from '../anthropic-base/messages';
+import type { ErrorResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 export const VertexAnthropicMessagesConfig = getMessagesConfig({
@@ -15,9 +15,7 @@ export const VertexAnthropicMessagesConfig = getMessagesConfig({
       default: 'vertex-2023-10-16',
       transform: (params: Params, providerOptions?: Options) => {
         return (
-          providerOptions?.anthropicVersion ||
-          params['anthropic_version'] ||
-          'vertex-2023-10-16'
+          providerOptions?.anthropicVersion || params['anthropic_version'] || 'vertex-2023-10-16'
         );
       },
     },
@@ -27,12 +25,12 @@ export const VertexAnthropicMessagesConfig = getMessagesConfig({
 
 export const VertexAnthropicMessagesResponseTransform = (
   response: MessagesResponse | AnthropicErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse,
-      GOOGLE_VERTEX_AI
+      GOOGLE_VERTEX_AI,
     );
     if (errorResposne) return errorResposne;
   }
