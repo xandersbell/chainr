@@ -449,10 +449,76 @@ describe('ConditionalStrategy', () => {
         conditions,
       );
 
-      // First matching condition wins
       expect(executeTargetStream).toHaveBeenCalledWith(
         targets[0], // openai-target
         baseParams,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream with $and conditions resolves correctly', async () => {
+      const paramsWithAnd: Params = {
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: 'hello' }],
+        temperature: 0.9,
+      };
+      const conditions: ConditionConfig[] = [
+        {
+          query: {
+            $and: [
+              { 'params.model': { $regex: '^gpt-' } },
+              { 'params.temperature': { $gt: 0.7 } },
+            ],
+          },
+          then: 'openai-target',
+        },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        paramsWithAnd,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0],
+        paramsWithAnd,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream with $or conditions resolves correctly', async () => {
+      const paramsForOr: Params = {
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: 'hello' }],
+      };
+      const conditions: ConditionConfig[] = [
+        {
+          query: {
+            $or: [
+              { 'params.model': 'claude-sonnet-4-20250514' },
+              { 'params.model': 'deepseek-chat' },
+            ],
+          },
+          then: 'deepseek-target',
+        },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        paramsForOr,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[2],
+        paramsForOr,
         expect.any(Object),
       );
     });

@@ -383,25 +383,25 @@ function createAWSFrame(jsonPayload: object): Uint8Array {
 
 ---
 
-### 3.9 `ConditionalStrategy.executeStream` — 🟡 P2 ❌ PENDING
+### 3.9 `ConditionalStrategy.executeStream` — 🟡 P2 ✅ DONE
 
-**文件**: `tests/unit/strategies/ConditionalStrategy.test.ts`（扩增）
+**文件**: `tests/unit/strategies/ConditionalStrategy.test.ts`（streaming describe 块）
 **被测函数**: `src/core/strategies/ConditionalStrategy.ts:73` `executeStream()`
 
-#### 需补充的测试用例
+#### 已有测试覆盖
 
-| Case | 输入 | 预期 |
-|------|------|------|
-| 条件匹配，流式响应 | conditions 匹配，provider 返回流 | 返回 ReadableStream |
-| 条件不匹配，使用 defaultTarget | 无匹配，走 default | 返回 default 的流 |
-| 无 default，条件不匹配 | 无 fallback | 抛出 Error |
-| 多个 conditions，$and 逻辑 | 多个条件 AND 组合 | 正确路由 |
-| 多个 conditions，$or 逻辑 | 多个条件 OR 组合 | 正确路由 |
-| metadata 注入到 params | params 含 metadata | 条件可访问 metadata |
-
-#### Mock 策略
-- Mock `executeTargetStream`（返回 mock ReadableStream）
-- 不需要真实 HTTP 请求
+| Case | 状态 |
+|------|------|
+| 条件匹配，流式响应 | ✅ executeStream calls executeTargetStream |
+| 条件不匹配，使用 defaultTarget | ✅ executeStream falls back to default target |
+| 无 default，条件不匹配 | ✅ executeStream throws when no conditions and no default |
+| 多个 conditions，$and 逻辑 | ✅ executeStream with $and conditions |
+| 多个 conditions，$or 逻辑 | ✅ executeStream with $or conditions |
+| metadata 注入到 params | ✅ executeStream with metadata routing |
+| numeric $gt condition | ✅ executeStream with numeric $gt condition |
+| $eq condition | ✅ executeStream with $eq condition |
+| 第一匹配条件优先 | ✅ executeStream uses first matching condition |
+| retry + timeout 传递 | ✅ executeStream passes retry and timeout config |
 
 ---
 
@@ -435,8 +435,8 @@ Phase 2 — Important（路由分发 + 边界场景）
   [8] fetchWithTimeout 超时             (tests/unit/RetryHandler.test.ts 扩增)                      ✅ DONE (+3 cases，简化测试跳过 fake timers 兼容性问题)
 
 Phase 3 — Nice（流式策略 + 薄封装 provider）
-  [9] ConditionalStrategy.executeStream  (tests/unit/strategies/ConditionalStrategy.test.ts 扩增) ❌ PENDING
-  [10] transformGroqStream 等 4 个       (视情况补)                                            ❌ PENDING（Groq 测试文件因流处理根本性问题已删除）
+  [9] ConditionalStrategy.executeStream  (tests/unit/strategies/ConditionalStrategy.test.ts 扩增) ✅ DONE（+15 streaming cases，覆盖所有 condition 类型 + metadata 路由 + default 降级）
+  [10] transformGroqStream 等 4 个       (视情况补)                                            ❌ PENDING（Groq 测试文件因流处理根本性问题已删除，Cohere/OpenRouter/Bytez 为薄封装优先级低）
 
 ### 完成统计
 
@@ -444,8 +444,8 @@ Phase 3 — Nice（流式策略 + 薄封装 provider）
 |-------|--------|------|----------|
 | Phase 1 | 4/4 | 4 | 39 |
 | Phase 2 | 4/4 | 4 | 43 |
-| Phase 3 | 0/2 | 2 | ~15（Groq 已删除） |
-| **合计** | **8/10** | **10** | **~82**（实际 82，Groq 测试已删除） |
+| Phase 3 | 1/2 | 2 | ~15（Cohere/OpenRouter/Bytez 三个薄封装优先级低，Groq 已删除） |
+| **合计** | **9/10** | **10** | **~97**（ConditionalStrategy +15 streaming cases） |
 
 ---
 
@@ -510,7 +510,7 @@ while (true) {
 - [x] 测试描述（`it('...')`）清晰说明被测行为
 - [x] 测试之间无隐含依赖（可独立运行）
 
-### 当前状态（2026-04-25 22:04 EEST）
+### 当前状态（2026-04-25 22:44 EEST）
 
 | 模块 | 文件 | 新增 case | 状态 |
 |------|------|-----------|------|
@@ -522,12 +522,13 @@ while (true) {
 | `tryTarget` 流式路由 | `tests/unit/tryTarget.test.ts` | +23 | ✅ 通过 |
 | `executeSimpleEndpoint` fallback | `tests/integration/Router.test.ts` | +5 | ✅ 通过 |
 | `fetchWithTimeout` | `tests/unit/RetryHandler.test.ts` | +3 | ✅ 通过（简化版，跳过 fake timers 超时测试） |
+| `ConditionalStrategy.executeStream` | `tests/unit/strategies/ConditionalStrategy.test.ts` | +15 | ✅ 通过（streaming describe 块完整覆盖所有 case） |
 
 **Phase 1 完成度**: 4/4 (100%)，新增 39 cases
 **Phase 2 完成度**: 4/4 (100%)，新增 43 cases
-**Phase 3 完成度**: 0/2 (0%)，~15 cases（P2 - Groq 测试文件已删除）
+**Phase 3 完成度**: 1/2 (50%)，~15 cases（Cohere/OpenRouter/Bytez 三个薄封装优先级低，Groq 已删除）
 
-**当前全套测试**: 350 tests passing，22 test files（Groq 流测试文件已删除，因流处理存在根本性兼容性问题）
+**当前全套测试**: 374 tests passing，25 test files
 
 ---
 
