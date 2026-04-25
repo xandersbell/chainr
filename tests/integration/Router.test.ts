@@ -19,6 +19,10 @@ vi.mock('../../src/core/strategies', () => ({
     execute = mockSingleExecute;
     executeStream = vi.fn();
   },
+  ConditionalStrategy: class MockConditionalStrategy {
+    execute = vi.fn();
+    executeStream = vi.fn();
+  },
 }));
 
 const mockTransformProviderResponse = vi.fn();
@@ -746,5 +750,424 @@ describe('Priorai (Router) integration tests', () => {
       const priorai = new Priorai(config);
       await expect(priorai.messages.countTokens(countTokensParams)).rejects.toThrow('HTTP 401');
     });
+  });
+
+  describe('Streaming endpoints', () => {
+    // 创建一个 mock 流式 ReadableStream，包含可验证的 chunk 数据
+    const createMockStream = (chunks: Record<string, unknown>[]) => {
+      return new ReadableStream({
+        start(controller) {
+          for (const chunk of chunks) {
+            controller.enqueue(chunk);
+          }
+          controller.close();
+        },
+      });
+    };
+
+    // 读取 ReadableStream 中所有 chunks 的辅助函数
+    const readAllChunks = async (stream: ReadableStream): Promise<unknown[]> => {
+      const reader = stream.getReader();
+      const chunks: unknown[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      return chunks;
+    };
+
+    it('chat.completions.create stream:true returns ReadableStream', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', api_key: 'key-1' }],
+      };
+
+      const mockChunk = {
+        id: 'chatcmpl-stream-1',
+        object: 'chat.completion.chunk',
+        created: 1714000000,
+        model: 'gpt-4',
+        choices: [{ index: 0, delta: { content: 'hi' }, finish_reason: null }],
+      };
+
+      const mockStream = createMockStream([mockChunk]);
+      const priorai = new Priorai(config);
+      const strategy = (
+        priorai as unknown as { strategy: { executeStream: ReturnType<typeof vi.fn> } }
+      ).strategy;
+      strategy.executeStream.mockResolvedValue(mockStream);
+
+      const result = await priorai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: true,
+      });
+
+      expect(result).toBeInstanceOf(ReadableStream);
+    });
+
+    it('stream response is readable', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', api_key: 'key-1' }],
+      };
+
+      const mockChunks = [
+        {
+          id: 'chatcmpl-stream-2',
+          object: 'chat.completion.chunk',
+          created: 1714000001,
+          model: 'gpt-4',
+          choices: [{ index: 0, delta: { content: 'Hello' }, finish_reason: null }],
+        },
+        {
+          id: 'chatcmpl-stream-2',
+          object: 'chat.completion.chunk',
+          created: 1714000002,
+          model: 'gpt-4',
+          choices: [{ index: 0, delta: { content: ' world' }, finish_reason: null }],
+        },
+        {
+          id: 'chatcmpl-stream-2',
+          object: 'chat.completion.chunk',
+          created: 1714000003,
+          model: 'gpt-4',
+          choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+        },
+      ];
+
+      const mockStream = createMockStream(mockChunks);
+      const priorai = new Priorai(config);
+      const strategy = (
+        priorai as unknown as { strategy: { executeStream: ReturnType<typeof vi.fn> } }
+      ).strategy;
+      strategy.executeStream.mockResolvedValue(mockStream);
+
+      const result = await priorai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: true,
+      });
+
+      const chunks = await readAllChunks(result as ReadableStream);
+      expect(chunks).toHaveLength(3);
+      expect((chunks[0] as Record<string, unknown>).choices).toBeDefined();
+      expect((chunks[1] as Record<string, unknown>).choices).toBeDefined();
+    });
+
+    it('messages.create stream:true returns ReadableStream', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      };
+
+      const mockStream = createMockStream([
+        { type: 'message_start', message: { id: 'msg-stream-1', role: 'assistant' } },
+        { type: 'content_block_delta', delta: { text: 'Hi' } },
+      ]);
+      const priorai = new Priorai(config);
+      const strategy = (
+        priorai as unknown as { strategy: { executeStream: ReturnType<typeof vi.fn> } }
+      ).strategy;
+      strategy.executeStream.mockResolvedValue(mockStream);
+
+      const result = await priorai.messages.create({
+        model: 'claude-3-5-sonnet',
+        messages: [{ role: 'user', content: 'hello' }],
+        stream: true,
+      });
+
+      expect(result).toBeInstanceOf(ReadableStream);
+      // 验证 strategy.executeStream 被调用时使用了 'messages' endpoint
+      expect(strategy.executeStream).toHaveBeenCalledWith(
+        config.targets,
+        expect.objectContaining({ stream: true }),
+        undefined,
+        undefined,
+        'messages',
+      );
+    });
+
+    it('responses.create stream:true returns ReadableStream', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      const mockStream = createMockStream([
+        { type: 'response.created', response: { id: 'resp-stream-1' } },
+      ]);
+      const priorai = new Priorai(config);
+      const strategy = (
+        priorai as unknown as { strategy: { executeStream: ReturnType<typeof vi.fn> } }
+      ).strategy;
+      strategy.executeStream.mockResolvedValue(mockStream);
+
+      const result = await priorai.responses.create({
+        model: 'gpt-4o',
+        stream: true,
+        input: 'test',
+      });
+
+      expect(result).toBeInstanceOf(ReadableStream);
+      // 验证 strategy.executeStream 被调用时使用了 'createModelResponse' endpoint
+      expect(strategy.executeStream).toHaveBeenCalledWith(
+        config.targets,
+        expect.objectContaining({ stream: true }),
+        undefined,
+        undefined,
+        'createModelResponse',
+      );
+    });
+
+    it('stream:false goes non-stream path', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', api_key: 'key-1' }],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: { status: 200, data: mockChatCompletionResponse },
+        provider: 'openai',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
+
+      const priorai = new Priorai(config);
+
+      // stream: false — 应走 executeChatCompletions（非流式路径）
+      const resultExplicit = await priorai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: false,
+      });
+      expect(resultExplicit).toEqual(mockChatCompletionResponse);
+      expect(mockFallbackExecute).toHaveBeenCalled();
+
+      vi.clearAllMocks();
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
+
+      // 无 stream 参数 — 同样走非流式路径
+      const resultNoStream = await priorai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hi' }],
+      });
+      expect(resultNoStream).toEqual(mockChatCompletionResponse);
+      expect(mockFallbackExecute).toHaveBeenCalled();
+    });
+
+    it('conditional strategy + stream:true routes to executeStream', async () => {
+      // Test that conditional strategy's executeStream is called when streaming with conditional mode
+      // Use a mock class that intercepts strategy creation
+      class MockConditionalStrategyForStream {
+        executeStream = vi.fn().mockResolvedValue(
+          createMockStream([
+            {
+              id: 'chatcmpl-conditional-stream',
+              object: 'chat.completion.chunk',
+              created: 1714000000,
+              model: 'gpt-4',
+              choices: [{ index: 0, delta: { content: 'conditional' }, finish_reason: null }],
+            },
+          ]),
+        );
+      }
+
+      const config: PrioraiConfig = {
+        strategy: 'conditional',
+        targets: [
+          { provider: 'openai', apiKey: 'key-1', name: 'premium' },
+          { provider: 'anthropic', apiKey: 'key-2', name: 'standard' },
+        ],
+        conditions: [{ query: { 'params.model': 'gpt-4' }, then: 'premium' }],
+        conditionalDefault: 'standard',
+      };
+
+      // Direct property replacement: swap the strategy to our mock
+      const priorai = new Priorai(config);
+      const mockStrategy = new MockConditionalStrategyForStream();
+      Object.defineProperty(priorai, 'strategy', {
+        value: mockStrategy,
+        writable: true,
+      });
+
+      const result = await priorai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: true,
+      });
+
+      expect(mockStrategy.executeStream).toHaveBeenCalled();
+      expect(result).toBeInstanceOf(ReadableStream);
+    });
+
+    it('all stream endpoints fail throws Error', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [
+          { provider: 'openai', api_key: 'key-1' },
+          { provider: 'openai', api_key: 'key-2' },
+        ],
+      };
+
+      const priorai = new Priorai(config);
+      const strategy = (
+        priorai as unknown as { strategy: { executeStream: ReturnType<typeof vi.fn> } }
+      ).strategy;
+      // 所有 target 都抛出异常，模拟全部失败
+      strategy.executeStream.mockRejectedValue(
+        new Error('All fallback targets exhausted for streaming'),
+      );
+
+      await expect(
+        priorai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: 'hi' }],
+          stream: true,
+        }),
+      ).rejects.toThrow('All fallback targets exhausted for streaming');
+    });
+  });
+});
+
+describe('executeSimpleEndpoint fallback', () => {
+  beforeEach(() => {
+    mockFetchWithTimeout.mockReset();
+  });
+
+  const setupMocks = async (data: Record<string, unknown> = {}) => {
+    const { buildProviderRequest } = await import('../../src/core/providerRequest');
+    (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+      body: {},
+      headers: {},
+      url: 'https://api.example.com',
+    });
+    mockTransformProviderResponse.mockReturnValue(data);
+  };
+
+  it('first target success — returns without trying second', async () => {
+    await setupMocks({ token_count: 42 });
+    mockFetchWithTimeout.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ token_count: 42 }),
+      headers: new Headers(),
+    });
+
+    const priorai = new Priorai({
+      strategy: 'fallback',
+      targets: [
+        { provider: 'openai', api_key: 'key-1' },
+        { provider: 'openai', api_key: 'key-2' },
+      ],
+    });
+
+    const result = await priorai.messages.countTokens({
+      model: 'claude-3-5-sonnet',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    expect(result).toEqual({ token_count: 42 });
+    expect(mockFetchWithTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  it('first fails (500), second succeeds (200) — continues to second target', async () => {
+    await setupMocks();
+    mockFetchWithTimeout
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}), headers: new Headers() })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ token_count: 77 }), headers: new Headers() })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ token_count: 88 }), headers: new Headers() });
+    mockTransformProviderResponse.mockReturnValue({ token_count: 77 });
+
+    const priorai = new Priorai({
+      strategy: 'fallback',
+      targets: [
+        { provider: 'openai', api_key: 'key-1' },
+        { provider: 'anthropic', api_key: 'key-2' },
+        { provider: 'openai', api_key: 'key-3' },
+      ],
+    });
+
+    const result = await priorai.messages.countTokens({
+      model: 'claude-3-5-sonnet',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    expect(result).toEqual({ token_count: 77 });
+    expect(mockFetchWithTimeout).toHaveBeenCalledTimes(2);
+  });
+
+  it('all targets fail — throws last error', async () => {
+    await setupMocks();
+    mockFetchWithTimeout
+      .mockResolvedValueOnce({ ok: false, status: 400, json: async () => ({}), headers: new Headers() })
+      .mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({}), headers: new Headers() });
+
+    const priorai = new Priorai({
+      strategy: 'fallback',
+      targets: [
+        { provider: 'openai', api_key: 'key-1' },
+        { provider: 'openai', api_key: 'key-2' },
+      ],
+    });
+
+    await expect(
+      priorai.messages.countTokens({
+        model: 'claude-3-5-sonnet',
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+    ).rejects.toThrow('HTTP 429');
+  });
+
+  it('3 targets, second succeeds — uses second result', async () => {
+    await setupMocks();
+    mockFetchWithTimeout
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}), headers: new Headers() })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ token_count: 77 }), headers: new Headers() })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ token_count: 88 }), headers: new Headers() });
+    mockTransformProviderResponse.mockReturnValue({ token_count: 77 });
+
+    const priorai = new Priorai({
+      strategy: 'fallback',
+      targets: [
+        { provider: 'openai', api_key: 'key-1' },
+        { provider: 'anthropic', api_key: 'key-2' },
+        { provider: 'openai', api_key: 'key-3' },
+      ],
+    });
+
+    const result = await priorai.messages.countTokens({
+      model: 'claude-3-5-sonnet',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    expect(result).toEqual({ token_count: 77 });
+    expect(mockFetchWithTimeout).toHaveBeenCalledTimes(2);
+  });
+
+  it('HTTP non-200 response throws Error with status code', async () => {
+    await setupMocks();
+    mockFetchWithTimeout.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      json: async () => ({ error: 'Bad Gateway' }),
+      headers: new Headers(),
+    });
+
+    const priorai = new Priorai({
+      strategy: 'fallback',
+      targets: [{ provider: 'openai', api_key: 'key-1' }],
+    });
+
+    await expect(
+      priorai.messages.countTokens({
+        model: 'claude-3-5-sonnet',
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+    ).rejects.toThrow('HTTP 502');
   });
 });

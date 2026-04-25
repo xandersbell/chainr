@@ -22,7 +22,7 @@ vi.mock('../../../src/core/tryTarget', () => ({
   tryLeafTargetStream: vi.fn(),
 }));
 
-const { executeTarget } = await import('../../../src/core/tryTarget');
+const { executeTarget, executeTargetStream } = await import('../../../src/core/tryTarget');
 
 describe('ConditionalStrategy', () => {
   let strategy: ConditionalStrategy;
@@ -270,6 +270,191 @@ describe('ConditionalStrategy', () => {
       await expect(
         strategy.execute(targets, baseParams, undefined, undefined, undefined, conditions),
       ).rejects.toThrow('Invalid target name in conditional routing: nonexistent-target');
+    });
+  });
+
+  describe('streaming', () => {
+    it('executeStream calls executeTargetStream and returns a stream', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
+      ];
+
+      const result = strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalled();
+      expect(result).toBeInstanceOf(Promise);
+    });
+
+    it('executeStream calls executeTargetStream and returns a stream', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
+      ];
+
+      const result = strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalled();
+      expect(result).toBeInstanceOf(Promise);
+    });
+
+    it('executeStream passes retry and timeout config', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
+      ];
+      const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
+      const timeoutMs = 15000;
+
+      await strategy.executeStream(
+        targets,
+        baseParams,
+        retryConfig,
+        timeoutMs,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0],
+        baseParams,
+        expect.objectContaining({
+          retry: retryConfig,
+          timeout: timeoutMs,
+        }),
+      );
+    });
+
+    it('executeStream falls back to default target when no conditions match', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': 'nonexistent-model' }, then: 'anthropic-target' },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        'openai-target', // default
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0], // openai-target as default
+        baseParams,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream throws when no conditions and no default', async () => {
+      await expect(
+        strategy.executeStream(targets, baseParams),
+      ).rejects.toThrow('No conditions provided for conditional routing');
+    });
+
+    it('executeStream with $eq condition resolves to correct target', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': { $eq: 'gpt-4o' } }, then: 'openai-target' },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0],
+        baseParams,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream with numeric $gt condition resolves correctly', async () => {
+      const paramsWithTemp: Params = {
+        ...baseParams,
+        temperature: 0.9,
+      };
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.temperature': { $gt: 0.7 } }, then: 'openai-target' },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        paramsWithTemp,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0],
+        paramsWithTemp,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream with metadata routing', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'metadata.streaming': 'true' }, then: 'openai-target' },
+      ];
+      const metadata = { streaming: 'true' };
+
+      await strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+        undefined,
+        metadata,
+      );
+
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0],
+        baseParams,
+        expect.any(Object),
+      );
+    });
+
+    it('executeStream uses first matching condition', async () => {
+      const conditions: ConditionConfig[] = [
+        { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
+        { query: { 'params.model': 'deepseek-chat' }, then: 'deepseek-target' },
+      ];
+
+      await strategy.executeStream(
+        targets,
+        baseParams,
+        undefined,
+        undefined,
+        undefined,
+        conditions,
+      );
+
+      // First matching condition wins
+      expect(executeTargetStream).toHaveBeenCalledWith(
+        targets[0], // openai-target
+        baseParams,
+        expect.any(Object),
+      );
     });
   });
 });

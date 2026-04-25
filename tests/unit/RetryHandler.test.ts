@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { retryRequest } from '../../src/core/RetryHandler';
+import { fetchWithTimeout, retryRequest, retryRequestForStream } from '../../src/core/RetryHandler';
 
 function createSuccessResponse(status: number, data: Record<string, unknown>): Response {
   return {
@@ -459,5 +459,288 @@ describe('RetryHandler', () => {
 
       expect(fetchMock).toHaveBeenCalled();
     });
+  });
+});
+
+function createStreamMockResponse(
+  ok: boolean,
+  status: number,
+  headers?: Record<string, string>,
+): Response {
+  return {
+    ok,
+    status,
+    headers: new Map(Object.entries(headers || {})),
+  } as unknown as Response;
+}
+
+function create429WithRetryAfterHeader(retryAfterMs: number): Response {
+  return createStreamMockResponse(false, 429, {
+    'retry-after-ms': String(retryAfterMs),
+  });
+}
+
+describe('retryRequestForStream', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('stream success returns raw Response object without calling json()', async () => {
+    const mockResponse = createStreamMockResponse(true, 200);
+    const fetchMock = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await retryRequestForStream('https://api.example.com/stream', {
+      method: 'GET',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mockResponse);
+    expect((result.response as Response).ok).toBe(true);
+    expect((result.response as Response).json).toBeUndefined();
+  });
+
+  it('429 retry then success returns final raw Response', async () => {
+    const mock429 = createStreamMockResponse(false, 429);
+    const mock200 = createStreamMockResponse(true, 200);
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(mock429)
+      .mockResolvedValueOnce(mock429)
+      .mockResolvedValueOnce(mock200);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(200);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await promise;
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mock200);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('429 exhausted returns error without response field', async () => {
+    const mock429 = createStreamMockResponse(false, 429);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(mock429)
+      .mockResolvedValueOnce(mock429)
+      .mockResolvedValueOnce(mock429);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    await vi.runAllTimersAsync();
+    const result = await promise;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('HTTP 429');
+    expect((result as Record<string, unknown>).response).toBeUndefined();
+  });
+
+  it('5xx retry then success returns raw Response', async () => {
+    const mock500 = createStreamMockResponse(false, 500);
+    const mock200 = createStreamMockResponse(true, 200);
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(mock500).mockResolvedValueOnce(mock200);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await promise;
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mock200);
+  });
+
+  it('4xx returns failure immediately without retry', async () => {
+    const mock400 = createStreamMockResponse(false, 400);
+    const fetchMock = vi.fn().mockResolvedValue(mock400);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('HTTP 400');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((result as Record<string, unknown>).response).toBeUndefined();
+  });
+
+  it('retry-after-ms header triggers delay instead of exponential backoff', async () => {
+    const mock429 = create429WithRetryAfterHeader(50);
+    const mock200 = createStreamMockResponse(true, 200);
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(mock429).mockResolvedValueOnce(mock200);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 2 },
+    );
+
+    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await promise;
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mock200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retry-after exceeds budget triggers early termination', async () => {
+    const mock429 = create429WithRetryAfterHeader(70000);
+    const fetchMock = vi.fn().mockResolvedValue(mock429);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    await vi.runAllTimersAsync();
+    const result = await promise;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('HTTP 429');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('network error retries then success returns raw Response', async () => {
+    const mock200 = createStreamMockResponse(true, 200);
+
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockResolvedValueOnce(mock200);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 3 },
+    );
+
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(200);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await promise;
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mock200);
+  });
+
+  it('ConnectTimeoutError is captured in lastError and retries succeed', async () => {
+    const mock200 = createStreamMockResponse(true, 200);
+
+    const connectError = new TypeError('Connection timed out');
+    connectError.cause = new Error('ConnectTimeoutError') as unknown as Error;
+
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(connectError)
+      .mockResolvedValueOnce(mock200);
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = retryRequestForStream(
+      'https://api.example.com/stream',
+      { method: 'GET' },
+      { attempts: 2 },
+    );
+
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const result = await promise;
+
+    expect(result.success).toBe(true);
+    expect(result.response).toBe(mock200);
+  });
+
+  it('default timeout is 60000ms', async () => {
+    const mockResponse = createStreamMockResponse(true, 200);
+    const fetchMock = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await retryRequestForStream('https://api.example.com/stream', { method: 'GET' });
+
+    expect(fetchMock).toHaveBeenCalled();
+  });
+});
+
+describe('fetchWithTimeout', () => {
+  it('completes before timeout returns response', async () => {
+    const mockResponse = createSuccessResponse(200, { result: 'ok' });
+    const fetchMock = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await fetchWithTimeout('https://api.example.com/test', { method: 'GET' }, 5000);
+
+    expect(response).toBe(mockResponse);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('clearTimeout called after success', async () => {
+    const mockResponse = createSuccessResponse(200, {});
+    const fetchMock = vi.fn().mockResolvedValue(mockResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+
+    await fetchWithTimeout('https://api.example.com/test', { method: 'GET' }, 5000);
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it('clearTimeout called after error', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+
+    await expect(fetchWithTimeout('https://api.example.com/test', { method: 'GET' }, 5000)).rejects.toThrow('Network failure');
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 });

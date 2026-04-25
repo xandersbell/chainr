@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildProviderRequest, transformUsingProviderConfig } from '../../src/core/providerRequest';
+import { describe, expect, it, vi } from 'vitest';
+import { buildProviderRequest, transformUsingProviderConfig, transformProviderResponse } from '../../src/core/providerRequest';
 import Providers from '../../src/providers';
 
 describe('Provider Registry', () => {
@@ -220,5 +220,95 @@ describe('buildProviderRequest', () => {
 
     expect(result).not.toBeNull();
     expect(result!.body.tools).toEqual(tools);
+  });
+});
+
+describe('transformProviderResponse', () => {
+  // --- Case 1: bare response body passthrough (branch 1 — no `data` key) ---
+  it('bare response body passthrough', () => {
+    const json = { id: 'chatcmpl-1', choices: [] };
+    const result = transformProviderResponse(json, 'openai', 'chatComplete', 200, {}, undefined);
+    // openai/chatComplete has a real transformFn, but since the json has no `data` key,
+    // the transformFn is still called — we only verify passthrough when endpoint has no transformFn
+    expect(result).toEqual({ id: 'chatcmpl-1', choices: [] });
+  });
+
+  // --- Case 2: { status, data } unwrap (branch 1 — has `data` key) ---
+  it('{ status, data } unwrap', () => {
+    const json = { status: 200, data: { id: 'chatcmpl-1', choices: [] } };
+    const result = transformProviderResponse(json, 'openai', 'chatComplete', 200, {}, undefined);
+    // The outer wrapper is stripped; what remains is passed to the transformFn
+    expect(result).toEqual({ id: 'chatcmpl-1', choices: [] });
+  });
+
+  // --- Case 3: unknown provider passthrough (branch 2) ---
+  it('unknown provider passthrough', () => {
+    const json = { id: 'x', choices: [] };
+    const result = transformProviderResponse(json, 'unknown-provider', 'chatComplete', 200, {}, undefined);
+    // No provider config found → passthrough immediately
+    expect(result).toEqual({ id: 'x', choices: [] });
+  });
+
+  // --- Case 4: Vertex AI with requestModel routing (branch 3 — requestModel takes priority) ---
+  it('Vertex AI with requestModel routing', () => {
+    // requestModel 'gemini-2.5-pro' routes to google provider sub-config
+    const json = { model: 'gemini-2.5-pro', choices: [] };
+    const result = transformProviderResponse(json, 'vertex-ai', 'chatComplete', 200, {}, 'gemini-2.5-pro');
+    // Vertex AI getConfig returns a google sub-config whose chatComplete transform adds a `provider` field
+    // We verify the function returned something different from raw responseBody
+    expect(result).toHaveProperty('provider');
+  });
+
+  // --- Case 5: Vertex AI with responseBody.model routing (branch 3 — fallback when no requestModel) ---
+  it('Vertex AI with responseBody.model routing', () => {
+    // No requestModel; getConfig reads model from responseBody
+    const json = { model: 'gemini-2.0-flash', choices: [] };
+    const result = transformProviderResponse(json, 'vertex-ai', 'chatComplete', 200, {}, undefined);
+    // Routes via responseBody.model → google sub-config
+    expect(result).toHaveProperty('provider');
+  });
+
+  // --- Case 6: endpoint without transformFn (branch 5) ---
+  it('endpoint without transformFn passthrough', () => {
+    // 'embed' endpoint exists for openai but has no responseTransforms entry
+    const json = { id: 'emb-1', object: 'embedding', embedding: [0.1, 0.2] };
+    const result = transformProviderResponse(json, 'openai', 'embed', 200, {}, undefined);
+    // No transformFn for 'embed' → passthrough
+    expect(result).toEqual({ id: 'emb-1', object: 'embedding', embedding: [0.1, 0.2] });
+  });
+
+  // --- Case 7: normal transform (branch 6) ---
+  it('normal transform calls transformFn', () => {
+    const json = {
+      id: 'chatcmpl-123',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-4o',
+      choices: [
+        {
+          index: 0,
+          message: { role: 'assistant', content: 'Hello!' },
+          finish_reason: 'stop',
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+    };
+    const result = transformProviderResponse(json, 'openai', 'chatComplete', 200, {}, undefined);
+    // OpenAI's chatComplete transformFn is called; it returns the response as-is for status 200
+    expect(result).toEqual(json);
+  });
+
+  // --- Case 8: status != 200 still calls transformFn (branch 6 — status is passed through) ---
+  it('status != 200 still calls transformFn', () => {
+    const json = {
+      id: 'chatcmpl-500',
+      object: 'chat.completion',
+      created: 1234567890,
+      model: 'gpt-4o',
+      error: { message: 'Internal server error', type: 'server_error', code: 'internal_error' },
+    };
+    const result = transformProviderResponse(json, 'openai', 'chatComplete', 500, {}, undefined);
+    // OpenAI's transformFn still runs for non-200; it adds provider field and returns transformed
+    expect(result).toHaveProperty('provider');
   });
 });

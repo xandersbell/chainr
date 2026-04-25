@@ -2,11 +2,11 @@ import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
 import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
 
-interface GoogleStreamState {
+export interface GoogleStreamState {
   containsChainOfThoughtMessage: boolean;
 }
 
-function transformFinishReason(
+export function transformFinishReason(
   reason: string | null,
   strictOpenAiCompliance?: boolean,
 ): string | null {
@@ -33,6 +33,10 @@ function googleStreamTransform(
 
   let trimmed = chunk.trim();
 
+  if (trimmed === '[DONE]' || trimmed === 'DONE') {
+    return `data: [DONE]\n\n`;
+  }
+
   if (trimmed.startsWith('[')) {
     trimmed = trimmed.slice(1);
   }
@@ -44,10 +48,6 @@ function googleStreamTransform(
   }
   trimmed = trimmed.replace(/^data: /, '');
   trimmed = trimmed.trim();
-
-  if (trimmed === '[DONE]') {
-    return `data: ${trimmed}\n\n`;
-  }
 
   let parsedChunk: any;
   try {
