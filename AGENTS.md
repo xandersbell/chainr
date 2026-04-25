@@ -1,4 +1,4 @@
-# AGENTS.md — Priorai
+# Priorai Project Rules
 
 Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
 
