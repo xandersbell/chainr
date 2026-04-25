@@ -19,6 +19,7 @@ describe('Real HTTP Integration Tests', () => {
   describe('OpenAI', () => {
     it(
       'should make a real request to OpenAI API',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('OPENAI_API_KEY');
         if (!apiKey) {
@@ -41,11 +42,11 @@ describe('Real HTTP Integration Tests', () => {
         expect(response.choices[0].message.content).toBeDefined();
         expect(response.choices[0].message.content!.length).toBeGreaterThan(0);
       },
-      { timeout: 30000 },
     );
 
     it(
       'should handle OpenAI error response',
+      { timeout: 15000 },
       async () => {
         const apiKey = getEnv('OPENAI_API_KEY');
         if (!apiKey) {
@@ -68,13 +69,13 @@ describe('Real HTTP Integration Tests', () => {
         // Should return error response, not throw
         expect(response).toHaveProperty('error');
       },
-      { timeout: 15000 },
     );
   });
 
   describe('Anthropic', () => {
     it(
       'should make a real request to Anthropic API with system message',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('ANTHROPIC_API_KEY');
         if (!apiKey) {
@@ -101,11 +102,11 @@ describe('Real HTTP Integration Tests', () => {
         const content = response.choices[0].message.content!;
         console.log('Anthropic response:', content);
       },
-      { timeout: 30000 },
     );
 
     it(
       'should handle Anthropic system message extraction',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('ANTHROPIC_API_KEY');
         if (!apiKey) {
@@ -131,13 +132,13 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
   });
 
   describe('Vertex AI', () => {
     it(
       'should make a real request to Vertex AI',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('VERTEX_API_KEY');
         const projectId = getEnv('VERTEX_PROJECT_ID');
@@ -168,11 +169,11 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
 
     it(
       'should handle Vertex AI systemInstruction',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('VERTEX_API_KEY');
         const projectId = getEnv('VERTEX_PROJECT_ID');
@@ -206,11 +207,11 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
 
     it(
       'should handle Vertex AI generationConfig',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('VERTEX_API_KEY');
         const projectId = getEnv('VERTEX_PROJECT_ID');
@@ -243,13 +244,13 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
   });
 
   describe('OpenRouter', () => {
     it(
       'should make a real request to OpenRouter',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('OPENROUTER_API_KEY');
         if (!apiKey) {
@@ -271,11 +272,11 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
 
     it(
       'should use X-OpenRouter-Title header',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('OPENROUTER_API_KEY');
         if (!apiKey) {
@@ -297,13 +298,13 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
   });
 
   describe('Fallback Strategy', () => {
     it(
       'should fallback to second provider when first fails',
+      { timeout: 60000 },
       async () => {
         const openaiKey = getEnv('OPENAI_API_KEY');
         const anthropicKey = getEnv('ANTHROPIC_API_KEY');
@@ -330,13 +331,13 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 60000 },
     );
   });
 
   describe('Load Balance Strategy', () => {
     it(
       'should distribute requests across multiple providers',
+      { timeout: 120000 },
       async () => {
         const openaiKey = getEnv('OPENAI_API_KEY');
         const anthropicKey = getEnv('ANTHROPIC_API_KEY');
@@ -369,13 +370,13 @@ describe('Real HTTP Integration Tests', () => {
         // All requests should succeed
         expect(results.every((r) => r && r.length > 0)).toBe(true);
       },
-      { timeout: 120000 },
     );
   });
 
   describe('Provider Alias', () => {
     it(
       'should handle google-vertexai alias',
+      { timeout: 30000 },
       async () => {
         const apiKey = getEnv('VERTEX_API_KEY');
         const projectId = getEnv('VERTEX_PROJECT_ID');
@@ -406,7 +407,6 @@ describe('Real HTTP Integration Tests', () => {
 
         expect(response.choices[0].message.content).toBeDefined();
       },
-      { timeout: 30000 },
     );
   });
 });
