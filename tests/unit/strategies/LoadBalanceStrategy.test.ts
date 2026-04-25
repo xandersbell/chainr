@@ -25,7 +25,7 @@ describe('LoadBalanceStrategy', () => {
   });
 
   describe('execute()', () => {
-    it('空 targets 数组时抛出 Error("No targets provided for load balance")', async () => {
+    it('should throw Error("No targets provided for load balance") when targets array is empty', async () => {
       await expect(
         strategy.execute([], { messages: [], model: 'test' })
       ).rejects.toThrow('No targets provided for load balance');
@@ -33,7 +33,7 @@ describe('LoadBalanceStrategy', () => {
   });
 
   describe('selectByWeight()', () => {
-    it('单个 target 始终返回该 target', async () => {
+    it('single target always returns that target', async () => {
       const targets = [{ provider: 'openai', weight: 1 }];
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
@@ -51,7 +51,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result).resolves.toBeDefined();
     });
 
-    it('两个等权重 target (50/50) - random=0.4 时选择第一个', async () => {
+    it('two equal-weight targets (50/50) - selects first when random=0.4', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },
         { provider: 'anthropic', weight: 1 },
@@ -72,7 +72,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('openai');
     });
 
-    it('两个等权重 target (50/50) - random=0.6 时选择第二个', async () => {
+    it('two equal-weight targets (50/50) - selects second when random=0.6', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },
         { provider: 'anthropic', weight: 1 },
@@ -93,7 +93,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('anthropic');
     });
 
-    it('无 weight 属性的 target 默认 weight=1', async () => {
+    it('target without weight property defaults to weight=1', async () => {
       const targets = [
         { provider: 'openai' },
         { provider: 'anthropic' },
@@ -114,7 +114,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('openai');
     });
 
-    it('70/30 权重分布 - random=0.5 (<0.7) 选择第一个', async () => {
+    it('70/30 weight distribution - selects first when random=0.5 (<0.7)', async () => {
       const targets = [
         { provider: 'openai', weight: 0.7 },
         { provider: 'anthropic', weight: 0.3 },
@@ -135,7 +135,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('openai');
     });
 
-    it('70/30 权重分布 - random=0.8 (>0.7) 选择第二个', async () => {
+    it('70/30 weight distribution - selects second when random=0.8 (>0.7)', async () => {
       const targets = [
         { provider: 'openai', weight: 0.7 },
         { provider: 'anthropic', weight: 0.3 },
@@ -158,7 +158,7 @@ describe('LoadBalanceStrategy', () => {
   });
 
   describe('tryTarget()', () => {
-    it('retryRequest 返回成功结果时 success=true', async () => {
+    it('should return success=true when retryRequest succeeds', async () => {
       const target = { provider: 'openai', weight: 1 };
       const params = { messages: [], model: 'test' };
 
@@ -182,7 +182,7 @@ describe('LoadBalanceStrategy', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('retryRequest 返回失败结果时 success=false', async () => {
+    it('should return success=false when retryRequest fails', async () => {
       const target = { provider: 'openai', weight: 1 };
       const params = { messages: [], model: 'test' };
 

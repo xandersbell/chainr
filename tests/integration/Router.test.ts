@@ -32,7 +32,7 @@ vi.mock('../../src/core/providerRequest', () => ({
   transformProviderResponse: (...args: unknown[]) => mockTransformProviderResponse(...args),
 }));
 
-// mock fetchWithTimeout — 用于 executeSimpleEndpoint 测试（messages.countTokens 等）
+// mock fetchWithTimeout — used for executeSimpleEndpoint tests (messages.countTokens etc.)
 const mockFetchWithTimeout = vi.fn();
 vi.mock('../../src/core/RetryHandler', () => ({
   fetchWithTimeout: (...args: unknown[]) => mockFetchWithTimeout(...args),
@@ -70,13 +70,13 @@ const baseParams: Params = {
   messages: [{ role: 'user', content: 'Hello!' }],
 };
 
-describe('Priorai (Router) 集成测试', () => {
+describe('Priorai (Router) integration tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Constructor - 策略实例化', () => {
-    it('strategy 为 "fallback" 时，实例化 FallbackStrategy', () => {
+  describe('Constructor - strategy instantiation', () => {
+    it('when strategy is "fallback", instantiates FallbackStrategy', () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -88,7 +88,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(strategy.execute).toBe(mockFallbackExecute);
     });
 
-    it('strategy 为 "loadbalance" 时，实例化 LoadBalanceStrategy', () => {
+    it('when strategy is "loadbalance", instantiates LoadBalanceStrategy', () => {
       const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
@@ -103,7 +103,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(strategy.execute).toBe(mockLoadBalanceExecute);
     });
 
-    it('strategy 为 "single" 时，实例化 SingleStrategy', () => {
+    it('when strategy is "single", instantiates SingleStrategy', () => {
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -115,7 +115,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(strategy.execute).toBe(mockSingleExecute);
     });
 
-    it('strategy 为未知模式时，抛出 "Unknown strategy mode: {mode}" 错误', () => {
+    it('when strategy is unknown, throws "Unknown strategy mode: {mode}" error', () => {
       const config = {
         strategy: 'roundrobin',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -126,7 +126,7 @@ describe('Priorai (Router) 集成测试', () => {
   });
 
   describe('chat.completions.create()', () => {
-    it('策略返回成功响应时，通过 transformProviderResponse 转换后返回', async () => {
+    it('when strategy returns success, transforms via transformProviderResponse and returns', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -148,7 +148,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockChatCompletionResponse);
     });
 
-    it('策略返回错误响应时，仍通过 transformProviderResponse 转换后返回', async () => {
+    it('when strategy returns error response, still transforms via transformProviderResponse and returns', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -173,7 +173,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockErrorResponse);
     });
 
-    it('使用 result.provider 传递给 transformProviderResponse', async () => {
+    it('passes result.provider to transformProviderResponse', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', api_key: 'key-1' }],
@@ -201,7 +201,7 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('result.provider 缺失时，默认使用 "openai" 传递给 transformProviderResponse', async () => {
+    it('when result.provider is missing, defaults to "openai" for transformProviderResponse', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -229,8 +229,8 @@ describe('Priorai (Router) 集成测试', () => {
     });
   });
 
-  describe('executeChatCompletions() - 完整管道', () => {
-    it('完整管道：config → strategy.execute() → transformProviderResponse()', async () => {
+  describe('executeChatCompletions() - full pipeline', () => {
+    it('full pipeline: config → strategy.execute() → transformProviderResponse()', async () => {
       const targets = [
         { provider: 'openai', api_key: 'key-1' },
         { provider: 'anthropic', api_key: 'key-2' },
@@ -267,7 +267,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockChatCompletionResponse);
     });
 
-    it('config.targets 正确传递给 strategy.execute()', async () => {
+    it('config.targets is correctly passed to strategy.execute()', async () => {
       const targets = [
         { provider: 'openai', api_key: 'key-1', weight: 0.6 },
         { provider: 'openai', api_key: 'key-2', weight: 0.4 },
@@ -293,7 +293,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined, 'chatComplete');
     });
 
-    it('config.retry 正确传递给 strategy.execute() 作为 retryConfig', async () => {
+    it('config.retry is correctly passed to strategy.execute() as retryConfig', async () => {
       const retryConfig = { attempts: 5, onStatusCodes: [500, 502, 503] };
       const config: PrioraiConfig = {
         strategy: 'single',
@@ -322,7 +322,7 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('config.retry 未设置时，strategy.execute() 接收 undefined', async () => {
+    it('when config.retry is not set, strategy.execute() receives undefined', async () => {
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
@@ -367,7 +367,7 @@ describe('Priorai (Router) 集成测试', () => {
       usage: { input_tokens: 10, output_tokens: 5 },
     };
 
-    it('非流式调用通过策略系统路由，使用 messages endpoint', async () => {
+    it('non-streaming call routes through strategy system using messages endpoint', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
@@ -385,7 +385,7 @@ describe('Priorai (Router) 集成测试', () => {
       const priorai = new Priorai(config);
       const result = await priorai.messages.create(messagesParams);
 
-      // 验证策略调用时传入 'messages' endpoint
+      // Verify strategy is called with 'messages' endpoint
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         config.targets,
         messagesParams,
@@ -393,7 +393,7 @@ describe('Priorai (Router) 集成测试', () => {
         undefined,
         'messages'
       );
-      // 验证响应转换使用 'messages' endpoint
+      // Verify response transform uses 'messages' endpoint
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockMessagesResponse,
         'anthropic',
@@ -405,8 +405,8 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockMessagesResponse);
     });
 
-    it('使用 messagesTargets 而非默认 targets', async () => {
-      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+  it('uses messagesTargets instead of default targets', async () => {
+    const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
@@ -425,7 +425,7 @@ describe('Priorai (Router) 集成测试', () => {
       const priorai = new Priorai(config);
       await priorai.messages.create(messagesParams);
 
-      // 应使用 messagesTargets 而非 targets
+      // Should use messagesTargets instead of targets
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         messagesTargets,
         messagesParams,
@@ -435,7 +435,7 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('provider 缺失时默认使用 anthropic', async () => {
+    it('defaults to anthropic when provider is missing', async () => {
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
@@ -444,11 +444,11 @@ describe('Priorai (Router) 集成测试', () => {
       const strategyResult: StrategyResult = {
         success: true,
         response: mockMessagesResponse,
-        // provider 未设置
-      };
+      // provider not set
+    };
 
-      mockSingleExecute.mockResolvedValue(strategyResult);
-      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+    mockSingleExecute.mockResolvedValue(strategyResult);
+    mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
       const priorai = new Priorai(config);
       await priorai.messages.create(messagesParams);
@@ -463,26 +463,26 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('retry 和 timeout 正确传递', async () => {
-      const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
-      const config: PrioraiConfig = {
-        strategy: 'fallback',
-        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
-        retry: retryConfig,
-        timeout: 60000,
-      };
+  it('correctly passes retry and timeout', async () => {
+    const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
+    const config: PrioraiConfig = {
+      strategy: 'fallback',
+      targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      retry: retryConfig,
+      timeout: 60000,
+    };
 
-      const strategyResult: StrategyResult = {
-        success: true,
-        response: mockMessagesResponse,
-        provider: 'anthropic',
-      };
+    const strategyResult: StrategyResult = {
+      success: true,
+      response: mockMessagesResponse,
+      provider: 'anthropic',
+    };
 
-      mockFallbackExecute.mockResolvedValue(strategyResult);
-      mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
+    mockFallbackExecute.mockResolvedValue(strategyResult);
+    mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-      const priorai = new Priorai(config);
-      await priorai.messages.create(messagesParams);
+    const priorai = new Priorai(config);
+    await priorai.messages.create(messagesParams);
 
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         config.targets,
@@ -497,7 +497,7 @@ describe('Priorai (Router) 集成测试', () => {
   describe('responses.create() — OpenAI Responses API', () => {
     const responsesParams: Params = {
       model: 'gpt-4o',
-      // Responses API 使用 input 替代 messages
+      // Responses API uses input instead of messages
       input: 'Tell me a joke',
       instructions: 'You are a comedian',
     } as unknown as Params;
@@ -516,7 +516,7 @@ describe('Priorai (Router) 集成测试', () => {
       usage: { input_tokens: 10, output_tokens: 20, total_tokens: 30 },
     };
 
-    it('非流式调用通过策略系统路由，使用 createModelResponse endpoint', async () => {
+    it('non-streaming call routes through strategy system using createModelResponse endpoint', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'key-1' }],
@@ -534,7 +534,7 @@ describe('Priorai (Router) 集成测试', () => {
       const priorai = new Priorai(config);
       const result = await priorai.responses.create(responsesParams);
 
-      // 验证策略调用时传入 'createModelResponse' endpoint
+      // Verify strategy is called with 'createModelResponse' endpoint
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         config.targets,
         responsesParams,
@@ -542,7 +542,7 @@ describe('Priorai (Router) 集成测试', () => {
         undefined,
         'createModelResponse'
       );
-      // 验证响应转换使用 'createModelResponse' endpoint
+      // Verify response transform uses 'createModelResponse' endpoint
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockResponsesResult,
         'openai',
@@ -554,7 +554,7 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockResponsesResult);
     });
 
-    it('使用 responsesTargets 而非默认 targets', async () => {
+    it('uses responsesTargets instead of default targets', async () => {
       const responsesTargets = [{ provider: 'openai', apiKey: 'responses-key' }];
       const config: PrioraiConfig = {
         strategy: 'single',
@@ -574,7 +574,7 @@ describe('Priorai (Router) 集成测试', () => {
       const priorai = new Priorai(config);
       await priorai.responses.create(responsesParams);
 
-      // 应使用 responsesTargets 而非 targets
+      // Should use responsesTargets instead of targets
       expect(mockSingleExecute).toHaveBeenCalledWith(
         responsesTargets,
         responsesParams,
@@ -584,7 +584,7 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('provider 缺失时默认使用 openai', async () => {
+    it('defaults to openai when provider is missing', async () => {
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', apiKey: 'key-1' }],
@@ -593,11 +593,11 @@ describe('Priorai (Router) 集成测试', () => {
       const strategyResult: StrategyResult = {
         success: true,
         response: mockResponsesResult,
-        // provider 未设置
-      };
+      // provider not set
+    };
 
-      mockSingleExecute.mockResolvedValue(strategyResult);
-      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+    mockSingleExecute.mockResolvedValue(strategyResult);
+    mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
       const priorai = new Priorai(config);
       await priorai.responses.create(responsesParams);
@@ -612,8 +612,8 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('retry 和 timeout 正确传递', async () => {
-      const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
+  it('correctly passes retry and timeout', async () => {
+    const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
       const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
@@ -646,7 +646,7 @@ describe('Priorai (Router) 集成测试', () => {
     });
   });
 
-  describe('messages.countTokens() — Anthropic Token 计数', () => {
+  describe('messages.countTokens() — Anthropic Token Counting', () => {
     const countTokensParams: Params = {
       model: 'claude-sonnet-4-20250514',
       messages: [{ role: 'user', content: 'Hello Claude!' }],
@@ -654,7 +654,7 @@ describe('Priorai (Router) 集成测试', () => {
 
     const mockCountTokensResponse = { input_tokens: 12 };
 
-    // executeSimpleEndpoint 直接调用 buildProviderRequest，需要每个测试重新设置 mock
+    // executeSimpleEndpoint calls buildProviderRequest directly, mocks need resetting per test
     const setupMocks = async () => {
       const { buildProviderRequest } = await import('../../src/core/providerRequest');
       (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -664,7 +664,7 @@ describe('Priorai (Router) 集成测试', () => {
       });
     };
 
-    it('调用 messagesCountTokens 端点并返回 token 计数', async () => {
+    it('calls messagesCountTokens endpoint and returns token count', async () => {
       await setupMocks();
       const config: PrioraiConfig = {
         strategy: 'single',
@@ -684,9 +684,9 @@ describe('Priorai (Router) 集成测试', () => {
       expect(result).toEqual(mockCountTokensResponse);
     });
 
-    it('使用 messagesTargets 而非默认 targets', async () => {
-      await setupMocks();
-      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+  it('uses messagesTargets instead of default targets', async () => {
+    await setupMocks();
+    const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
       const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
@@ -703,7 +703,7 @@ describe('Priorai (Router) 集成测试', () => {
       const priorai = new Priorai(config);
       await priorai.messages.countTokens(countTokensParams);
 
-      // buildProviderRequest 应收到 messagesTargets 中的 target
+      // buildProviderRequest should receive target from messagesTargets
       const { buildProviderRequest } = await import('../../src/core/providerRequest');
       expect(buildProviderRequest).toHaveBeenCalledWith(
         countTokensParams,
@@ -713,7 +713,7 @@ describe('Priorai (Router) 集成测试', () => {
       );
     });
 
-    it('请求失败时抛出错误', async () => {
+    it('throws error when request fails', async () => {
       await setupMocks();
       const config: PrioraiConfig = {
         strategy: 'single',

@@ -1,6 +1,6 @@
 /**
- * Tool Calling 对齐测试
- * 验证各 provider 的 tools/tool_choice 请求转换和 tool_calls 响应透传
+ * Tool Calling alignment tests
+ * Verify tools/tool_choice request transformation and tool_calls response passthrough across providers
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -9,7 +9,7 @@ import {
   DeepSeekChatCompleteStreamChunkTransform,
 } from '../../src/providers/deepseek/chatComplete';
 
-// 简化版 transformUsingProviderConfig，避免 import 整个 Providers 注册表
+// Simplified transformUsingProviderConfig to avoid importing the entire Providers registry
 function applyConfig(config: Record<string, any>, params: Record<string, any>) {
   const result: Record<string, any> = {};
   for (const key in config) {
@@ -33,7 +33,7 @@ describe('Tool Calling — DeepSeek', () => {
       type: 'function',
       function: {
         name: 'get_weather',
-        description: '获取天气',
+        description: 'get weather',
         parameters: {
           type: 'object',
           properties: { location: { type: 'string' } },
@@ -43,8 +43,8 @@ describe('Tool Calling — DeepSeek', () => {
     },
   ];
 
-  describe('请求转换', () => {
-    it('tools 参数正确透传', () => {
+  describe('Request transformation', () => {
+    it('tools param is correctly passed through', () => {
       const result = applyConfig(DeepSeekChatCompleteConfig, {
         model: 'deepseek-chat',
         messages: [{ role: 'user', content: 'hi' }],
@@ -54,7 +54,7 @@ describe('Tool Calling — DeepSeek', () => {
       expect(result.tools).toEqual(toolsPayload);
     });
 
-    it('tool_choice 参数正确透传', () => {
+    it('tool_choice param is correctly passed through', () => {
       const result = applyConfig(DeepSeekChatCompleteConfig, {
         model: 'deepseek-chat',
         messages: [{ role: 'user', content: 'hi' }],
@@ -65,7 +65,7 @@ describe('Tool Calling — DeepSeek', () => {
       expect(result.tool_choice).toBe('auto');
     });
 
-    it('tool_choice 为对象时正确透传', () => {
+    it('tool_choice as object is correctly passed through', () => {
       const toolChoice = { type: 'function', function: { name: 'get_weather' } };
       const result = applyConfig(DeepSeekChatCompleteConfig, {
         model: 'deepseek-chat',
@@ -77,7 +77,7 @@ describe('Tool Calling — DeepSeek', () => {
       expect(result.tool_choice).toEqual(toolChoice);
     });
 
-    it('不传 tools 时请求体中不包含 tools 字段', () => {
+    it('when tools is not provided, request body does not include tools field', () => {
       const result = applyConfig(DeepSeekChatCompleteConfig, {
         model: 'deepseek-chat',
         messages: [{ role: 'user', content: 'hi' }],
@@ -88,8 +88,8 @@ describe('Tool Calling — DeepSeek', () => {
     });
   });
 
-  describe('响应转换', () => {
-    it('tool_calls 从响应中正确透传', () => {
+  describe('Response transformation', () => {
+    it('tool_calls are correctly passed through from response', () => {
       const mockResponse = {
         id: 'chatcmpl-123',
         object: 'chat.completion',
@@ -139,7 +139,7 @@ describe('Tool Calling — DeepSeek', () => {
       ]);
     });
 
-    it('无 tool_calls 时响应中不包含该字段', () => {
+    it('when no tool_calls, response does not include the field', () => {
       const mockResponse = {
         id: 'chatcmpl-456',
         object: 'chat.completion',
@@ -170,8 +170,8 @@ describe('Tool Calling — DeepSeek', () => {
     });
   });
 
-  describe('流式响应', () => {
-    it('流式 chunk 中 tool_calls delta 正确透传', () => {
+  describe('Streaming response', () => {
+    it('tool_calls delta in streaming chunk is correctly passed through', () => {
       const chunk = JSON.stringify({
         id: 'chatcmpl-stream-1',
         object: 'chat.completion.chunk',
@@ -214,7 +214,7 @@ describe('Tool Calling — DeepSeek', () => {
       ]);
     });
 
-    it('流式 chunk 无 tool_calls 时正常处理', () => {
+    it('streaming chunk without tool_calls is handled normally', () => {
       const chunk = JSON.stringify({
         id: 'chatcmpl-stream-2',
         object: 'chat.completion.chunk',

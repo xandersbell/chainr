@@ -13,29 +13,29 @@ vi.mock('../../src/core/providerRequest', () => ({
 import { Priorai } from '../../src/core/Router';
 
 describe('Config Validation', () => {
-  describe('targets 验证', () => {
-    it('targets 为空数组时抛出错误', () => {
+  describe('targets validation', () => {
+    it('throws error when targets is empty array', () => {
       expect(() => new Priorai({
         strategy: 'fallback',
         targets: [],
       })).toThrow('At least one target is required');
     });
 
-    it('targets 未定义时抛出错误', () => {
+    it('throws error when targets is undefined', () => {
       expect(() => new Priorai({
         strategy: 'fallback',
         targets: undefined as unknown as Array<Record<string, unknown>>,
       })).toThrow('At least one target is required');
     });
 
-    it('target 缺少 provider 字段时抛出错误', () => {
+    it('throws error when target is missing provider field', () => {
       expect(() => new Priorai({
         strategy: 'fallback',
         targets: [{ apiKey: 'test' }],
       })).toThrow('must have a "provider" field');
     });
 
-    it('多个 target 中有一个缺少 provider 时抛出错误', () => {
+    it('throws error when one of multiple targets is missing provider', () => {
       expect(() => new Priorai({
         strategy: 'fallback',
         targets: [
@@ -45,7 +45,7 @@ describe('Config Validation', () => {
       })).toThrow('must have a "provider" field');
     });
 
-    it('合法 targets 不抛出错误', () => {
+    it('valid targets do not throw error', () => {
       expect(() => new Priorai({
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'key1' }],
@@ -53,8 +53,8 @@ describe('Config Validation', () => {
     });
   });
 
-  describe('timeout 验证', () => {
-    it('timeout 为负数时抛出错误', () => {
+  describe('timeout validation', () => {
+    it('throws error when timeout is negative', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -62,7 +62,7 @@ describe('Config Validation', () => {
       })).toThrow('timeout must be a positive number (milliseconds)');
     });
 
-    it('timeout 为 0 时抛出错误', () => {
+    it('throws error when timeout is 0', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -70,7 +70,7 @@ describe('Config Validation', () => {
       })).toThrow('timeout must be a positive number (milliseconds)');
     });
 
-    it('timeout 为字符串时抛出错误', () => {
+    it('throws error when timeout is a string', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -78,7 +78,7 @@ describe('Config Validation', () => {
       })).toThrow('timeout must be a positive number (milliseconds)');
     });
 
-    it('timeout 为正数时不抛出错误', () => {
+    it('timeout as positive number does not throw', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -86,7 +86,7 @@ describe('Config Validation', () => {
       })).not.toThrow();
     });
 
-    it('timeout 未设置时不抛出错误', () => {
+    it('timeout not set does not throw', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -94,8 +94,8 @@ describe('Config Validation', () => {
     });
   });
 
-  describe('retry 验证', () => {
-    it('retry.attempts 为 0 时抛出错误', () => {
+  describe('retry validation', () => {
+    it('retry.attempts being 0 throws error', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -103,7 +103,7 @@ describe('Config Validation', () => {
       })).toThrow('retry.attempts must be a positive integer');
     });
 
-    it('retry.attempts 为负数时抛出错误', () => {
+    it('retry.attempts being negative throws error', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -111,7 +111,7 @@ describe('Config Validation', () => {
       })).toThrow('retry.attempts must be a positive integer');
     });
 
-    it('合法 retry 不抛出错误', () => {
+    it('valid retry does not throw', () => {
       expect(() => new Priorai({
         strategy: 'single',
         targets: [{ provider: 'openai' }],
@@ -120,8 +120,8 @@ describe('Config Validation', () => {
     });
   });
 
-  describe('strategy 验证', () => {
-    it('未知 strategy 抛出错误', () => {
+  describe('strategy validation', () => {
+    it('unknown strategy throws error', () => {
       expect(() => new Priorai({
         strategy: 'roundrobin' as PrioraiConfig['strategy'],
         targets: [{ provider: 'openai' }],

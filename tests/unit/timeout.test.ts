@@ -27,12 +27,12 @@ vi.mock('../../src/core/providerRequest', () => ({
 
 import { Priorai } from '../../src/core/Router';
 
-describe('Timeout 传递', () => {
+describe('Timeout propagation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('config.timeout 传递给 strategy.execute() 第 4 参数', async () => {
+  it('passes config.timeout as the 4th argument to strategy.execute()', async () => {
     const strategyResult: StrategyResult = {
       success: true,
       response: { status: 200, data: {} },
@@ -57,7 +57,7 @@ describe('Timeout 传递', () => {
     );
   });
 
-  it('config.timeout 未设置时，strategy.execute() 第 4 参数为 undefined', async () => {
+  it('when config.timeout is not set, the 4th argument to strategy.execute() is undefined', async () => {
     const strategyResult: StrategyResult = {
       success: true,
       response: { status: 200, data: {} },
@@ -81,7 +81,7 @@ describe('Timeout 传递', () => {
     );
   });
 
-  it('config.timeout 与 config.retry 同时传递', async () => {
+  it('passes both config.timeout and config.retry together', async () => {
     const strategyResult: StrategyResult = {
       success: true,
       response: { status: 200, data: {} },

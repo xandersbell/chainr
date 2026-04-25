@@ -18,8 +18,8 @@ describe('SingleStrategy', () => {
     vi.clearAllMocks();
   });
 
-  describe('execute() 方法', () => {
-    it('空 targets 数组应抛出 Error("No targets provided")', async () => {
+  describe('execute() method', () => {
+    it('should throw Error("No targets provided") when targets array is empty', async () => {
       const strategy = new SingleStrategy();
       const targets: Array<Record<string, unknown>> = [];
       const params = { messages: [] };
@@ -29,7 +29,7 @@ describe('SingleStrategy', () => {
       );
     });
 
-    it('单个 target 时应使用该 target', async () => {
+    it('should use the single target when only one target is provided', async () => {
       const strategy = new SingleStrategy();
       const targets = [
         {
@@ -66,7 +66,7 @@ describe('SingleStrategy', () => {
       expect(result.success).toBe(true);
     });
 
-    it('多个 targets 时应忽略除第一个外的所有 targets', async () => {
+    it('should ignore all targets except the first when multiple targets are provided', async () => {
       const strategy = new SingleStrategy();
       const targets = [
         { provider: 'openai', apiKey: 'key-1' },
@@ -95,8 +95,8 @@ describe('SingleStrategy', () => {
       );
     });
 
-    describe('Provider 提取', () => {
-      it('应使用 target.provider 当提供时', async () => {
+describe('Provider extraction', () => {
+    it('should use target.provider when provided', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'anthropic', apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -122,7 +122,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('应默认使用 "openai" 当 target.provider 未提供时', async () => {
+      it('should default to "openai" when target.provider is not provided', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -149,8 +149,8 @@ describe('SingleStrategy', () => {
       });
     });
 
-    describe('overrideParams 合并', () => {
-      it('应将 target.overrideParams 与 params 合并', async () => {
+describe('overrideParams merging', () => {
+    it('should merge target.overrideParams with params', async () => {
         const strategy = new SingleStrategy();
         const targets = [
           {
@@ -189,7 +189,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('target.overrideParams 应覆盖 params 中的同名属性', async () => {
+      it('target.overrideParams should override same-named properties in params', async () => {
         const strategy = new SingleStrategy();
         const targets = [
           {
@@ -225,8 +225,8 @@ describe('SingleStrategy', () => {
     });
   });
 
-  describe('tryTarget() 方法 (通过 execute 间接测试)', () => {
-    it('retryRequest 成功时应返回 success: true', async () => {
+  describe('tryTarget() method (tested indirectly via execute)', () => {
+    it('should return success: true when retryRequest succeeds', async () => {
       const strategy = new SingleStrategy();
       const targets = [{ provider: 'openai', apiKey: 'test-key' }];
       const params = { messages: [] };
@@ -252,7 +252,7 @@ describe('SingleStrategy', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('retryRequest 失败时应返回 success: false', async () => {
+    it('should return success: false when retryRequest fails', async () => {
       const strategy = new SingleStrategy();
       const targets = [{ provider: 'openai', apiKey: 'test-key' }];
       const params = { messages: [] };
@@ -276,8 +276,8 @@ describe('SingleStrategy', () => {
       expect(result.error).toBe('HTTP 500');
     });
 
-    describe('Retry Config 传递', () => {
-      it('应使用传入的 retryConfig', async () => {
+describe('Retry Config passing', () => {
+    it('should use the provided retryConfig', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'openai', apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -303,7 +303,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('当未传入 retryConfig 时应使用 target.retry', async () => {
+      it('should use target.retry when retryConfig is not provided', async () => {
         const strategy = new SingleStrategy();
         const targetRetry = { attempts: 3, onStatusCodes: [429, 500] };
         const targets = [{ provider: 'openai', apiKey: 'test-key', retry: targetRetry }];
@@ -329,7 +329,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('当两者都没有时应使用 undefined', async () => {
+      it('should use undefined when neither retryConfig nor target.retry is provided', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'openai', apiKey: 'test-key' }];
         const params = { messages: [] };
@@ -354,7 +354,7 @@ describe('SingleStrategy', () => {
         );
       });
 
-      it('target.retry 应优先于全局 retryConfig（子级覆盖父级）', async () => {
+      it('target.retry should take precedence over global retryConfig (child overrides parent)', async () => {
         const strategy = new SingleStrategy();
         const targets = [{ provider: 'openai', apiKey: 'test-key', retry: { attempts: 2 } }];
         const params = { messages: [] };
@@ -372,7 +372,7 @@ describe('SingleStrategy', () => {
 
         await strategy.execute(targets, params, retryConfig);
 
-        // 嵌套策略模型：target 级别的 retry 比全局 retryConfig 更具体，应优先
+        // Nested strategy model: target-level retry is more specific than global retryConfig, should take precedence
         expect(retryRequest).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
