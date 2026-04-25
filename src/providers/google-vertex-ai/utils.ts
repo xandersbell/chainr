@@ -1,4 +1,7 @@
 /// <reference lib="dom" />
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import {
   GoogleErrorResponse,
   GoogleResponseCandidate,
@@ -135,6 +138,132 @@ export const getAccessToken = async (
   } catch (err) {
     return '';
   }
+};
+
+/**
+ * ADC（Application Default Credentials）凭证文件的类型定义
+ * authorized_user: gcloud auth application-default login 生成的用户凭证
+ * service_account: GCP 控制台下载的服务账号密钥
+ */
+interface ADCAuthorizedUser {
+  type: 'authorized_user';
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+  // quota_project_id 可选，部分 ADC 文件包含
+  quota_project_id?: string;
+}
+
+interface ADCServiceAccount {
+  type: 'service_account';
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  [key: string]: unknown;
+}
+
+type ADCCredentials = ADCAuthorizedUser | ADCServiceAccount;
+
+/**
+ * 获取 ADC 凭证文件路径
+ * 查找顺序：
+ * 1. GOOGLE_APPLICATION_CREDENTIALS 环境变量
+ * 2. 默认路径 ~/.config/gcloud/application_default_credentials.json
+ */
+const getADCFilePath = (): string | null => {
+  // 优先使用环境变量指定的路径
+  const envPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (envPath && fs.existsSync(envPath)) {
+    return envPath;
+  }
+
+  // fallback 到 gcloud 默认路径
+  const defaultPath = path.join(
+    os.homedir(),
+    '.config',
+    'gcloud',
+    'application_default_credentials.json'
+  );
+  if (fs.existsSync(defaultPath)) {
+    return defaultPath;
+  }
+
+  return null;
+};
+
+/**
+ * 读取并解析 ADC 凭证文件
+ */
+const readADCCredentials = (): ADCCredentials | null => {
+  const filePath = getADCFilePath();
+  if (!filePath) return null;
+
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(content) as ADCCredentials;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * 使用 refresh_token 换取 access_token（authorized_user 类型）
+ * POST https://oauth2.googleapis.com/token
+ * grant_type=refresh_token&client_id=...&client_secret=...&refresh_token=...
+ */
+const getAccessTokenFromRefreshToken = async (
+  credentials: ADCAuthorizedUser
+): Promise<string> => {
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const body = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: credentials.client_id,
+    client_secret: credentials.client_secret,
+    refresh_token: credentials.refresh_token,
+  });
+
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  const json = (await response.json()) as Record<string, unknown>;
+  return (json.access_token as string) ?? '';
+};
+
+/**
+ * 通过 ADC 获取 access_token
+ * 自动检测凭证类型并使用对应的认证流程：
+ * - authorized_user → refresh_token 交换
+ * - service_account → JWT 签名交换（复用 getAccessToken）
+ *
+ * 返回 { token, projectId } — projectId 仅 service_account 类型可用
+ */
+export const getAccessTokenFromADC = async (): Promise<{
+  token: string;
+  projectId?: string;
+} | null> => {
+  const credentials = readADCCredentials();
+  if (!credentials) return null;
+
+  if (credentials.type === 'authorized_user') {
+    const token = await getAccessTokenFromRefreshToken(credentials);
+    return token
+      ? { token, projectId: credentials.quota_project_id }
+      : null;
+  }
+
+  if (credentials.type === 'service_account') {
+    // 复用已有的 JWT→OAuth2 流程
+    const token = await getAccessToken(credentials as Record<string, any>);
+    return token
+      ? { token, projectId: credentials.project_id }
+      : null;
+  }
+
+  return null;
 };
 
 export const getModelAndProvider = (modelString: string) => {
