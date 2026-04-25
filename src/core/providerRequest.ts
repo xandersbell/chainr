@@ -72,14 +72,20 @@ export const transformUsingProviderConfig = (
 };
 
 // 构建 providerOptions（对齐 Portkey 的 Options 结构）
+// 用户可以在 target 中使用 providerOptions 嵌套对象传递 provider 特定字段，
+// 这里将其展平到顶层，与 Options 接口对齐
 function buildProviderOptions(
   provider: string,
   target: Record<string, unknown>
 ): Options {
+  const { providerOptions, ...rest } = target;
   return {
     provider,
-    apiKey: target['apiKey'] as string,
-    ...(target as Record<string, any>),
+    apiKey: (target['apiKey'] ?? target['api_key']) as string,
+    ...rest,
+    ...(providerOptions && typeof providerOptions === 'object'
+      ? (providerOptions as Record<string, unknown>)
+      : {}),
   };
 }
 
@@ -151,25 +157,36 @@ export async function buildProviderRequest(
 /**
  * 使用 provider 注册表的 responseTransforms 转换响应
  * 对齐 Portkey 的 responseHandler 流程
+ * requestModel: 原始请求中的模型名，用于动态 provider（如 Vertex AI）的 getConfig 路由
  */
 export function transformProviderResponse(
   json: unknown,
   provider: string,
   endpoint: endpointStrings = 'chatComplete',
   status: number = 200,
-  responseHeaders: Record<string, string> = {}
+  responseHeaders: Record<string, string> = {},
+  requestModel?: string
 ): unknown {
+  // retryRequest 返回 { status, data } 包装结构，解包取实际响应体
+  const responseBody = (json && typeof json === 'object' && 'data' in json)
+    ? (json as Record<string, unknown>).data
+    : json;
+
   const providerConfigs = Providers[provider];
   if (!providerConfigs) {
-    // 未注册的 provider，直接返回原始响应
-    return json;
+    return responseBody;
   }
 
   // 获取 responseTransforms
   let responseTransforms: Record<string, any> | undefined;
   if (providerConfigs.getConfig) {
+    // 对于动态 provider（如 Vertex AI），需要用请求的 model 来路由到正确的子配置
+    // 响应 JSON 中可能没有 model 字段，所以优先使用 requestModel
+    const configParams = requestModel
+      ? { model: requestModel } as Params
+      : responseBody as Params;
     const dynamicConfig = providerConfigs.getConfig({
-      params: json as Params,
+      params: configParams,
       providerOptions: { provider } as Options,
     });
     responseTransforms = dynamicConfig?.responseTransforms;
@@ -179,10 +196,9 @@ export function transformProviderResponse(
 
   const transformFn = responseTransforms?.[endpoint];
   if (!transformFn || typeof transformFn !== 'function') {
-    // 没有转换函数（如 OpenAI-compatible provider），直接返回
-    return json;
+    return responseBody;
   }
 
   // 对齐 Portkey 的 responseTransformer 调用签名
-  return transformFn(json, status, responseHeaders, false);
+  return transformFn(responseBody, status, responseHeaders, false);
 }

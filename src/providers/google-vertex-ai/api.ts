@@ -110,8 +110,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       mappedFn = `stream-${fn}` as endpointStrings;
     }
 
-    const url = new URL(gatewayRequestURL);
-    const searchParams = url.searchParams;
+    const url = gatewayRequestURL ? new URL(gatewayRequestURL) : null;
+    const searchParams = url?.searchParams ?? new URLSearchParams();
 
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
       const jobIdIndex = [
@@ -123,8 +123,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         : -1;
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
-      const url = new URL(gatewayRequestURL);
-      const params = new URLSearchParams(url.search);
+      const url = gatewayRequestURL ? new URL(gatewayRequestURL) : null;
+      const params = new URLSearchParams(url?.search ?? '');
       const pageSize = params.get('limit') ?? 20;
       const after = params.get('after') ?? '';
 
