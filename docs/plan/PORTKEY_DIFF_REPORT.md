@@ -3,7 +3,7 @@
 **生成时间**: 2026-04-25 06:22 EEST（新增 messagesCountTokens 端点后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Priorai 版本**: All Phases Complete, 224 tests, main branch
+**Priorai 版本**: All Phases Complete, 250 tests, main branch
 
 ---
 

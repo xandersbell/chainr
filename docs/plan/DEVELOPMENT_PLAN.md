@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 All Phases Complete — **224 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-25)
+**Status**: 🟢 All Phases Complete — **250 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-25)
 
-**Last Updated**: 2026-04-25 06:22 EEST — 新增 messagesCountTokens 端点（+3 测试），文档准确性核对
+**Last Updated**: 2026-04-25 — Portkey 2.0 同步完成，250 tests，npm 发布准备完成
 
 ---
 
@@ -473,7 +473,7 @@ Uses a single provider without fallback.
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (224 tests ✅)
+### Current Test Coverage (250 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
