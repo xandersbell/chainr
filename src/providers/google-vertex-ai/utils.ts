@@ -1,23 +1,19 @@
 /// <reference lib="dom" />
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import type {
-  GoogleErrorResponse,
-  GoogleResponseCandidate,
-  GoogleBatchRecord,
-  GoogleFinetuneRecord,
-  GoogleSearchRetrievalTool,
-} from './types';
-import { generateErrorResponse } from '../utils';
-import {
-  BatchEndpoints,
-  GOOGLE_VERTEX_AI,
-  fileExtensionMimeTypeMap,
-} from '../../globals';
-import type { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { BatchEndpoints, fileExtensionMimeTypeMap, GOOGLE_VERTEX_AI } from '../../globals';
 import type { ContentType, JsonSchema, Tool } from '../../types/requestBody';
 import type { GoogleMessagePart } from '../google/chatComplete';
+import type { ErrorResponse, FinetuneRequest, Logprobs } from '../types';
+import { generateErrorResponse } from '../utils';
+import type {
+  GoogleBatchRecord,
+  GoogleErrorResponse,
+  GoogleFinetuneRecord,
+  GoogleResponseCandidate,
+  GoogleSearchRetrievalTool,
+} from './types';
 
 /**
  * Encodes an object as a Base64 URL-encoded string.
@@ -25,16 +21,13 @@ import type { GoogleMessagePart } from '../google/chatComplete';
  * @returns The Base64 URL-encoded string.
  */
 function base64UrlEncode(obj: Record<string, any>): string {
-  return btoa(JSON.stringify(obj))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  return btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 const createJWT = async (
   header: Record<string, any>,
   payload: Record<string, any>,
-  privateKey: CryptoKey
+  privateKey: CryptoKey,
 ): Promise<string> => {
   const encodedHeader = base64UrlEncode(header);
   const encodedPayload = base64UrlEncode(payload);
@@ -47,12 +40,10 @@ const createJWT = async (
       hash: { name: 'SHA-256' },
     },
     privateKey,
-    data
+    data,
   );
 
-  const encodedSignature = btoa(
-    String.fromCharCode(...new Uint8Array(signature))
-  )
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
     .replace(/=/g, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
@@ -86,13 +77,11 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
       hash: { name: 'SHA-256' },
     },
     false,
-    ['sign']
+    ['sign'],
   );
 }
 
-export const getAccessToken = async (
-  serviceAccountInfo: Record<string, any>
-): Promise<string> => {
+export const getAccessToken = async (serviceAccountInfo: Record<string, any>): Promise<string> => {
   try {
     const scope = 'https://www.googleapis.com/auth/cloud-platform';
     const iat = Math.floor(Date.now() / 1000);
@@ -183,7 +172,7 @@ const getADCFilePath = (): string | null => {
     os.homedir(),
     '.config',
     'gcloud',
-    'application_default_credentials.json'
+    'application_default_credentials.json',
   );
   if (fs.existsSync(defaultPath)) {
     return defaultPath;
@@ -212,9 +201,7 @@ const readADCCredentials = (): ADCCredentials | null => {
  * POST https://oauth2.googleapis.com/token
  * grant_type=refresh_token&client_id=...&client_secret=...&refresh_token=...
  */
-const getAccessTokenFromRefreshToken = async (
-  credentials: ADCAuthorizedUser
-): Promise<string> => {
+const getAccessTokenFromRefreshToken = async (credentials: ADCAuthorizedUser): Promise<string> => {
   const tokenUrl = 'https://oauth2.googleapis.com/token';
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
@@ -250,17 +237,13 @@ export const getAccessTokenFromADC = async (): Promise<{
 
   if (credentials.type === 'authorized_user') {
     const token = await getAccessTokenFromRefreshToken(credentials);
-    return token
-      ? { token, projectId: credentials.quota_project_id }
-      : null;
+    return token ? { token, projectId: credentials.quota_project_id } : null;
   }
 
   if (credentials.type === 'service_account') {
     // Reuse the existing JWT→OAuth2 flow
     const token = await getAccessToken(credentials as Record<string, any>);
-    return token
-      ? { token, projectId: credentials.project_id }
-      : null;
+    return token ? { token, projectId: credentials.project_id } : null;
   }
 
   return null;
@@ -272,9 +255,7 @@ export const getModelAndProvider = (modelString: string) => {
   const modelStringParts = modelString.split('.');
   if (
     modelStringParts.length > 1 &&
-    ['google', 'anthropic', 'meta', 'endpoints', 'mistralai'].includes(
-      modelStringParts[0]
-    )
+    ['google', 'anthropic', 'meta', 'endpoints', 'mistralai'].includes(modelStringParts[0])
   ) {
     provider = modelStringParts[0];
     model = modelStringParts.slice(1).join('.');
@@ -285,15 +266,13 @@ export const getModelAndProvider = (modelString: string) => {
 
 export const getMimeType = (url: string): string | undefined => {
   const urlParts = url.split('.');
-  const extension = urlParts[
-    urlParts.length - 1
-  ] as keyof typeof fileExtensionMimeTypeMap;
+  const extension = urlParts[urlParts.length - 1] as keyof typeof fileExtensionMimeTypeMap;
   return fileExtensionMimeTypeMap[extension];
 };
 
 export const GoogleErrorResponseTransform: (
   response: GoogleErrorResponse,
-  provider?: string
+  provider?: string,
 ) => ErrorResponse | undefined = (response, provider = GOOGLE_VERTEX_AI) => {
   if ('error' in response) {
     return generateErrorResponse(
@@ -303,7 +282,7 @@ export const GoogleErrorResponseTransform: (
         param: null,
         code: response.error.status ?? null,
       },
-      provider
+      provider,
     );
   }
 
@@ -316,23 +295,19 @@ const getDefFromRef = (ref: string): string | null => {
   return match ? match[1] : null;
 };
 
-const getDefObject = (
-  defs: Record<string, any> | undefined | null,
-  key: string | null
-): any => (key && defs ? defs[key] : undefined);
+const getDefObject = (defs: Record<string, any> | undefined | null, key: string | null): any =>
+  key && defs ? defs[key] : undefined;
 
 // Recursively expands $ref nodes in a JSON Schema object tree
 export const derefer = (
   schema: any,
   defs: Record<string, any> | null = null,
-  stack: Set<string> = new Set()
+  stack: Set<string> = new Set(),
 ): any => {
   if (schema === null || typeof schema !== 'object') return schema;
-  if (Array.isArray(schema))
-    return schema.map((item) => derefer(item, defs, stack));
+  if (Array.isArray(schema)) return schema.map((item) => derefer(item, defs, stack));
   const node = { ...schema };
-  const activeDefs =
-    defs ?? (node.$defs as Record<string, any> | undefined) ?? null;
+  const activeDefs = defs ?? (node.$defs as Record<string, any> | undefined) ?? null;
   if ('$ref' in node && typeof node.$ref === 'string') {
     const defKey = getDefFromRef(node.$ref);
     const target = getDefObject(activeDefs, defKey);
@@ -355,14 +330,8 @@ export const derefer = (
   return node;
 };
 
-export const transformGeminiToolParameters = (
-  parameters: JsonSchema
-): JsonSchema => {
-  if (
-    !parameters ||
-    typeof parameters !== 'object' ||
-    Array.isArray(parameters)
-  ) {
+export const transformGeminiToolParameters = (parameters: JsonSchema): JsonSchema => {
+  if (!parameters || typeof parameters !== 'object' || Array.isArray(parameters)) {
     return parameters;
   }
 
@@ -480,7 +449,7 @@ const filterSchemaFields = (obj: any, isSchemaObject: boolean): void => {
     filterSchemaFields(obj.items, true);
   }
   if (Array.isArray(obj.anyOf)) {
-    obj.anyOf.forEach((item: any) => filterSchemaFields(item, true));
+    obj.anyOf.forEach((item: any) => { filterSchemaFields(item, true); });
   }
 };
 
@@ -497,7 +466,7 @@ export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
 // Generate Gateway specific response.
 export const GoogleResponseHandler = (
   response: Response | string | Record<string, unknown>,
-  status: number
+  status: number,
 ) => {
   if (status !== 200) {
     return new Response(
@@ -507,13 +476,12 @@ export const GoogleResponseHandler = (
         param: null,
         provider: GOOGLE_VERTEX_AI,
       }),
-      { status: status || 500, headers: { 'Content-Type': 'application/json' } }
+      { status: status || 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
   if (!(response instanceof Response)) {
-    const _response =
-      typeof response === 'object' ? JSON.stringify(response) : response;
+    const _response = typeof response === 'object' ? JSON.stringify(response) : response;
     return new Response(_response as string, {
       status: status || 200,
       headers: { 'Content-Type': 'application/json' },
@@ -523,9 +491,7 @@ export const GoogleResponseHandler = (
   return response as Response;
 };
 
-export const googleBatchStatusToOpenAI = (
-  status: GoogleBatchRecord['state']
-) => {
+export const googleBatchStatusToOpenAI = (status: GoogleBatchRecord['state']) => {
   switch (status) {
     case 'JOB_STATE_CANCELLING':
       return 'cancelling';
@@ -541,18 +507,12 @@ export const googleBatchStatusToOpenAI = (
     case 'JOB_STATE_RUNNING':
     case 'JOB_STATE_UPDATING':
       return 'in_progress';
-    case 'JOB_STATE_PAUSED':
-    case 'JOB_STATE_PENDING':
-    case 'JOB_STATE_QUEUED':
-    case 'JOB_STATE_UNSPECIFIED':
     default:
       return 'validating';
   }
 };
 
-export const googleFinetuneStatusToOpenAI = (
-  status: GoogleFinetuneRecord['state']
-) => {
+export const googleFinetuneStatusToOpenAI = (status: GoogleFinetuneRecord['state']) => {
   switch (status) {
     case 'JOB_STATE_CANCELLED':
     case 'JOB_STATE_CANCELLING':
@@ -599,8 +559,8 @@ const getTimeKey = (status: GoogleBatchRecord['state'], value: string) => {
 export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
   const jobId = response.name.split('/').at(-1);
   const total = Object.values(response.completionStats ?? {}).reduce(
-    (acc, current) => acc + Number.parseInt(current),
-    0
+    (acc, current) => acc + Number.parseInt(current, 10),
+    0,
   );
 
   const endpoint = isEmbeddingModel(response.model)
@@ -608,9 +568,7 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     : BatchEndpoints.CHAT_COMPLETIONS;
 
   const fileSuffix =
-    endpoint === BatchEndpoints.EMBEDDINGS
-      ? '000000000000.jsonl'
-      : 'predictions.jsonl';
+    endpoint === BatchEndpoints.EMBEDDINGS ? '000000000000.jsonl' : 'predictions.jsonl';
 
   const outputFileId = response.outputInfo
     ? `${response.outputInfo?.gcsOutputDirectory}/${fileSuffix}`
@@ -620,16 +578,12 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
     id: jobId,
     object: 'batch',
     endpoint: endpoint,
-    input_file_id: encodeURIComponent(
-      response.inputConfig.gcsSource?.uris?.at(0) ?? ''
-    ),
+    input_file_id: encodeURIComponent(response.inputConfig.gcsSource?.uris?.at(0) ?? ''),
     completion_window: null,
     status: googleBatchStatusToOpenAI(response.state),
     output_file_id: encodeURIComponent(outputFileId),
     // Same as output_file_id
-    error_file_id: encodeURIComponent(
-      response.outputConfig.gcsDestination.outputUriPrefix ?? ''
-    ),
+    error_file_id: encodeURIComponent(response.outputConfig.gcsDestination.outputUriPrefix ?? ''),
     created_at: new Date(response.createTime).getTime(),
     ...getTimeKey(response.state, response.endTime),
     in_progress_at: new Date(response.startTime).getTime(),
@@ -648,9 +602,7 @@ export const GoogleToOpenAIBatch = (response: GoogleBatchRecord) => {
   };
 };
 
-export const transformVertexLogprobs = (
-  generation: GoogleResponseCandidate
-) => {
+export const transformVertexLogprobs = (generation: GoogleResponseCandidate) => {
   const logprobsContent: Logprobs[] = [];
   if (!generation.logprobsResult) return null;
   if (generation.logprobsResult?.chosenCandidates) {
@@ -667,23 +619,21 @@ export const transformVertexLogprobs = (
     });
   }
   if (generation.logprobsResult?.topCandidates) {
-    generation.logprobsResult.topCandidates.forEach(
-      (topCandidatesForIndex, index) => {
-        const topLogprobs = [];
-        for (const candidate of topCandidatesForIndex.candidates) {
-          const bytes = [];
-          for (const char of candidate.token) {
-            bytes.push(char.charCodeAt(0));
-          }
-          topLogprobs.push({
-            token: candidate.token,
-            logprob: candidate.logProbability,
-            bytes: bytes,
-          });
+    generation.logprobsResult.topCandidates.forEach((topCandidatesForIndex, index) => {
+      const topLogprobs = [];
+      for (const candidate of topCandidatesForIndex.candidates) {
+        const bytes = [];
+        for (const char of candidate.token) {
+          bytes.push(char.charCodeAt(0));
         }
-        logprobsContent[index].top_logprobs = topLogprobs;
+        topLogprobs.push({
+          token: candidate.token,
+          logprob: candidate.logProbability,
+          bytes: bytes,
+        });
       }
-    );
+      logprobsContent[index].top_logprobs = topLogprobs;
+    });
   }
   return logprobsContent;
 };
@@ -742,16 +692,10 @@ export const GoogleToOpenAIFinetune = (response: GoogleFinetuneRecord) => {
       n_epochs: response.supervisedTuningSpec.hyperParameters.epochCount,
     },
     model: response.baseModel ?? response.source_model?.baseModel,
-    trained_tokens:
-      response.tuningDataStats?.supervisedTuningDataStats
-        .totalBillableTokenCount,
-    training_file: encodeURIComponent(
-      response.supervisedTuningSpec.trainingDatasetUri
-    ),
+    trained_tokens: response.tuningDataStats?.supervisedTuningDataStats.totalBillableTokenCount,
+    training_file: encodeURIComponent(response.supervisedTuningSpec.trainingDatasetUri),
     ...(response.supervisedTuningSpec.validationDatasetUri && {
-      validation_file: encodeURIComponent(
-        response.supervisedTuningSpec.validationDatasetUri
-      ),
+      validation_file: encodeURIComponent(response.supervisedTuningSpec.validationDatasetUri),
     }),
   };
 };
@@ -760,7 +704,7 @@ export const vertexRequestLineHandler = (
   purpose: string,
   vertexBatchEndpoint: BatchEndpoints,
   transformedBody: any,
-  requestId: string
+  requestId: string,
 ) => {
   switch (purpose) {
     case 'batch':
@@ -779,12 +723,10 @@ export const generateSignedURL = async (
   expiration: number = 604800,
   httpMethod: string = 'GET',
   queryParameters: Record<string, string> = {},
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
 ): Promise<string> => {
   if (expiration > 604800) {
-    throw new Error(
-      "Expiration Time can't be longer than 604800 seconds (7 days)."
-    );
+    throw new Error("Expiration Time can't be longer than 604800 seconds (7 days).");
   }
 
   const escapedObjectName = encodeURIComponent(objectName).replace(/%2F/g, '/');
@@ -814,9 +756,7 @@ export const generateSignedURL = async (
   }
 
   // Create signed headers
-  const signedHeaders = orderedHeaders
-    .map((key) => key.toLowerCase())
-    .join(';');
+  const signedHeaders = orderedHeaders.map((key) => key.toLowerCase()).join(';');
 
   // Add required query parameters
   const queryParams: Record<string, string> = {
@@ -831,10 +771,7 @@ export const generateSignedURL = async (
   // Create canonical query string
   const canonicalQueryString = Object.keys(queryParams)
     .sort()
-    .map(
-      (key) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`
-    )
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
     .join('&');
 
   // Create canonical request
@@ -850,7 +787,7 @@ export const generateSignedURL = async (
   // Hash the canonical request
   const canonicalRequestHash = await crypto.subtle.digest(
     'SHA-256',
-    new TextEncoder().encode(canonicalRequest)
+    new TextEncoder().encode(canonicalRequest),
   );
 
   // Create string to sign
@@ -871,7 +808,7 @@ export const generateSignedURL = async (
       hash: { name: 'SHA-256' },
     },
     privateKey,
-    new TextEncoder().encode(stringToSign)
+    new TextEncoder().encode(stringToSign),
   );
 
   // Convert signature to hex
@@ -910,8 +847,7 @@ export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
   const data = c.input_audio?.data;
   const mimeType =
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
-      c.input_audio
-        ?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
+      c.input_audio?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
     ] ?? c.input_audio?.format;
   return {
     inlineData: {
@@ -945,18 +881,13 @@ export const transformGoogleTools = (tool: Tool) => {
         ...(timeRangeFilter !== undefined && { timeRangeFilter }),
       },
     });
-  } else if (
-    ['googleSearchRetrieval', 'google_search_retrieval'].includes(
-      tool.function.name
-    )
-  ) {
+  } else if (['googleSearchRetrieval', 'google_search_retrieval'].includes(tool.function.name)) {
     tools.push(buildGoogleSearchRetrievalTool(tool));
   } else if (['computerUse', 'computer_use'].includes(tool.function.name)) {
     tools.push({
       computerUse: {
         environment: tool.function.parameters?.environment,
-        excludedPredefinedFunctions:
-          tool.function.parameters?.excluded_predefined_functions,
+        excludedPredefinedFunctions: tool.function.parameters?.excluded_predefined_functions,
       },
     });
   } else if (['googleMaps', 'google_maps'].includes(tool.function.name)) {
@@ -975,8 +906,8 @@ export const buildGoogleSearchRetrievalTool = (tool: Tool) => {
   };
   // This function is called only when tool.function exists
   if (tool.function?.parameters?.dynamicRetrievalConfig) {
-    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig =
-      tool.function.parameters.dynamicRetrievalConfig as { mode: string; dynamicThreshold?: string };
+    googleSearchRetrievalTool.googleSearchRetrieval.dynamicRetrievalConfig = tool.function
+      .parameters.dynamicRetrievalConfig as { mode: string; dynamicThreshold?: string };
   }
   return googleSearchRetrievalTool;
 };
