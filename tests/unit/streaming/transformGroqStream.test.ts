@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createGroqStream, isGroqProvider } from '../../../src/core/transformGroqStream';
 import type { ChatCompletionChunk } from '../../../src/core/types/streaming';
 
