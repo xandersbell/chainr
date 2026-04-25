@@ -26,6 +26,7 @@ function groqStreamTransform(
 
   if (parsedChunk['x_groq']?.usage) {
     return (
+      'data: ' +
       JSON.stringify({
         id: parsedChunk.id || fallbackId,
         object: parsedChunk.object || 'chat.completion.chunk',
@@ -50,6 +51,7 @@ function groqStreamTransform(
   }
 
   return (
+    'data: ' +
     JSON.stringify({
       id: parsedChunk.id || fallbackId,
       object: parsedChunk.object || 'chat.completion.chunk',
