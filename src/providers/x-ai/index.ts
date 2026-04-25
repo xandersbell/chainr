@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { X_AI } from '../../globals';
 import XAIAPIConfig from './api';
 import {
@@ -21,7 +21,7 @@ interface XAIErrorResponse {
 }
 
 const xAIResponseTransform = <T>(response: T) => {
-  let _response = response as XAIErrorResponse;
+  const _response = response as XAIErrorResponse;
   if ('error' in _response) {
     return {
       error: {

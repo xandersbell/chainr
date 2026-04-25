@@ -1,9 +1,9 @@
 import { FIREWORKS_AI } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  FireworksAIValidationErrorResponse,
+  type FireworksAIValidationErrorResponse,
   FireworksAIErrorResponseTransform,
 } from './chatComplete';
 

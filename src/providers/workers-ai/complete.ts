@@ -1,9 +1,9 @@
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { WORKERS_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  WorkersAiErrorResponse,
+  type WorkersAiErrorResponse,
   WorkersAiErrorResponseTransform,
 } from './utils';
 

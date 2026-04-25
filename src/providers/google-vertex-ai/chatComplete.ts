@@ -3,33 +3,33 @@
 
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import {
-  ContentType,
-  Message,
-  Params,
-  ToolCall,
+  type ContentType,
+  type Message,
+  type Params,
+  type ToolCall,
   SYSTEM_MESSAGE_ROLES,
-  Options,
+  type Options,
 } from '../../types/requestBody';
 import {
   AnthropicChatCompleteConfig,
-  AnthropicChatCompleteResponse,
-  AnthropicChatCompleteStreamResponse,
+  type AnthropicChatCompleteResponse,
+  type AnthropicChatCompleteStreamResponse,
 } from '../anthropic/chatComplete';
-import {
+import type {
   AnthropicStreamState,
   AnthropicErrorResponse,
 } from '../anthropic/types';
 import {
-  GoogleMessage,
-  GoogleMessagePart,
-  GoogleMessageRole,
-  GoogleToolConfig,
+  type GoogleMessage,
+  type GoogleMessagePart,
+  type GoogleMessageRole,
+  type GoogleToolConfig,
   SYSTEM_INSTRUCTION_DISABLED_MODELS,
   transformOpenAIRoleToGoogleRole,
   transformToolChoiceForGemini,
 } from '../google/chatComplete';
-import { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
-import {
+import type { GOOGLE_GENERATE_CONTENT_FINISH_REASON } from '../google/types';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   Logprobs,
@@ -42,10 +42,10 @@ import {
 } from '../utils';
 import { transformGenerationConfig } from './transformGenerationConfig';
 import {
-  GoogleErrorResponse,
-  GoogleGenerateContentResponse,
-  VertexLlamaChatCompleteStreamChunk,
-  VertexLLamaChatCompleteResponse,
+  type GoogleErrorResponse,
+  type GoogleGenerateContentResponse,
+  type VertexLlamaChatCompleteStreamChunk,
+  type VertexLLamaChatCompleteResponse,
   VERTEX_MODALITY,
 } from './types';
 import {
@@ -83,7 +83,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
             return;
 
           const role = transformOpenAIRoleToGoogleRole(message.role);
-          let parts: GoogleMessagePart[] = [];
+          const parts: GoogleMessagePart[] = [];
 
           if (message.role === 'assistant' && message.tool_calls) {
             message.tool_calls.forEach((tool_call: ToolCall) => {
@@ -98,7 +98,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
               });
             });
           } else if (message.role === 'tool') {
-            // OpenAI tool message content 可以是 string 或 ContentType[]
+            // OpenAI tool message content can be string or ContentType[]
             const toolName = message.name ?? 'gateway-tool-filler-name';
             if (typeof message.content === 'string') {
               parts.push({
@@ -303,7 +303,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
             tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function) {
-              // 先 transform 再 delete，确保 schema 转换在过滤之前完成
+                // Transform first, then delete — ensure schema conversion completes before filtering
               const transformedParameters = transformGeminiToolParameters(
                 tool.function.parameters || {}
               );
@@ -505,7 +505,7 @@ export const GoogleChatCompleteResponseTransform: (
       if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
       return acc;
     }, 0);
-    // completion_tokens 需要包含 thinking tokens
+    // completion_tokens must include thinking tokens
     const completionTokens = candidatesTokenCount + thoughtsTokenCount;
 
     return {
@@ -551,12 +551,12 @@ export const GoogleChatCompleteResponseTransform: (
             }
           }
 
-          // 当 content 为空时（如 MALFORMED_FUNCTION_CALL），用 finishMessage 兜底
-          if (
-            content === undefined &&
-            toolCalls.length === 0 &&
-            generation.finishMessage
-          ) {
+        // When content is empty (e.g. MALFORMED_FUNCTION_CALL), fall back to finishMessage
+        if (
+          content === undefined &&
+          toolCalls.length === 0 &&
+          generation.finishMessage
+        ) {
             content = generation.finishMessage;
           }
 
@@ -690,7 +690,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
     return `data: ${chunk}\n\n`;
   }
 
-  let parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
+  const parsedChunk: GoogleGenerateContentResponse = JSON.parse(chunk);
 
   let usageMetadata;
   if (parsedChunk.usageMetadata) {
@@ -701,7 +701,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
       totalTokenCount = 0,
       thoughtsTokenCount = 0,
     } = parsedChunk.usageMetadata;
-    // 流式 completion_tokens 也需要包含 thinking tokens
+    // Streaming completion_tokens must also include thinking tokens
     const streamCompletionTokens = candidatesTokenCount + thoughtsTokenCount;
 
     usageMetadata = {
@@ -813,9 +813,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
             role: 'assistant',
             content_blocks: contentBlocks,
           };
-        } else if (generation.finishMessage) {
-          // 当 content 为空时（如 MALFORMED_FUNCTION_CALL），用 finishMessage 兜底
-          message = {
+      } else if (generation.finishMessage) {
+        // When content is empty (e.g. MALFORMED_FUNCTION_CALL), fall back to finishMessage
+        message = {
             role: 'assistant',
             content: generation.finishMessage,
           };
@@ -909,7 +909,7 @@ export const VertexAnthropicChatCompleteResponseTransform: (
       }
     });
 
-    let toolCalls: any = [];
+    const toolCalls: any = [];
     response.content.forEach((item) => {
       if (item.type === 'tool_use') {
         toolCalls.push({

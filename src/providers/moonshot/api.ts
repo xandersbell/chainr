@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const MoonshotAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.moonshot.cn',

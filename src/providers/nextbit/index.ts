@@ -4,7 +4,7 @@ import {
   completeParams,
   responseTransformers,
 } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { nextBitAPIConfig } from './api';
 
 export const NextBitConfig: ProviderConfigs = {

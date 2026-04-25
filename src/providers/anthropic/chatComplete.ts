@@ -1,17 +1,17 @@
 import { fileExtensionMimeTypeMap } from '../../globals';
 import {
-  Params,
-  Message,
-  ContentType,
+  type Params,
+  type Message,
+  type ContentType,
   SYSTEM_MESSAGE_ROLES,
-  ToolChoiceObject,
+  type ToolChoiceObject,
 } from '../../types/requestBody';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
-import {
+import type {
   AnthropicErrorObject,
   AnthropicErrorResponse,
   AnthropicStreamState,
@@ -42,7 +42,7 @@ interface AnthropicTool {
     $defs: Record<string, any>;
   };
   type?: string;
-  // 约束解码：保证 tool call 参数严格符合 schema
+  // Constrained decoding: ensures tool call parameters strictly conform to the schema
   strict?: boolean;
   display_width_px?: number;
   display_height_px?: number;
@@ -135,12 +135,12 @@ type AnthropicMessageContentItem =
   | AnthropicBase64PdfContentItem
   | AnthropicPlainTextContentItem;
 
-// 构建 Anthropic output_config：将 response_format (json_schema) 和 reasoning_effort 映射
+// Build Anthropic output_config: map response_format (json_schema) and reasoning_effort
 const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null => {
   const outputConfig: Record<string, any> = {};
   const responseFormat = params.response_format;
 
-  // json_schema → output_config.schema
+  // Map json_schema to output_config.schema
   if (
     typeof responseFormat === 'object' &&
     responseFormat?.type === 'json_schema'
@@ -154,7 +154,7 @@ const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null 
     }
   }
 
-  // reasoning_effort → output_config.effort
+  // Map reasoning_effort to output_config.effort
   if (params.reasoning_effort) {
     outputConfig.effort = params.reasoning_effort;
   }
@@ -168,8 +168,8 @@ interface AnthropicMessage extends Message {
 }
 
 const transformAssistantMessage = (msg: Message): AnthropicMessage => {
-  let transformedContent: AnthropicContentItem[] = [];
-  let inputContent: ContentType[] | string | undefined =
+  const transformedContent: AnthropicContentItem[] = [];
+  const inputContent: ContentType[] | string | undefined =
     (msg.content_blocks ?? msg.content) as ContentType[] | string | undefined;
   const containsToolCalls = msg.tool_calls && msg.tool_calls.length;
 
@@ -305,9 +305,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'messages',
       required: true,
       transform: (params: Params) => {
-        let messages: AnthropicMessage[] = [];
+        const messages: AnthropicMessage[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
             if (SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer')) return;
 
@@ -357,9 +357,9 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
       param: 'system',
       required: false,
       transform: (params: Params) => {
-        let systemMessages: AnthropicMessageContentItem[] = [];
+        const systemMessages: AnthropicMessageContentItem[] = [];
         // Transform the chat messages into a simple prompt
-        if (!!params.messages) {
+        if (params.messages) {
           params.messages.forEach((msg: Message & { cache_control?: { type: 'ephemeral' } }) => {
             if (
               SYSTEM_MESSAGE_ROLES.includes(msg.role as 'system' | 'developer') &&
@@ -398,7 +398,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'tools',
     required: false,
     transform: (params: Params) => {
-      let tools: AnthropicTool[] = [];
+      const tools: AnthropicTool[] = [];
       if (params.tools) {
         params.tools.forEach((tool) => {
           if (tool.function) {
@@ -411,7 +411,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 required: (tool.function.parameters?.['required'] as string[]) || [],
                 $defs: (tool.function.parameters?.['$defs'] as Record<string, any>) || {},
               },
-              // strict 约束解码透传
+              // Pass through strict constrained decoding
               ...(tool.function.strict !== undefined && {
                 strict: tool.function.strict,
               }),
@@ -503,7 +503,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
     param: 'thinking',
     required: false,
   },
-  // output_config：将 response_format (json_schema) 和 reasoning_effort 映射到 Anthropic 格式
+  // output_config: map response_format (json_schema) and reasoning_effort to Anthropic format
   response_format: {
     param: 'output_config',
     required: false,
@@ -599,7 +599,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         cache_read_input_tokens,
       } = response?.usage ?? {};
 
-      // prompt_tokens 应包含缓存 token，与 total_tokens 计算一致
+        // prompt_tokens should include cache tokens for consistent total_tokens calculation
       const promptTokens =
         input_tokens +
         (cache_read_input_tokens ?? 0) +
@@ -616,7 +616,7 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
         }
       });
 
-      let toolCalls: any = [];
+      const toolCalls: any = [];
       response.content.forEach((item) => {
         if (item.type === 'tool_use') {
           toolCalls.push({
@@ -741,7 +741,7 @@ export const getAnthropicStreamChunkTransform = (
 
     if (parsedChunk.type === 'message_start' && parsedChunk.message?.usage) {
       streamState.model = parsedChunk?.message?.model ?? '';
-      // prompt_tokens 应包含缓存 token
+      // prompt_tokens should include cache tokens
       const inputTokens = parsedChunk.message?.usage?.input_tokens ?? 0;
       const cacheReadTokens =
         parsedChunk.message?.usage?.cache_read_input_tokens ?? 0;
@@ -777,7 +777,7 @@ export const getAnthropicStreamChunkTransform = (
       );
     }
 
-    // final chunk — 计算最终 token 统计
+    // final chunk — compute final token statistics
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
       const promptTokens = streamState?.usage?.prompt_tokens ?? 0;
       const completionTokens = parsedChunk.usage.output_tokens ?? 0;

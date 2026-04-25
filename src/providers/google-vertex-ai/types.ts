@@ -1,5 +1,5 @@
-import { Params } from '../../types/requestBody';
-import { ChatCompletionResponse, GroundingMetadata } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, GroundingMetadata } from '../types';
 
 export interface GoogleErrorResponse {
   error: {

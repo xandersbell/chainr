@@ -1,6 +1,6 @@
 import { NOVITA_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

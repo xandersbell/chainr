@@ -1,5 +1,5 @@
-import { Options } from '../../../types/requestBody';
-import { BedrockMessagesParams } from '../types';
+import type { Options } from '../../../types/requestBody';
+import type { BedrockMessagesParams } from '../types';
 
 export const transformInferenceConfig = (params: BedrockMessagesParams) => {
   const inferenceConfig: Record<string, any> = {};
@@ -51,8 +51,8 @@ export const transformAnthropicAdditionalModelRequestFields = (
 };
 
 export const transformToolsConfig = (params: BedrockMessagesParams) => {
-  let toolChoice = undefined;
-  let tools = [];
+  let toolChoice ;
+  const tools = [];
   if (params.tool_choice) {
     if (params.tool_choice.type === 'auto') {
       toolChoice = {

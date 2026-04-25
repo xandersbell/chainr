@@ -48,15 +48,15 @@ function cohereStreamTransform(
   }
 
   if (parsedChunk.type === 'message-end') {
-    const prompt_tokens =
+    const promptTokens =
       parsedChunk.delta?.usage?.tokens?.input_tokens ??
       parsedChunk.delta?.usage?.billed_units?.input_tokens ??
       0;
-    const completion_tokens =
+    const completionTokens =
       parsedChunk.delta?.usage?.tokens?.output_tokens ??
       parsedChunk.delta?.usage?.billed_units?.output_tokens ??
       0;
-    const total_tokens = prompt_tokens + completion_tokens;
+    const totalTokens = promptTokens + completionTokens;
 
     return (
       `data: ${JSON.stringify({
@@ -77,9 +77,9 @@ function cohereStreamTransform(
           },
         ],
         usage: {
-          completion_tokens,
-          prompt_tokens,
-          total_tokens,
+          completion_tokens: completionTokens,
+          prompt_tokens: promptTokens,
+          total_tokens: totalTokens,
         },
       })}` +
       '\n\n' +

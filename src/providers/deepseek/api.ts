@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DeepSeekAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.deepseek.com',

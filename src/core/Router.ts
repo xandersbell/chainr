@@ -23,11 +23,11 @@ export class Priorai {
     if (!config.targets || config.targets.length === 0) {
       throw new Error('At least one target is required');
     }
-    // 递归验证所有 target（conditional 策略下 target 可以没有 provider，只需有 name）
+    // Recursively validate all targets (under conditional strategy, targets may omit provider — only name is required)
     if (config.strategy !== 'conditional') {
       this.validateTargets(config.targets, 'targets');
     }
-    // conditional 策略需要 conditions 配置
+    // Conditional strategy requires conditions configuration
     if (config.strategy === 'conditional') {
       if (!config.conditions || config.conditions.length === 0) {
         throw new Error('conditional strategy requires non-empty "conditions" array');
@@ -54,8 +54,8 @@ export class Priorai {
   }
 
   /**
-   * 递归验证 target 列表
-   * 叶节点必须有 provider，嵌套策略组必须有 strategy + 非空 targets
+   * Recursively validate target list
+   * Leaf nodes must have provider; nested strategy groups must have strategy + non-empty targets
    */
   private validateTargets(targets: TargetConfig[], path: string): void {
     for (let i = 0; i < targets.length; i++) {
@@ -63,7 +63,7 @@ export class Priorai {
       const targetPath = `${path}[${i}]`;
 
       if (target.strategy || target.targets) {
-        // 嵌套策略组
+        // Nested strategy group
         if (!target.strategy) {
           throw new Error(`${targetPath} has "targets" but missing "strategy" field`);
         }
@@ -73,10 +73,10 @@ export class Priorai {
         if (!Array.isArray(target.targets) || target.targets.length === 0) {
           throw new Error(`${targetPath} strategy "${target.strategy}" requires non-empty "targets" array`);
         }
-        // 递归验证子 targets
+        // Recursively validate child targets
         this.validateTargets(target.targets, `${targetPath}.targets`);
       } else {
-        // 叶节点
+        // Leaf node
         if (!target.provider) {
           throw new Error(`${targetPath} must have a "provider" field`);
         }
@@ -152,9 +152,9 @@ export class Priorai {
   };
 
   /**
-   * Anthropic Messages API — 原生格式透传
-   * 请求/响应都是 Anthropic 原生格式，不做 OpenAI 兼容转换
-   * 支持 fallback/loadbalance/single 路由策略
+   * Anthropic Messages API — native format passthrough
+   * Both request and response use Anthropic native format, no OpenAI compatibility conversion
+   * Supports fallback/loadbalance/single routing strategies
    */
   messages = {
     create: (
@@ -166,9 +166,9 @@ export class Priorai {
       return this.executeMessages(params);
     },
     /**
-     * Anthropic Messages Count Tokens — 预估 input token 数量
+     * Anthropic Messages Count Tokens — estimate input token count
      * POST /v1/messages/count_tokens
-     * 支持 Anthropic 直连、Bedrock、Vertex AI
+     * Supports Anthropic direct, Bedrock, Vertex AI
      */
     countTokens: async (params: Params): Promise<Record<string, unknown>> => {
       const targets = this.config.messagesTargets || this.config.targets;
@@ -177,9 +177,9 @@ export class Priorai {
   };
 
   /**
-   * OpenAI Responses API — /v1/responses 端点
-   * 使用 input/instructions 替代 messages/system，支持 tool calling、reasoning 等
-   * 支持 fallback/loadbalance/single 路由策略
+   * OpenAI Responses API — /v1/responses endpoint
+   * Uses input/instructions instead of messages/system, supports tool calling, reasoning, etc.
+   * Supports fallback/loadbalance/single routing strategies
    */
   responses = {
     create: (
@@ -193,8 +193,8 @@ export class Priorai {
   };
 
   /**
-   * Legacy text completion API — /v1/completions 端点
-   * 通过策略系统路由，支持 fallback/loadbalance/single
+ * Legacy text completion API — /v1/completions endpoint
+ * Routed through the strategy system, supports fallback/loadbalance/single
    */
   completions = {
     create: (
@@ -208,8 +208,8 @@ export class Priorai {
   };
 
   /**
-   * 文件操作 API — upload/list/delete/retrieve
-   * 使用简单循环模式（管理类端点，不需要策略路由）
+ * File operations API — upload/list/delete/retrieve
+ * Uses simple loop pattern (management endpoints, no strategy routing needed)
    */
   files = {
     upload: async (params: Params): Promise<Record<string, unknown>> => {
@@ -230,7 +230,7 @@ export class Priorai {
   };
 
   /**
-   * Batch API — 批量推理
+   * Batch API — batch inference
    */
   batches = {
     create: async (params: Params): Promise<Record<string, unknown>> => {
@@ -248,7 +248,7 @@ export class Priorai {
   };
 
   /**
-   * Fine-tune API — 微调管理
+   * Fine-tune API — fine-tuning management
    */
   fineTuning = {
     create: async (params: Params): Promise<Record<string, unknown>> => {
@@ -283,7 +283,7 @@ export class Priorai {
   }
 
   /**
-   * Anthropic Messages API — 非流式
+   * Anthropic Messages API — non-streaming
    */
   private async executeMessages(params: Params): Promise<MessagesResponse | ErrorResponse> {
     const targets = this.config.messagesTargets || this.config.targets;
@@ -300,7 +300,7 @@ export class Priorai {
   }
 
   /**
-   * Anthropic Messages API — 流式
+   * Anthropic Messages API — streaming
    */
   private async executeMessagesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.messagesTargets || this.config.targets;
@@ -308,7 +308,7 @@ export class Priorai {
   }
 
   /**
-   * OpenAI Responses API — 非流式
+   * OpenAI Responses API — non-streaming
    */
   private async executeResponses(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
     const targets = this.config.responsesTargets || this.config.targets;
@@ -325,7 +325,7 @@ export class Priorai {
   }
 
   /**
-   * OpenAI Responses API — 流式
+   * OpenAI Responses API — streaming
    */
   private async executeResponsesStreaming(params: Params): Promise<ReadableStream> {
     const targets = this.config.responsesTargets || this.config.targets;
@@ -333,7 +333,7 @@ export class Priorai {
   }
 
   /**
-   * 统一策略执行入口 — 处理 conditional 策略的额外参数
+   * Unified strategy execution entry point — handles conditional strategy extra params
    */
   private async executeStrategy(
     targets: TargetConfig[],
@@ -350,7 +350,7 @@ export class Priorai {
   }
 
   /**
-   * 统一流式策略执行入口
+   * Unified streaming strategy execution entry point
    */
   private async executeStrategyStream(
     targets: TargetConfig[],
@@ -367,8 +367,8 @@ export class Priorai {
   }
 
   /**
-   * Legacy text completion — 非流式
-   * 通过策略系统路由，使用 'complete' endpoint 配置
+ * Legacy text completion — non-streaming
+ * Routed through the strategy system, uses 'complete' endpoint config
    */
   private async executeCompletions(params: Params): Promise<Record<string, unknown> | ErrorResponse> {
     const result: StrategyResult = await this.executeStrategy(this.config.targets, params, 'complete');
@@ -384,8 +384,8 @@ export class Priorai {
   }
 
   /**
-   * 通用简单端点执行 — 管理类 API（文件、批量、微调、图片编辑等）
-   * 使用简单循环模式，逐个 target 尝试直到成功
+ * Generic simple endpoint execution — management APIs (files, batches, fine-tuning, image edit, etc.)
+ * Uses simple loop pattern, tries each target in order until success
    */
   private async executeSimpleEndpoint(
     targets: TargetConfig[],

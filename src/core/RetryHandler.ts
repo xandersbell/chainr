@@ -6,9 +6,9 @@ const DEFAULT_RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 const BASE_DELAY_MS = 100;
 
 /**
- * retry-after header 优先级（对齐 Portkey）
- * retry-after-ms / x-ms-retry-after-ms 值为毫秒
- * retry-after 值为秒
+ * Retry-after header priority (aligned with Portkey)
+ * retry-after-ms / x-ms-retry-after-ms values are in milliseconds
+ * retry-after values are in seconds
  */
 const RETRY_AFTER_HEADERS = ['retry-after-ms', 'x-ms-retry-after-ms', 'retry-after'];
 
@@ -17,12 +17,12 @@ async function sleep(ms: number): Promise<void> {
 }
 
 function getRetryDelay(attempt: number): number {
-  return Math.min(BASE_DELAY_MS * Math.pow(2, attempt), MAX_RETRY_LIMIT_MS);
+  return Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_RETRY_LIMIT_MS);
 }
 
 /**
- * 从响应头中解析 retry-after 等待时间（毫秒）
- * 返回 undefined 表示没有 retry-after 头
+ * Parse retry-after wait time from response headers (in milliseconds)
+ * Returns undefined if no retry-after header is present
  */
 function parseRetryAfter(headers: Headers): number | undefined {
   for (const headerName of RETRY_AFTER_HEADERS) {
@@ -30,7 +30,7 @@ function parseRetryAfter(headers: Headers): number | undefined {
     if (value) {
       const parsed = Number.parseInt(value.trim(), 10);
       if (Number.isNaN(parsed) || parsed <= 0) continue;
-      // retry-after 头的值是秒，需要转换为毫秒
+      // retry-after header value is in seconds, needs conversion to milliseconds
       return headerName === 'retry-after' ? parsed * 1000 : parsed;
     }
   }
@@ -67,7 +67,7 @@ export async function retryRequest(
 
   let lastResponse: Record<string, unknown> | undefined;
   let lastError: string | undefined;
-  // retry-after 总预算（对齐 Portkey 的 remainingRetryTimeout）
+  // Total retry-after budget (aligned with Portkey's remainingRetryTimeout)
   let remainingRetryBudget = MAX_RETRY_LIMIT_MS;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -90,14 +90,14 @@ export async function retryRequest(
       if (attempt < attempts - 1) {
         const delay = getSmartDelay(attempt, response, remainingRetryBudget);
         if (delay === null) {
-          // retry-after 超出预算，放弃重试
+          // retry-after exceeded budget, abort retry
           break;
         }
         remainingRetryBudget -= delay;
         await sleep(delay);
       }
     } catch (error) {
-      // ConnectTimeoutError → 当 host 不可达时，包装为 503 让 fallback/retry 正常处理
+      // ConnectTimeoutError -> when host is unreachable, wrap as 503 so fallback/retry handles properly
       if (
         error instanceof TypeError &&
         error.cause instanceof Error &&
@@ -158,7 +158,6 @@ export async function retryRequestForStream(
         await sleep(delay);
       }
     } catch (error) {
-      // ConnectTimeoutError → 当 host 不可达时，包装为 503 让 fallback/retry 正常处理
       if (
         error instanceof TypeError &&
         error.cause instanceof Error &&
@@ -179,25 +178,25 @@ export async function retryRequestForStream(
 }
 
 /**
- * 智能延迟计算：优先使用 provider 返回的 retry-after，否则用指数退避
- * 返回 null 表示 retry-after 超出预算，应放弃重试
+ * Smart delay calculation: prefer provider's retry-after header, otherwise use exponential backoff
+ * Returns null if retry-after exceeds budget, indicating retry should be abandoned
  */
 function getSmartDelay(
   attempt: number,
   response: Response,
   remainingBudget: number
 ): number | null {
-  // 仅在 429 时尝试读取 retry-after
+  // Only attempt to read retry-after on 429
   if (response.status === 429) {
     const retryAfter = parseRetryAfter(response.headers);
     if (retryAfter !== undefined) {
-      // 单次等待超过总预算上限，或超出剩余预算 → 放弃
+      // Single wait exceeds total budget cap, or exceeds remaining budget -> abandon
       if (retryAfter >= MAX_RETRY_LIMIT_MS || retryAfter > remainingBudget) {
         return null;
       }
       return retryAfter;
     }
   }
-  // 没有 retry-after 头，使用指数退避
+  // No retry-after header, use exponential backoff
   return getRetryDelay(attempt);
 }

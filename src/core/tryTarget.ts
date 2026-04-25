@@ -1,7 +1,7 @@
 /**
- * 核心递归调度模块
- * 处理叶节点（直接发请求）和嵌套策略组（递归调度到子策略）
- * 同时负责配置继承：overrideParams 合并，retry/timeout 子级优先
+ * Core recursive dispatch module
+ * Handles leaf nodes (direct requests) and nested strategy groups (recursive dispatch to sub-strategies)
+ * Also responsible for config inheritance: overrideParams merging, retry/timeout child-priority
  */
 import type { Params } from '../types/requestBody';
 import type { StrategyResult, TargetConfig } from './types';
@@ -16,8 +16,8 @@ import { createBedrockStream, isBedrockProvider } from './transformBedrockStream
 import { createBytezStream, isBytezProvider } from './transformBytezStream';
 
 /**
- * 继承配置 — 从父级向下传递的配置
- * endpoint: 指定当前请求的端点类型，决定使用哪个 ProviderConfig 映射
+ * Inherited config — passed down from parent level
+ * endpoint: specifies the endpoint type for the current request, determines which ProviderConfig mapping to use
  */
 export interface InheritedConfig {
   overrideParams?: Record<string, unknown>;
@@ -27,15 +27,15 @@ export interface InheritedConfig {
 }
 
 /**
- * 判断 target 是否为嵌套策略组（有 strategy + targets 字段）
+ * Check whether a target is a nested strategy group (has strategy + targets fields)
  */
 export function isNestedTarget(target: TargetConfig): boolean {
   return !!target.strategy && Array.isArray(target.targets) && target.targets.length > 0;
 }
 
 /**
- * 构建当前层级的继承配置
- * 规则：overrideParams 合并（父级铺底，当前覆盖），retry/timeout 当前优先
+ * Build the inherited config for the current level
+ * Rules: overrideParams merge (parent as base, current overrides), retry/timeout child-priority
  */
 export function buildInheritedConfig(
   target: TargetConfig,
@@ -52,13 +52,13 @@ export function buildInheritedConfig(
         ? { ...parentConfig.retry }
         : undefined,
     timeout: target.timeout ?? parentConfig.timeout,
-    // endpoint 从父级继承，不被子 target 覆盖（由顶层 Router 决定）
+    // endpoint is inherited from parent, not overridden by child targets (determined by top-level Router)
     endpoint: parentConfig.endpoint,
   };
 }
 
 /**
- * 对叶节点发起实际 HTTP 请求（非流式）
+ * Send actual HTTP request to a leaf target (non-streaming)
  */
 export async function tryLeafTarget(
   target: TargetConfig,
@@ -87,7 +87,7 @@ export async function tryLeafTarget(
 }
 
 /**
- * 对叶节点发起实际 HTTP 请求（流式）
+ * Send actual HTTP request to a leaf target (streaming)
  */
 export async function tryLeafTargetStream(
   target: TargetConfig,
@@ -119,7 +119,7 @@ export async function tryLeafTargetStream(
 }
 
 /**
- * 根据 provider 类型创建对应的流式转换
+ * Create the appropriate stream transform based on provider type
  */
 export function createStreamForProvider(
   response: Response,
@@ -135,8 +135,8 @@ export function createStreamForProvider(
 }
 
 /**
- * 递归执行目标（非流式）
- * 如果 target 是嵌套策略组，递归调度到对应策略；否则直接发请求
+ * Recursively execute a target (non-streaming)
+ * If target is a nested strategy group, recursively dispatch to the corresponding strategy; otherwise send request directly
  */
 export async function executeTarget(
   target: TargetConfig,
@@ -146,7 +146,7 @@ export async function executeTarget(
   const inherited = buildInheritedConfig(target, parentConfig);
 
   if (isNestedTarget(target)) {
-    // 嵌套策略组 — 递归调度
+    // Nested strategy group — recursive dispatch
     return executeNestedStrategy(
       target.strategy!,
       target.targets!,
@@ -155,12 +155,12 @@ export async function executeTarget(
     );
   }
 
-  // 叶节点 — 直接发请求
+  // Leaf node — send request directly
   return tryLeafTarget(target, params, inherited);
 }
 
 /**
- * 递归执行目标（流式）
+ * Recursively execute a target (streaming)
  */
 export async function executeTargetStream(
   target: TargetConfig,
@@ -182,7 +182,7 @@ export async function executeTargetStream(
 }
 
 /**
- * 执行嵌套策略（非流式）— 根据 strategy 类型分发
+ * Execute nested strategy (non-streaming) — dispatch based on strategy type
  */
 function executeNestedStrategy(
   strategy: string,
@@ -203,7 +203,7 @@ function executeNestedStrategy(
 }
 
 /**
- * 执行嵌套策略（流式）
+ * Execute nested strategy (streaming)
  */
 function executeNestedStrategyStream(
   strategy: string,
@@ -223,7 +223,7 @@ function executeNestedStrategyStream(
   }
 }
 
-// --- 内联策略实现（避免循环依赖） ---
+// --- Inline strategy implementations (avoid circular dependencies) ---
 
 async function executeFallback(
   targets: TargetConfig[],

@@ -1,5 +1,5 @@
 import { MISTRAL_AI } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import MistralAIAPIConfig from './api';
 import {
   GetMistralAIChatCompleteResponseTransform,

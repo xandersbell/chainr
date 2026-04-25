@@ -5,7 +5,7 @@
  * Generated: 2025-11-21T21:44:31.445Z
  */
 
-import { JsonSchema } from '../../../types/requestBody';
+import type { JsonSchema } from '../../../types/requestBody';
 
 export type OracleMessageRole =
   | 'SYSTEM'

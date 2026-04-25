@@ -1,5 +1,5 @@
 import { COMETAPI } from '../../globals';
-import { ParameterConfig, ProviderConfig } from '../types';
+import type { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
 
 const cometAPIModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;

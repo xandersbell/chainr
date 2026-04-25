@@ -1,4 +1,4 @@
-import { ChatCompletionResponse, ErrorResponse } from '../types';
+import type { ChatCompletionResponse, ErrorResponse } from '../types';
 import { generateErrorResponse } from '../utils';
 import { KRUTRIM } from '../../globals';
 

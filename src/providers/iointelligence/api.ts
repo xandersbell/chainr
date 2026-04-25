@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const IOIntelligenceAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.intelligence.io.solutions/api/v1',

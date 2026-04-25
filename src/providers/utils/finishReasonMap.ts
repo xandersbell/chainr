@@ -1,11 +1,11 @@
-// 从 Portkey 的 src/providers/utils/finishReasonMap.ts 适配而来
-// 将 google/types 的引用改为从 ../types 内联的枚举
+// Adapted from Portkey's src/providers/utils/finishReasonMap.ts
+// Changed google/types import to use the inlined enum from ../types
 
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
 import {
   FINISH_REASON,
   GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-  PROVIDER_FINISH_REASON,
+  type PROVIDER_FINISH_REASON,
 } from '../types';
 import {
   BEDROCK_CONVERSE_STOP_REASON,
@@ -44,7 +44,7 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.PROHIBITED_CONTENT, FINISH_REASON.content_filter],
   [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.BLOCKLIST, FINISH_REASON.content_filter],
   [VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON.SPII, FINISH_REASON.content_filter],
-  // Google AI (内联枚举)
+  // Google AI (inlined enum)
   [GOOGLE_GENERATE_CONTENT_FINISH_REASON.FINISH_REASON_UNSPECIFIED, FINISH_REASON.stop],
   [GOOGLE_GENERATE_CONTENT_FINISH_REASON.STOP, FINISH_REASON.stop],
   [GOOGLE_GENERATE_CONTENT_FINISH_REASON.MAX_TOKENS, FINISH_REASON.length],

@@ -1,6 +1,6 @@
 import { BYTEZ } from '../../globals';
-import { ProviderConfig } from '../types';
-import { BytezResponse } from './types';
+import type { ProviderConfig } from '../types';
+import type { BytezResponse } from './types';
 import { generateErrorResponse } from '../utils';
 
 const BytezInferenceChatCompleteConfig: ProviderConfig = {

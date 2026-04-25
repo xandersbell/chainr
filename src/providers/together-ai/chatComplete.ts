@@ -1,6 +1,6 @@
 import { TOGETHER_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -10,7 +10,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { TOGETHER_AI_FINISH_REASON } from './types';
+import type { TOGETHER_AI_FINISH_REASON } from './types';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 

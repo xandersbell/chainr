@@ -1,9 +1,9 @@
 import { AZURE_AI_INFERENCE } from '../../globals';
-import { MessagesResponse } from '../../types/messagesResponse';
+import type { MessagesResponse } from '../../types/messagesResponse';
 import { getMessagesConfig } from '../anthropic-base/messages';
-import { AnthropicErrorResponse } from '../anthropic/types';
+import type { AnthropicErrorResponse } from '../anthropic/types';
 import { AnthropicErrorResponseTransform } from '../anthropic/utils';
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 export const AzureAIInferenceMessagesConfig = getMessagesConfig({});

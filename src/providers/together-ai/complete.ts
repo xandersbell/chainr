@@ -1,10 +1,10 @@
 import { TOGETHER_AI } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  TogetherAIErrorResponse,
+  type TogetherAIErrorResponse,
   TogetherAIErrorResponseTransform,
-  TogetherAIOpenAICompatibleErrorResponse,
+  type TogetherAIOpenAICompatibleErrorResponse,
 } from './chatComplete';
 
 export const TogetherAICompleteConfig: ProviderConfig = {

@@ -1,5 +1,5 @@
-// Provider 注册表 — 静态导入所有 provider 配置
-// 对齐 Portkey 的 src/providers/index.ts 结构
+// Provider registry — statically imports all provider configs
+// Aligned with Portkey's src/providers/index.ts structure
 import AI302Config from './302ai';
 import AI21Config from './ai21';
 import AIBadgrConfig from './aibadgr';

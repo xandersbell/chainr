@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import { version } from '../../../package.json';
 
 const BytezInferenceAPI: ProviderAPIConfig = {

@@ -1,11 +1,11 @@
 import { ANYSCALE } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  AnyscaleErrorResponse,
+  type AnyscaleErrorResponse,
   AnyscaleErrorResponseTransform,
-  AnyscaleValidationErrorResponse,
+  type AnyscaleValidationErrorResponse,
 } from './chatComplete';
 
 export const AnyscaleEmbedConfig: ProviderConfig = {

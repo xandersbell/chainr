@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const RecraftAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://external.api.recraft.ai/v1',

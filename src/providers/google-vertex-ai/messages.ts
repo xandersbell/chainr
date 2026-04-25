@@ -1,10 +1,10 @@
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { MessagesResponse } from '../../types/messagesResponse';
-import { Options, Params } from '../../types/requestBody';
+import type { MessagesResponse } from '../../types/messagesResponse';
+import type { Options, Params } from '../../types/requestBody';
 import { getMessagesConfig } from '../anthropic-base/messages';
-import { AnthropicErrorResponse } from '../anthropic/types';
+import type { AnthropicErrorResponse } from '../anthropic/types';
 import { AnthropicErrorResponseTransform } from '../anthropic/utils';
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 export const VertexAnthropicMessagesConfig = getMessagesConfig({

@@ -4,7 +4,7 @@ import {
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { upstageAPIConfig } from './api';
 
 export const UpstageConfig: ProviderConfigs = {

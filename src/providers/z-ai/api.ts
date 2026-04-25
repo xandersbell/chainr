@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const ZAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.z.ai/api/paas/v4',

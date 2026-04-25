@@ -1,5 +1,5 @@
-import { Options } from '../../types/requestBody';
-import { endpointStrings, ProviderAPIConfig } from '../types';
+import type { Options } from '../../types/requestBody';
+import type { endpointStrings, ProviderAPIConfig } from '../types';
 import { bedrockInvokeModels } from './constants';
 import {
   getAwsEndpointDomain,
@@ -57,7 +57,7 @@ const ENDPOINTS_TO_ROUTE_TO_S3 = [
 
 const getMethod = (fn: endpointStrings, transformedRequestUrl: string) => {
   if (fn === 'proxy') {
-    // proxy 模式默认使用 POST，不再依赖 Hono Context
+    // Proxy mode defaults to POST, no longer depends on Hono Context
     return 'POST';
   }
   if (fn === 'uploadFile') {
@@ -133,11 +133,11 @@ const BedrockAPIConfig: ProviderAPIConfig = {
     providerOptions,
     transformedRequestBody,
     transformedRequestUrl,
-    gatewayRequestBody, // proxy 模式直接透传请求体
+    gatewayRequestBody, // Proxy mode passes through request body directly
     headers: requestHeaders,
   }) => {
     const { awsAuthType, awsService } = providerOptions;
-    // 直接通过 fn 计算 HTTP 方法，不再依赖 Hono Context
+    // Compute HTTP method directly from fn, no longer depends on Hono Context
     const method = getMethod(fn as endpointStrings, transformedRequestUrl);
     const service = awsService || getService(fn as endpointStrings);
 

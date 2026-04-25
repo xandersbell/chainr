@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const RekaAIApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.reka.ai',

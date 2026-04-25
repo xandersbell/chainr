@@ -1,11 +1,11 @@
 import { BEDROCK } from '../../globals';
-import {
+import type {
   EmbedParams,
   EmbedResponse,
   EmbedResponseData,
 } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
 

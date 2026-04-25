@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import { OCIRequestSigner } from './utils';
 
 const OracleAPIConfig: ProviderAPIConfig = {

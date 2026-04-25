@@ -1,11 +1,11 @@
 import { PALM } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
 import {
-  GoogleErrorResponse,
+  type GoogleErrorResponse,
   GoogleErrorResponseTransform,
 } from '../google/chatComplete';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
 export const PalmEmbedConfig: ProviderConfig = {

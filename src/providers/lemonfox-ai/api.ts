@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const LemonfoxAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.lemonfox.ai/v1',

@@ -1,5 +1,5 @@
 import { MATTERAI } from '../../globals';
-import { ParameterConfig, ProviderConfig } from '../types';
+import type { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
 
 const matterAIModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;

@@ -1,6 +1,6 @@
 import { PERPLEXITY_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -208,7 +208,7 @@ export const PerplexityAIChatCompleteStreamChunkTransform: (
   chunk = chunk.trim();
 
   const parsedChunk: PerplexityAIChatCompletionStreamChunk = JSON.parse(chunk);
-  let returnChunk =
+  const returnChunk =
     `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,

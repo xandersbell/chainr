@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import AIBadgrAPIConfig from './api';
 import { AIBadgrChatCompleteStreamChunkTransform } from './chatComplete';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';

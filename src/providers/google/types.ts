@@ -1,4 +1,4 @@
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
 export enum GOOGLE_GENERATE_CONTENT_FINISH_REASON {
   FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',

@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import KrutrimAPIConfig from './api';
 import { chatCompleteParams } from '../open-ai-base';
 import { KrutrimChatCompleteResponseTransform } from './chatComplete';

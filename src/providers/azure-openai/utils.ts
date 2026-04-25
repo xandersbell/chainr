@@ -1,7 +1,7 @@
 import { AZURE_OPEN_AI } from '../../globals';
-import { Options, Params } from '../../types/requestBody';
+import type { Options, Params } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 
 export async function getAccessTokenFromEntraId(
   tenantId: string,

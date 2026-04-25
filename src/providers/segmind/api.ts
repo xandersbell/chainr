@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const SegmindAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.segmind.com/v1',

@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import VertexApiConfig, { GoogleApiConfig } from './api';
 import {
   GoogleChatCompleteResponseTransform,
@@ -15,7 +15,7 @@ import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
 import { getModelAndProvider } from './utils';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { GOOGLE_VERTEX_AI } from '../../globals';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,

@@ -1,7 +1,7 @@
 import { LATITUDE } from '../../globals';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -11,7 +11,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { LATITUDE_STOP_REASON } from './types';
+import type { LATITUDE_STOP_REASON } from './types';
 
 export const LatitudeChatCompleteConfig: ProviderConfig = {
   model: {

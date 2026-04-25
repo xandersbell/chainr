@@ -1,6 +1,6 @@
 import { ANTHROPIC, OPEN_AI } from '../../globals';
-import { ContentBlockChunk } from '../../types/requestBody';
-import {
+import type { ContentBlockChunk } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

@@ -1,6 +1,6 @@
 import { GatewayError } from '../../errors/GatewayError';
-import { Options } from '../../types/requestBody';
-import { endpointStrings, ProviderAPIConfig } from '../types';
+import type { Options } from '../../types/requestBody';
+import type { endpointStrings, ProviderAPIConfig } from '../types';
 import { getModelAndProvider, getAccessToken, getBucketAndFile, getAccessTokenFromADC } from './utils';
 
 const getApiVersion = (provider: string) => {
@@ -69,16 +69,16 @@ export const GoogleApiConfig: ProviderAPIConfig = {
     let authToken = apiKey;
 
     if (vertexServiceAccountJson) {
-      // 方式一：显式传入 service account JSON
+      // Method 1: Explicitly provided service account JSON
       authToken = await getAccessToken(vertexServiceAccountJson as Record<string, any>);
     } else if (!apiKey) {
-      // 方式二：ADC 自动发现（本地开发场景）
-      // 当 apiKey 和 vertexServiceAccountJson 都未提供时，
-      // 自动从 GOOGLE_APPLICATION_CREDENTIALS 或 ~/.config/gcloud/ 读取凭证
+    // Method 2: ADC auto-discovery (local development scenario)
+    // When neither apiKey nor vertexServiceAccountJson is provided,
+    // automatically read credentials from GOOGLE_APPLICATION_CREDENTIALS or ~/.config/gcloud/
       const adcResult = await getAccessTokenFromADC();
       if (adcResult) {
         authToken = adcResult.token;
-        // 如果用户未指定 vertexProjectId，尝试从 ADC 凭证中获取
+        // If user did not specify vertexProjectId, try to get it from ADC credentials
         if (!providerOptions.vertexProjectId && adcResult.projectId) {
           providerOptions.vertexProjectId = adcResult.projectId;
         }

@@ -1,10 +1,10 @@
 import { NOVITA_AI } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  NovitaAIErrorResponse,
+  type NovitaAIErrorResponse,
   NovitaAIErrorResponseTransform,
-  NovitaAIOpenAICompatibleErrorResponse,
+  type NovitaAIOpenAICompatibleErrorResponse,
 } from './chatComplete';
 
 export const NovitaAICompleteConfig: ProviderConfig = {

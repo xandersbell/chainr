@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import LemonfoxAIAPIConfig from './api';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { LemonfoxAIChatCompleteStreamChunkTransform } from './chatComplete';

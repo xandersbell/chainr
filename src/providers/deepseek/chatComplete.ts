@@ -1,7 +1,7 @@
 import { DEEPSEEK } from '../../globals';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -11,7 +11,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { DEEPSEEK_STOP_REASON } from './types';
+import type { DEEPSEEK_STOP_REASON } from './types';
 
 export const DeepSeekChatCompleteConfig: ProviderConfig = {
   model: {
@@ -85,7 +85,7 @@ export const DeepSeekChatCompleteConfig: ProviderConfig = {
     min: 0,
     max: 20,
   },
-  // DeepSeek 兼容 OpenAI 格式，tools 和 tool_choice 直接透传
+  // DeepSeek is OpenAI-compatible; tools and tool_choice are passed through directly
   tools: {
     param: 'tools',
   },
@@ -128,7 +128,7 @@ interface DeepSeekStreamChunk {
     delta: {
       role?: string | null;
       content?: string;
-      // tool calling 流式响应
+      // tool calling in streaming response
       tool_calls?: {
         index: number;
         id?: string;
@@ -176,7 +176,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         message: {
           role: c.message.role,
           content: c.message.content,
-          // tool calling 响应透传
+          // pass through tool calling response
           ...(c.message.tool_calls && { tool_calls: c.message.tool_calls }),
         },
         finish_reason: transformFinishReason(

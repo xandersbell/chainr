@@ -1,5 +1,5 @@
 import { ANTHROPIC } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import AnthropicAPIConfig from './api';
 import {
   AnthropicChatCompleteConfig,

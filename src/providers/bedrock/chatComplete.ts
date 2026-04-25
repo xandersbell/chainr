@@ -5,15 +5,15 @@ import {
   videoMimeTypes,
 } from '../../globals';
 import {
-  Message,
-  Params,
-  ToolCall,
+  type Message,
+  type Params,
+  type ToolCall,
   SYSTEM_MESSAGE_ROLES,
-  ContentType,
-  ToolChoiceObject,
-  Options,
+  type ContentType,
+  type ToolChoiceObject,
+  type Options,
 } from '../../types/requestBody';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -24,13 +24,13 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import {
+import type {
   BedrockAI21CompleteResponse,
   BedrockCohereCompleteResponse,
   BedrockCohereStreamChunk,
 } from './complete';
-import { BedrockErrorResponse } from './embed';
-import {
+import type { BedrockErrorResponse } from './embed';
+import type {
   BedrockChatCompleteStreamChunk,
   BedrockChatCompletionResponse,
   BedrockContentItem,
@@ -275,7 +275,7 @@ const getMessageContent = (message: Message) => {
         });
       }
     });
-    // Bedrock 要求有 document block 时必须有 text block
+    // Bedrock requires a text block when a document block is present
     if (hasDocumentBlock && !hasTextBlock) {
       out.unshift({ text: ' ' });
     }
@@ -283,7 +283,7 @@ const getMessageContent = (message: Message) => {
 
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
   message.tool_calls?.forEach((toolCall: ToolCall) => {
-    // arguments 空值保护：空字符串时默认为空对象
+    // Null-safe arguments: default to empty object when empty string
     const args = toolCall.function.arguments?.length > 0
       ? JSON.parse(toolCall.function.arguments)
       : {};
@@ -385,7 +385,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       const toolConfig = {
         tools,
       };
-      let toolChoice = undefined;
+      let toolChoice ;
       if (params.tool_choice) {
         if (typeof params.tool_choice === 'object') {
           toolChoice = {
@@ -878,7 +878,7 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       let prompt: string = '';
       if (params.messages) {
-        let messages: Message[] = params.messages;
+        const messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;
@@ -1080,7 +1080,7 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
     transform: (params: Params) => {
       let prompt: string = '';
       if (params.messages) {
-        let messages: Message[] = params.messages;
+        const messages: Message[] = params.messages;
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;

@@ -1,5 +1,5 @@
-import { GoogleEmbedParams } from './embed';
-import { EmbedInstancesData, PortkeyGeminiParams } from './types';
+import type { GoogleEmbedParams } from './embed';
+import type { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
 /**
  * @see https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini#request_body
@@ -27,7 +27,7 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
-  // response_format 可能是字符串或对象，需要类型守卫
+  // response_format can be a string or object; type guard needed
   const responseFormat = params?.response_format;
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
@@ -43,7 +43,7 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    // 新版 Gemini API 支持原生 JSON Schema，使用 responseJsonSchema 直接透传
+    // Newer Gemini API supports native JSON Schema; use responseJsonSchema for direct passthrough
     generationConfig['responseJsonSchema'] =
       (responseFormat as any)?.json_schema?.schema ??
       (responseFormat as any)?.json_schema;

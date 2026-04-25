@@ -1,15 +1,15 @@
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import {
+import type {
   BedrockChatCompletionsParams,
   BedrockConverseAI21ChatCompletionsParams,
   BedrockConverseAnthropicChatCompletionsParams,
   BedrockConverseCohereChatCompletionsParams,
 } from './chatComplete';
-import { Options, Tool } from '../../types/requestBody';
+import type { Options, Tool } from '../../types/requestBody';
 import { GatewayError } from '../../errors/GatewayError';
-import { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
-import { FinetuneRequest } from '../types';
+import type { BedrockFinetuneRecord, BedrockInferenceProfile } from './types';
+import type { FinetuneRequest } from '../types';
 import { BEDROCK } from '../../globals';
 import { Environment } from '../../utils/env';
 
@@ -171,7 +171,7 @@ export const transformCohereAdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+  // Use != null to avoid filtering out top_k=0 via falsy check
   if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
@@ -199,7 +199,7 @@ export const transformAI21AdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+  // Use != null to avoid filtering out top_k=0 via falsy check
   if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }

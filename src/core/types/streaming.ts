@@ -1,12 +1,12 @@
 /**
  * Priorai Streaming Support Types
- * 基于 OpenAI Chat Completions Streaming API 规范
- * 参考: Portkey-ai-gateway streaming 实现模式
+ * Based on OpenAI Chat Completions Streaming API specification
+ * Reference: Portkey-ai-gateway streaming implementation patterns
  */
 
 /**
- * OpenAI 格式的 Streaming Chunk
- * 每个 chunk 对应 SSE 中的一个 data: {...} 行
+ * OpenAI-format streaming chunk
+ * Each chunk corresponds to a single data: {...} line in SSE
  */
 export interface ChatCompletionChunk {
   id: string;
@@ -20,8 +20,8 @@ export interface ChatCompletionChunk {
 }
 
 /**
- * Streaming chunk 中的 usage 信息
- * 仅在最终 chunk 中包含完整 usage
+ * Usage info within a streaming chunk
+ * Only included in the final chunk with complete usage
  */
 export interface StreamUsage {
   prompt_tokens?: number;
@@ -35,7 +35,7 @@ export interface StreamUsage {
 }
 
 /**
- * Streaming chunk 中的 choice
+ * Choice within a streaming chunk
  */
 export interface ChatCompletionChunkChoice {
   index: number;
@@ -45,8 +45,8 @@ export interface ChatCompletionChunkChoice {
 }
 
 /**
- * Streaming chunk 中的 delta 内容
- * 包含增量内容（而非完整消息）
+ * Delta content within a streaming chunk
+ * Contains incremental content (not a complete message)
  */
 export interface ChatCompletionDelta {
   role?: 'assistant' | 'system' | 'user' | 'tool' | 'function';
@@ -57,7 +57,7 @@ export interface ChatCompletionDelta {
 }
 
 /**
- * Tool call 的增量更新
+ * Incremental update for a tool call
  */
 export interface ChatCompletionToolCallDelta {
   index: number;
@@ -70,8 +70,8 @@ export interface ChatCompletionToolCallDelta {
 }
 
 /**
- * Anthropic content block 的增量更新
- * 用于非标准 OpenAI 兼容模式
+ * Incremental update for an Anthropic content block
+ * Used in non-standard OpenAI-compatible mode
  */
 export interface ContentBlockDelta {
   index: number;
@@ -85,8 +85,8 @@ export interface ContentBlockDelta {
 }
 
 /**
- * Anthropic Streaming 状态
- * 在多次 chunk 之间保持状态
+ * Anthropic streaming state
+ * Maintained across multiple chunks
  */
 export interface AnthropicStreamState {
   toolIndex: number;
@@ -99,8 +99,8 @@ export interface AnthropicStreamState {
 }
 
 /**
- * SSE 分割符类型
- * 不同 provider 使用不同的分割符
+ * SSE delimiter types
+ * Different providers use different delimiters
  */
 export type SplitPatternType = '\n\n' | '\r\n\r\n' | '\n' | '\r\n' | ' ';
 
@@ -114,7 +114,7 @@ export type StreamTransformFn = (
 
 /**
  * Stream Result
- * 用于返回 streaming 结果
+ * Used to return streaming results
  */
 export interface StreamResult {
   stream: ReadableStream<ChatCompletionChunk>;
@@ -122,7 +122,7 @@ export interface StreamResult {
 }
 
 /**
- * Provider 支持的 Split Pattern 映射
+ * Split Pattern mapping supported by providers
  */
 export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
   'openai': '\n\n',
@@ -133,7 +133,7 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
   'deepseek': '\n\n',
   'mistral-ai': '\n\n',
   'cohere': '\n\n',
-  'anthropic': '\n\n',  // /v1/messages 使用 \n\n
+'anthropic': '\n\n', // /v1/messages uses \n\n
   'vertex-ai': '\r\n\r\n',
   'google': '\r\n',
   'azure-openai': '\n\n',
@@ -163,8 +163,8 @@ export const PROVIDER_SPLIT_PATTERNS: Record<string, SplitPatternType> = {
 };
 
 /**
- * 检测是否为 OpenAI-compatible provider
- * 这些 provider 使用标准 OpenAI SSE 格式，可以直接 passthrough
+ * Detect whether a provider is OpenAI-compatible
+ * These providers use the standard OpenAI SSE format and can be passed through directly
  */
 export const OPENAI_COMPATIBLE_PROVIDERS = [
   'openai',

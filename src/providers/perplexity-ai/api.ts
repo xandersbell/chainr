@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const PerplexityAIApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.perplexity.ai',

@@ -1,6 +1,6 @@
 import { INFERENCENET } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { inferenceAPIConfig } from './api';
 
 export const InferenceNetProviderConfigs: ProviderConfigs = {

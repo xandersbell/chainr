@@ -9,7 +9,7 @@ export function isOpenAICompatibleProvider(provider: string): boolean {
   return OPENAI_COMPATIBLE_PROVIDERS.includes(provider);
 }
 
-function openAIStreamTransform(
+function openAiStreamTransform(
   chunk: string,
   _fallbackId: string,
   _streamState: Record<string, unknown>
@@ -22,8 +22,8 @@ function openAIStreamTransform(
 }
 
 /**
- * Azure OpenAI 的 SSE 流在某些情况下会把多个 chunk 粘连发送
- * 不加延迟会导致客户端解析错误，对齐 Portkey 的 isSleepTimeRequired
+ * Azure OpenAI SSE streams may concatenate multiple chunks in a single send
+ * Without delay, client-side parsing errors can occur; aligned with Portkey's isSleepTimeRequired
  */
 function isAzureProvider(provider: string): boolean {
   return provider === 'azure-openai' || provider === 'azure-ai';
@@ -41,7 +41,7 @@ export function createOpenAIStream(
   const generator = parseSSEStream(
     reader,
     splitPattern,
-    openAIStreamTransform,
+    openAiStreamTransform,
     fallbackId,
     {}
   );
@@ -53,7 +53,7 @@ export function createOpenAIStream(
       try {
         for await (const chunkStr of generator) {
           if (chunkStr) {
-            // 首 chunk 延迟 25ms（所有 provider），Azure 后续 chunk 延迟 1ms
+            // Delay 25ms on first chunk (all providers), 1ms on subsequent Azure chunks
             if (isFirstChunk) {
               await new Promise(resolve => setTimeout(resolve, 25));
               isFirstChunk = false;

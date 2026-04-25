@@ -1,6 +1,6 @@
 import { VOYAGE } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -55,10 +55,10 @@ export interface VoyageValidationErrorResponse {
 export const VoyageErrorResponseTransform: (
   response: VoyageValidationErrorResponse | any
 ) => ErrorResponse = (response) => {
-  let errorField: string | null = null;
+  const errorField: string | null = null;
 
-  let errorMessage = response.detail;
-  let errorType = 'Invalid Request';
+  const errorMessage = response.detail;
+  const errorType = 'Invalid Request';
 
   return generateErrorResponse(
     {

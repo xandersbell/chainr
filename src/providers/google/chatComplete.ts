@@ -1,11 +1,11 @@
 import { GOOGLE } from '../../globals';
 import {
-  ContentType,
-  Message,
-  OpenAIMessageRole,
-  Params,
-  ToolCall,
-  ToolChoice,
+  type ContentType,
+  type Message,
+  type OpenAIMessageRole,
+  type Params,
+  type ToolCall,
+  type ToolChoice,
   SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
@@ -18,7 +18,7 @@ import {
   transformInputAudioPart,
   transformVertexLogprobs,
 } from '../google-vertex-ai/utils';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   GroundingMetadata,
@@ -30,7 +30,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import {
+import type {
   GOOGLE_GENERATE_CONTENT_FINISH_REASON,
   PortkeyGeminiParams,
 } from './types';
@@ -58,7 +58,7 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   if (params['stop']) {
     generationConfig['stopSequences'] = params['stop'];
   }
-  // response_format 可能是字符串或对象，需要类型守卫
+  // response_format can be a string or object; type guard required
   const responseFormat = params?.response_format;
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_object') {
     generationConfig['responseMimeType'] = 'application/json';
@@ -74,7 +74,7 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    let schema =
+    const schema =
       (responseFormat as any)?.json_schema?.schema ??
       (responseFormat as any)?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
@@ -237,7 +237,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
             return;
 
           const role = transformOpenAIRoleToGoogleRole(message.role);
-          let parts = [];
+          const parts = [];
 
           if (message.role === 'assistant' && message.tool_calls) {
             message.tool_calls.forEach((tool_call: ToolCall) => {

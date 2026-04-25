@@ -1,7 +1,7 @@
-import { MessagesResponse } from '../../types/messagesResponse';
+import type { MessagesResponse } from '../../types/messagesResponse';
 import { getMessagesConfig } from '../anthropic-base/messages';
-import { AnthropicErrorResponse } from './types';
-import { ErrorResponse } from '../types';
+import type { AnthropicErrorResponse } from './types';
+import type { ErrorResponse } from '../types';
 import { AnthropicErrorResponseTransform } from './utils';
 import { generateInvalidProviderResponseError } from '../utils';
 import { ANTHROPIC } from '../../globals';

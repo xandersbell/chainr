@@ -1,5 +1,5 @@
 import { AI21, ANTHROPIC, COHERE } from '../../globals';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import {
   BedrockConverseChatCompleteConfig,
@@ -55,7 +55,7 @@ import { getBedrockModelWithoutRegion } from './utils';
 const BedrockConfig: ProviderConfigs = {
   api: BedrockAPIConfig,
   getConfig: ({ params, providerOptions }) => {
-    // 移除跨区域推理配置 ID 中的区域前缀
+    // Remove region prefix from cross-region inference profile ID
     // https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference-support.html
     let config: ProviderConfigs = {};
 
@@ -147,13 +147,13 @@ const BedrockConfig: ProviderConfigs = {
           }
           break;
         case 'stability':
-          // stability 模型暂不支持（imageGenerate 文件已移除）
+          // stability models not supported (imageGenerate file removed)
           return {
             api: BedrockAPIConfig,
           };
       }
 
-      // 默认配置合并
+      // Merge default configuration
       config = {
         ...config,
         ...(!config.chatComplete && {

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const GoogleApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://generativelanguage.googleapis.com',
@@ -7,7 +7,7 @@ export const GoogleApiConfig: ProviderAPIConfig = {
   },
   getEndpoint: ({ fn, providerOptions, gatewayRequestBodyJSON }) => {
     let routeVersion = 'v1beta';
-    let mappedFn = fn;
+    const mappedFn = fn;
     const { model, stream } = gatewayRequestBodyJSON;
     if (model?.includes('gemini-2.0-flash-thinking-exp')) {
       routeVersion = 'v1alpha';

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const GroqAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.groq.com/openai/v1',

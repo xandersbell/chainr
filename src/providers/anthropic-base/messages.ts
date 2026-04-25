@@ -1,4 +1,4 @@
-import { ParameterConfig, ProviderConfig } from '../types';
+import type { ParameterConfig, ProviderConfig } from '../types';
 
 export const messagesBaseConfig: ProviderConfig = {
   model: {

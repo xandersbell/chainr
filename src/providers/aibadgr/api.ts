@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const AIBadgrAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://aibadgr.com/api/v1',

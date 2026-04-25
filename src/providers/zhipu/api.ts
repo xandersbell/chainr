@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const ZhipuAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://open.bigmodel.cn/api/paas/v4',

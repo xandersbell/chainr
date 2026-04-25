@@ -5,7 +5,7 @@ export class CryptoUtils {
    */
   private static normalizePemKey(pemKey: string): string {
     // Remove all whitespace first
-    let normalized = pemKey.trim().replace(/\s+/g, '');
+    const normalized = pemKey.trim().replace(/\s+/g, '');
 
     // Check for BEGIN/END markers
     const beginMarkers = [
@@ -63,7 +63,7 @@ export class CryptoUtils {
     _passphrase?: string
   ): Promise<CryptoKey> {
     // Normalize the key first
-    const normalizedKey = this.normalizePemKey(pemKey);
+    const normalizedKey = CryptoUtils.normalizePemKey(pemKey);
 
     // Remove PEM headers and decode base64
     const pemHeader = '-----BEGIN';
@@ -73,7 +73,7 @@ export class CryptoUtils {
       .filter((line) => !line.includes(pemHeader) && !line.includes(pemFooter))
       .join('');
 
-    const binaryDer = this.base64ToArrayBuffer(pemContents);
+    const binaryDer = CryptoUtils.base64ToArrayBuffer(pemContents);
 
     // Import the key using Web Crypto API
     try {
@@ -128,14 +128,14 @@ export class CryptoUtils {
       dataBuffer
     );
 
-    return this.arrayBufferToBase64(signature);
+    return CryptoUtils.arrayBufferToBase64(signature);
   }
 
   static async sha256(data: string): Promise<string> {
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
     const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    return this.arrayBufferToBase64(hashBuffer);
+    return CryptoUtils.arrayBufferToBase64(hashBuffer);
   }
 
   static async loadPrivateKey(
@@ -147,6 +147,6 @@ export class CryptoUtils {
         'Key passphrase provided but not supported in Web Crypto API. Please use an unencrypted key.'
       );
     }
-    return this.importPrivateKey(pemKey, passphrase);
+    return CryptoUtils.importPrivateKey(pemKey, passphrase);
   }
 }

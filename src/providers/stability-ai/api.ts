@@ -1,5 +1,5 @@
 import { CONTENT_TYPES } from '../../globals';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import { isStabilityV1Model } from './utils';
 
 const StabilityAIAPIConfig: ProviderAPIConfig = {

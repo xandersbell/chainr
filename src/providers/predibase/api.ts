@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import { splitString } from '../utils';
 
 const PredibaseAPIConfig: ProviderAPIConfig = {

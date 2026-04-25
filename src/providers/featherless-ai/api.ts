@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const featherlessAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.featherless.ai/v1',

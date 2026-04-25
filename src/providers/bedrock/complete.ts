@@ -1,13 +1,13 @@
 import { BEDROCK } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { BedrockErrorResponse } from './embed';
-import { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
+import type { BedrockErrorResponse } from './embed';
+import type { TITAN_STOP_REASON as TITAN_COMPLETION_REASON } from './types';
 
 export const BedrockAnthropicCompleteConfig: ProviderConfig = {
   prompt: {
@@ -673,7 +673,7 @@ export const BedrockAnthropicCompleteStreamChunkTransform: (
   _strictOpenAiCompliance,
   gatewayRequest
 ) => {
-  let chunk = responseChunk.trim();
+  const chunk = responseChunk.trim();
   const model = gatewayRequest.model ?? '';
 
   const parsedChunk: BedrockAnthropicStreamChunk = JSON.parse(chunk);

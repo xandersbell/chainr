@@ -15,7 +15,8 @@
       "recommended": true,
       "complexity": {
         "useOptionalChain": "warn",
-        "noForEach": "off"
+        "noForEach": "off",
+        "useLiteralKeys": "off"
       },
       "correctness": {
         "noUnusedVariables": "warn",
@@ -24,14 +25,18 @@
       "style": {
         "useNamingConvention": {
           "level": "warn",
-          "options": {}
+          "options": {
+            "strictCase": false
+          }
         },
         "noNonNullAssertion": "off",
-        "useNodejsImportProtocol": "warn"
+        "useNodejsImportProtocol": "warn",
+        "useTemplate": "off"
       },
       "suspicious": {
         "noDoubleEquals": "warn",
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off"
       }
     }
   },
@@ -67,10 +72,21 @@
           },
           "style": {
             "useNamingConvention": "off",
+            "useNodejsImportProtocol": "off",
             "noNonNullAssertion": "off"
           },
           "suspicious": {
             "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/core/transform*Stream.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
           }
         }
       }

@@ -7,7 +7,7 @@ interface BedrockStreamState {
   currentToolCallIndex: number;
 }
 
-function readUInt32BE(buffer: Uint8Array, offset: number): number {
+function readUInt32be(buffer: Uint8Array, offset: number): number {
   return (
     ((buffer[offset] << 24) |
       (buffer[offset + 1] << 16) |
@@ -17,10 +17,10 @@ function readUInt32BE(buffer: Uint8Array, offset: number): number {
   );
 }
 
-function getPayloadFromAWSChunk(chunk: Uint8Array): string {
+function getPayloadFromAwsChunk(chunk: Uint8Array): string {
   const decoder = new TextDecoder();
-  const chunkLength = readUInt32BE(chunk, 0);
-  const headersLength = readUInt32BE(chunk, 4);
+  const chunkLength = readUInt32be(chunk, 0);
+  const headersLength = readUInt32be(chunk, 4);
 
   const headersEnd = 12 + headersLength;
   const payloadLength = chunkLength - headersEnd - 4;
@@ -216,12 +216,12 @@ export async function* readAWSStream(
     const { done, value } = await reader.read();
     if (done) {
       if (buffer.length) {
-        expectedLength = readUInt32BE(buffer, 0);
+        expectedLength = readUInt32be(buffer, 0);
         while (buffer.length >= expectedLength && buffer.length !== 0) {
           const data = buffer.subarray(0, expectedLength);
           buffer = buffer.subarray(expectedLength);
-          expectedLength = readUInt32BE(buffer, 0);
-          const payload = getPayloadFromAWSChunk(data);
+          expectedLength = readUInt32be(buffer, 0);
+          const payload = getPayloadFromAwsChunk(data);
           if (transformFunction) {
             const transformedChunk = transformFunction(
               payload,
@@ -246,7 +246,7 @@ export async function* readAWSStream(
     }
 
     if (expectedLength === 0) {
-      expectedLength = readUInt32BE(value, 0);
+      expectedLength = readUInt32be(value, 0);
     }
 
     buffer = concatenateUint8Arrays(buffer, value);
@@ -255,8 +255,8 @@ export async function* readAWSStream(
       const data = buffer.subarray(0, expectedLength);
       buffer = buffer.subarray(expectedLength);
 
-      expectedLength = readUInt32BE(buffer, 0);
-      const payload = getPayloadFromAWSChunk(data);
+      expectedLength = readUInt32be(buffer, 0);
+      const payload = getPayloadFromAwsChunk(data);
 
       if (transformFunction) {
         const transformedChunk = transformFunction(

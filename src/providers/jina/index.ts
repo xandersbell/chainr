@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import JinaAPIConfig from './api';
 import { JinaEmbedConfig, JinaEmbedResponseTransform } from './embed';
 

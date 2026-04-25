@@ -1,6 +1,6 @@
 /**
- * Fallback 策略 — 按顺序尝试每个 target，成功即返回
- * 支持嵌套：target 可以是叶节点或子策略组
+ * Fallback strategy — try each target in order, return on first success
+ * Supports nesting: a target can be a leaf node or a sub-strategy group
  */
 import type { Params } from '../../types/requestBody';
 import type { endpointStrings } from '../../providers/types';

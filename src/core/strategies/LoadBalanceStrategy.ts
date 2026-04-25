@@ -1,6 +1,6 @@
 /**
- * LoadBalance 策略 — 按权重随机选择一个 target
- * 支持嵌套：选中的 target 可以是叶节点或子策略组
+ * LoadBalance strategy — randomly select a target based on weights
+ * Supports nesting: the selected target can be a leaf node or a sub-strategy group
  */
 import type { Params } from '../../types/requestBody';
 import type { endpointStrings } from '../../providers/types';

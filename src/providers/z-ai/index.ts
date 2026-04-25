@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { Z_AI } from '../../globals';
 import ZAIAPIConfig from './api';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';

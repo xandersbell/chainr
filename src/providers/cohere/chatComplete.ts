@@ -1,6 +1,6 @@
 import { COHERE } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -10,7 +10,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import {
+import type {
   COHERE_STOP_REASON,
   CohereChatCompleteResponse,
   CohereChatCompletionStreamChunk,

@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { OllamaEmbedConfig, OllamaEmbedResponseTransform } from './embed';
 import OllamaAPIConfig from './api';
 import {

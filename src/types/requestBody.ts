@@ -273,11 +273,11 @@ export interface Params {
   };
   dimensions?: number;
   parameters?: unknown;
-  // 图片生成
+  // Image generation
   size?: string;
   quality?: string;
   style?: string;
-  // 音频转录/翻译
+  // Audio transcription/translation
   file?: File | Blob | string;
   language?: string;
   // TTS
@@ -285,12 +285,12 @@ export interface Params {
   speed?: number;
   // Embeddings
   encoding_format?: string;
-  // SiliconFlow 图片
+  // SiliconFlow image
   num_steps?: number;
   guidance?: number;
   // Google Imagen
   aspectRatio?: string;
-  // 其他
+  // Other
   version?: string;
   examples?: unknown[];
 }
@@ -460,13 +460,13 @@ export interface Model3DGenerateResponse {
   provider?: string;
 }
 
-// Provider 需要的类型常量和别名
+// Type constants and aliases needed by providers
 export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'] as const;
 export const MESSAGE_ROLES = ['system', 'user', 'assistant', 'function', 'tool', 'developer'] as const;
 export type OpenAIMessageRole = (typeof MESSAGE_ROLES)[number];
 
-// ContentBlockChunk 继承 ContentType 的所有字段，但 type 改为可选，
-// 用于流式响应中的内容块增量数据（text/thinking/data 等顶层字段）
+// ContentBlockChunk inherits all fields from ContentType but makes type optional,
+// used for content block incremental data in streaming responses (text/thinking/data etc. as top-level fields)
 export interface ContentBlockChunk extends Omit<ContentType, 'type'> {
   type?: string;
   index?: number;

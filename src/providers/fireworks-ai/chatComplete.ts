@@ -1,6 +1,6 @@
 import { FIREWORKS_AI } from '../../globals';
-import { Message, Params } from '../../types/requestBody';
-import {
+import type { Message, Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

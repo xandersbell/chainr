@@ -1,9 +1,9 @@
-import { ErrorResponse, ProviderConfig } from '../types';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
 import { GOOGLE } from '../../globals';
 import {
-  GoogleErrorResponse,
+  type GoogleErrorResponse,
   GoogleErrorResponseTransform,
 } from './chatComplete';
 import { generateInvalidProviderResponseError } from '../utils';

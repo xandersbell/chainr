@@ -1,7 +1,7 @@
 import { HUGGING_FACE } from '../../globals';
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 import { generateErrorResponse } from '../utils';
-import { HuggingfaceErrorResponse } from './types';
+import type { HuggingfaceErrorResponse } from './types';
 
 export const HuggingfaceErrorResponseTransform: (
   response: HuggingfaceErrorResponse,

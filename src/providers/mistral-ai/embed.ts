@@ -1,11 +1,11 @@
 import { MISTRAL_AI } from '../../globals';
-import { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { MistralAIErrorResponse } from './chatComplete';
+import type { MistralAIErrorResponse } from './chatComplete';
 
 export const MistralAIEmbedConfig: ProviderConfig = {
   model: {

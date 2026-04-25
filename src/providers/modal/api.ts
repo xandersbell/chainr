@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const ModalAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => `https://api.modal.com/v1`, // This would ideally always be replaced by a custom host

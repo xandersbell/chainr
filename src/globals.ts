@@ -1,16 +1,16 @@
-// Priorai - 全局常量与 Provider 定义
-// 对齐 Portkey 的 src/globals.ts，确保所有 provider 文件的 import 都能解析
+// Priorai - Global constants and Provider definitions
+// Aligned with Portkey's src/globals.ts to ensure all provider file imports resolve
 
 import type { endpointStrings } from './providers/types';
 
 export const POWERED_BY: string = 'priorai';
 
-// 重试配置
+// Retry configuration
 export const MAX_RETRY_LIMIT_MS = 60 * 1000;
 export const RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
 export const MAX_RETRIES = 5;
 
-// Provider 名称常量（对齐 Portkey）
+// Provider name constants (aligned with Portkey)
 export const OPEN_AI: string = 'openai';
 export const COHERE: string = 'cohere';
 export const AZURE_OPEN_AI: string = 'azure-openai';
@@ -85,14 +85,14 @@ export const OVHCLOUD: string = 'ovhcloud';
 export const DATABRICKS: string = 'databricks';
 export const LATITUDE: string = 'latitude';
 
-// 旧名称别名（向后兼容）
+// Legacy aliases for backward compatibility
 export const PERPLEXITY = PERPLEXITY_AI;
 export const LEMONFOX = LEMONFOX_AI;
 export const RECRAFT_AI = RECRAFTAI;
 export const WHISPER = 'whisper';
 export const TTS = 'tts';
 
-// Embeddings/Image/Audio 专用 URL 常量
+// Embeddings/Image/Audio specific URL constants
 export const JINA_URL = 'https://api.jina.ai';
 export const NOMIC_URL = 'https://api.nomic.ai';
 export const VOYAGE_URL = 'https://api.voyageai.com';
@@ -113,7 +113,7 @@ export const SILICONFLOW_EMBED_URL = 'https://api.siliconflow.cn/v1/embeddings';
 export const SILICONFLOW_IMAGE_URL = 'https://api.siliconflow.cn/v1/images/generations';
 export const NSCALE_URL = 'https://api.nscale.io';
 
-// OpenAI-compatible Provider URLs（provider 注册表使用）
+// OpenAI-compatible Provider URLs (used by provider registry)
 export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'openai': 'https://api.openai.com/v1/chat/completions',
   'openrouter': 'https://openrouter.ai/api/v1/chat/completions',
@@ -174,7 +174,7 @@ export const OPENAI_COMPATIBLE_URLS: Record<string, string> = {
   'cortex': '',
 };
 
-// Embeddings/Image/Audio 专用 URL 映射（provider 注册表使用）
+// Embeddings/Image/Audio specific URL mappings (used by provider registry)
 export const OPENAI_COMPATIBLE_EMBED_URLS: Record<string, string> = {
   'openai': 'https://api.openai.com/v1/embeddings',
   'workers-ai': 'https://api.cloudflare.com/client/v4/ai/v1/embeddings',
@@ -197,7 +197,7 @@ export const OPENAI_COMPATIBLE_IMAGE_URLS: Record<string, string> = {
   'nscale': 'https://api.nscale.io/v1/image/generate',
 };
 
-// Portkey 对齐的工具对象
+// Portkey-aligned content type constants
 export const CONTENT_TYPES = {
   APPLICATION_JSON: 'application/json',
   MULTIPART_FORM_DATA: 'multipart/form-data',

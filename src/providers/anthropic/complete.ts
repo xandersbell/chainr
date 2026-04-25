@@ -1,11 +1,11 @@
 import { ANTHROPIC } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import {
+import type {
   ANTHROPIC_STOP_REASON,
   AnthropicStreamState,
   AnthropicErrorResponse,

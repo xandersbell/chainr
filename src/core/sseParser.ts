@@ -1,6 +1,6 @@
 import type { SplitPatternType, StreamTransformFn } from './types/streaming';
 
-export { SplitPatternType, StreamTransformFn };
+export type { SplitPatternType, StreamTransformFn };
 
 export async function* parseSSEStream(
   reader: ReadableStreamDefaultReader,
@@ -100,7 +100,6 @@ export function parseSSEDataMultiple<T>(data: string): T[] {
         try {
           results.push(JSON.parse(dataContent) as T);
         } catch {
-          continue;
         }
       }
     }

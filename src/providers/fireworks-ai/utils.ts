@@ -1,4 +1,4 @@
-import { FinetuneResponse, FinetuneState, FireworksFile } from './types';
+import { type FinetuneResponse, FinetuneState, type FireworksFile } from './types';
 
 export const fireworksDatasetToOpenAIFile = (dataset: FireworksFile) => {
   const name = dataset.displayName || dataset.name;

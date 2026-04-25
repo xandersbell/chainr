@@ -1,5 +1,5 @@
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -9,7 +9,7 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import { MISTRAL_AI_FINISH_REASON } from './types';
+import type { MISTRAL_AI_FINISH_REASON } from './types';
 
 export const MistralAIChatCompleteConfig: ProviderConfig = {
   model: {

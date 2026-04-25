@@ -1,11 +1,11 @@
 import { PALM } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { PalmChatCompleteResponse } from '../../types/responseBody';
+import type { Params } from '../../types/requestBody';
+import type { PalmChatCompleteResponse } from '../../types/responseBody';
 import {
-  GoogleErrorResponse,
+  type GoogleErrorResponse,
   GoogleErrorResponseTransform,
 } from '../google/chatComplete';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

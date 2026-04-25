@@ -1,6 +1,6 @@
 import { KLUSTER_AI } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { ChatCompletionResponse, ErrorResponse } from '../types';
+import type { ChatCompletionResponse, ErrorResponse } from '../types';
 
 interface KlusterAIChatCompleteResponse extends ChatCompletionResponse {}
 

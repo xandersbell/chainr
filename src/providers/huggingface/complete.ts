@@ -1,7 +1,7 @@
 import { HUGGING_FACE } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import { HuggingfaceErrorResponse } from './types';
+import type { HuggingfaceErrorResponse } from './types';
 import { HuggingfaceErrorResponseTransform } from './utils';
 
 interface HuggingfaceCompleteResponse extends CompletionResponse {}

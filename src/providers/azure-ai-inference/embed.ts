@@ -1,6 +1,6 @@
-import { EmbedResponse } from '../../types/embedRequestBody';
+import type { EmbedResponse } from '../../types/embedRequestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { ErrorResponse, ProviderConfig } from '../types';
 
 export const AzureAIInferenceEmbedConfig: ProviderConfig = {
   model: {

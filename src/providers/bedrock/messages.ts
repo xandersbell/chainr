@@ -1,5 +1,5 @@
 import { BEDROCK } from '../../globals';
-import {
+import type {
   DocumentBlockParam,
   ImageBlockParam,
   RedactedThinkingBlockParam,
@@ -8,13 +8,13 @@ import {
   ToolResultBlockParam,
   ToolUseBlockParam,
 } from '../../types/MessagesRequest';
-import { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
-import {
+import type { ContentBlock, MessagesResponse } from '../../types/messagesResponse';
+import type {
   RawContentBlockDeltaEvent,
   RawContentBlockStartEvent,
   RawContentBlockStopEvent,
 } from '../../types/MessagesStreamResponse';
-import { Options, Params } from '../../types/requestBody';
+import type { Options, Params } from '../../types/requestBody';
 import {
   ANTHROPIC_CONTENT_BLOCK_START_EVENT,
   ANTHROPIC_CONTENT_BLOCK_STOP_EVENT,
@@ -22,18 +22,18 @@ import {
   ANTHROPIC_MESSAGE_START_EVENT,
   ANTHROPIC_MESSAGE_STOP_EVENT,
 } from '../anthropic-base/constants';
-import {
+import type {
   AnthropicMessageDeltaEvent,
   AnthropicMessageStartEvent,
 } from '../anthropic-base/types';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import {
   generateInvalidProviderResponseError,
   transformToAnthropicStopReason,
 } from '../utils';
 import { BedrockErrorResponseTransform } from './chatComplete';
-import { BedrockErrorResponse } from './embed';
-import {
+import type { BedrockErrorResponse } from './embed';
+import type {
   BedrockChatCompleteStreamChunk,
   BedrockChatCompletionResponse,
   BedrockContentItem,
@@ -109,9 +109,9 @@ const appendDocumentBlock = (
   transformedContent: any[],
   documentBlock: DocumentBlockParam
 ) => {
-  // 文档名称：优先使用 title，否则生成随机 UUID
+  // Document name: prefer title, otherwise generate random UUID
   const docName = (documentBlock as any).title || crypto.randomUUID();
-  // citations 透传
+  // Pass through citations
   const citations = (documentBlock as any).citations;
 
   if (documentBlock.source.type === 'base64') {
@@ -139,7 +139,7 @@ const appendDocumentBlock = (
       },
     });
   } else if ((documentBlock.source as any).type === 'text') {
-    // 新增 text 类型文档支持
+    // Added text type document support
     transformedContent.push({
       document: {
         format: 'txt',
@@ -151,7 +151,7 @@ const appendDocumentBlock = (
       },
     });
   }
-  // cache_control 统一处理，适用于所有 source 类型
+  // Unified cache_control handling, applies to all source types
   if (documentBlock.cache_control) {
     transformedContent.push({
       cachePoint: {
@@ -289,7 +289,7 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
               appendToolResultBlock(transformedContent, content);
             }
           }
-          // Bedrock 要求有 document block 时必须有 text block
+          // Bedrock requires a text block when a document block is present
           if (hasDocumentBlock && !hasTextBlock) {
             transformedContent.unshift({ text: ' ' });
           }

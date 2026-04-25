@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const nebiusAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.studio.nebius.ai/v1',

@@ -1,6 +1,6 @@
 import { AI21 } from '../../globals';
-import { Params } from '../../types/requestBody';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { Params } from '../../types/requestBody';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
 

@@ -1,4 +1,4 @@
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 import { generateErrorResponse } from '../utils';
 import { WORKERS_AI } from '../../globals';
 

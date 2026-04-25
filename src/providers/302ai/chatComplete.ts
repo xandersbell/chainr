@@ -1,6 +1,6 @@
 import { THREE_ZERO_TWO_AI } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

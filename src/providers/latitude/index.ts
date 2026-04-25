@@ -1,4 +1,4 @@
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import LatitudeAPIConfig from './api';
 import {
   LatitudeChatCompleteConfig,

@@ -1,6 +1,6 @@
 import { HYPERBOLIC } from '../../globals';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import HyperbolicAPIConfig from './api';
 import { HyperbolicChatCompleteStreamChunkTransform } from './chatComplete';
 

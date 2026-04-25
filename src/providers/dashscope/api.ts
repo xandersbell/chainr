@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const dashscopeAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',

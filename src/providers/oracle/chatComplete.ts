@@ -5,7 +5,7 @@ import type {
   Options,
   Params,
 } from '../../types/requestBody';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -14,13 +14,13 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import {
+import type {
   ChatContent,
   Message,
   OracleMessageRole,
   ToolDefinition,
 } from './types/ChatDetails';
-import {
+import type {
   ChatChoice,
   OracleChatCompleteResponse,
   OracleErrorResponse,

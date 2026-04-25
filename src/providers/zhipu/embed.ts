@@ -1,6 +1,6 @@
 import { ZHIPU } from '../../globals';
-import { EmbedResponse } from '../../types/embedRequestBody';
-import { ErrorResponse, ProviderConfig } from '../types';
+import type { EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateErrorResponse } from '../utils';
 
 export const ZhipuEmbedConfig: ProviderConfig = {

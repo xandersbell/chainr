@@ -1,5 +1,5 @@
 import { generateInvalidProviderResponseError } from '../utils';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { TRITON } from '../../globals';
 import { generateErrorResponse } from '../utils';
 

@@ -1,6 +1,6 @@
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

@@ -1,5 +1,5 @@
 import { Environment } from '../../utils/env';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 import {
   getAccessTokenFromEntraId,
   getAzureManagedIdentityToken,
@@ -52,7 +52,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         Authorization: `Bearer ${accessToken}`,
       };
     }
-    // `AZURE_FEDERATED_TOKEN_FILE` 由运行时注入，Priorai 是纯 Node.js SDK，直接支持
+    // `AZURE_FEDERATED_TOKEN_FILE` is injected at runtime; Priorai is a pure Node.js SDK and supports this directly
     if (azureAuthMode === 'workload') {
       const { azureWorkloadClientId, azureEntraScope } = providerOptions;
 

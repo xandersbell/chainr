@@ -1,7 +1,7 @@
-// 从 Portkey 的 src/types/embedRequestBody.ts 适配而来
+// Adapted from Portkey's src/types/embedRequestBody.ts
 
-import { BaseResponse } from '../providers/types';
-import { Options } from './requestBody';
+import type { BaseResponse } from '../providers/types';
+import type { Options } from './requestBody';
 
 type EmbedInput = {
   text?: string;

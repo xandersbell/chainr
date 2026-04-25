@@ -1,6 +1,6 @@
 /**
- * Single 策略 — 始终使用第一个 target
- * 支持嵌套：target 可以是叶节点或子策略组
+ * Single strategy — always use the first target
+ * Supports nesting: a target can be a leaf node or a sub-strategy group
  */
 import type { Params } from '../../types/requestBody';
 import type { endpointStrings } from '../../providers/types';

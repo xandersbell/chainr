@@ -1,5 +1,5 @@
-import { ProviderConfig } from '../types';
-import { OpenAIResponse } from '../../types/modelResponses';
+import type { ProviderConfig } from '../types';
+import type { OpenAIResponse } from '../../types/modelResponses';
 import {
   getRandomId,
   getResponseCompletedEvent,

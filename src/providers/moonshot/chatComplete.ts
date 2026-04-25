@@ -1,7 +1,7 @@
 import { MOONSHOT } from '../../globals';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

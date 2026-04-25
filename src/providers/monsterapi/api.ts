@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const MonsterAPIApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://llm.monsterapi.ai/v1',

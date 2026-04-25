@@ -1,10 +1,10 @@
 import type { SplitPatternType } from './types/streaming';
 
-export { SplitPatternType };
+export type { SplitPatternType };
 
-export function getSplitPattern(provider: string, requestURL?: string): SplitPatternType {
-  if (provider === 'cohere' && requestURL) {
-    return requestURL.includes('/chat') ? '\n\n' : '\n';
+export function getSplitPattern(provider: string, requestUrl?: string): SplitPatternType {
+  if (provider === 'cohere' && requestUrl) {
+    return requestUrl.includes('/chat') ? '\n\n' : '\n';
   }
 
   const splitPatterns: Record<string, SplitPatternType> = {
@@ -15,7 +15,7 @@ export function getSplitPattern(provider: string, requestURL?: string): SplitPat
     'groq': '\n\n',
     'deepseek': '\n\n',
     'mistral-ai': '\n\n',
-    'anthropic': requestURL?.includes('/complete') ? '\r\n\r\n' : '\n\n',
+    'anthropic': requestUrl?.includes('/complete') ? '\r\n\r\n' : '\n\n',
     'vertex-ai': '\r\n\r\n',
     'google': '\r\n',
     'deepinfra': '\n',

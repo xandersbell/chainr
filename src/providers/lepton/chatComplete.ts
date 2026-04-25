@@ -1,5 +1,5 @@
 import { LEPTON } from '../../globals';
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,

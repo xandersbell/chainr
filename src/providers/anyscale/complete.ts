@@ -1,10 +1,10 @@
 import { ANYSCALE } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  AnyscaleErrorResponse,
+  type AnyscaleErrorResponse,
   AnyscaleErrorResponseTransform,
-  AnyscaleValidationErrorResponse,
+  type AnyscaleValidationErrorResponse,
 } from './chatComplete';
 
 export const AnyscaleCompleteConfig: ProviderConfig = {

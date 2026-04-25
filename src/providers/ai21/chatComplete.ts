@@ -1,6 +1,6 @@
 import { AI21 } from '../../globals';
-import { Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
-import {
+import { type Params, SYSTEM_MESSAGE_ROLES } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -9,7 +9,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { AI21ErrorResponse } from './complete';
+import type { AI21ErrorResponse } from './complete';
 
 export const AI21ChatCompleteConfig: ProviderConfig = {
   messages: [

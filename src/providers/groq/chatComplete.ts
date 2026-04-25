@@ -1,5 +1,5 @@
 import { GROQ } from '../../globals';
-import { ChatCompletionResponse, ErrorResponse } from '../types';
+import type { ChatCompletionResponse, ErrorResponse } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,

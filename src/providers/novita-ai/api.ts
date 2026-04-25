@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const NovitaAIApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.novita.ai/v3/openai',

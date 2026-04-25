@@ -1,10 +1,10 @@
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
+import type { ErrorResponse, ProviderConfig } from '../types';
+import type {
   EmbedResponse,
   EmbedResponseData,
   EmbedParams,
 } from '../../types/embedRequestBody';
-import { GoogleErrorResponse, GoogleEmbedResponse } from './types';
+import type { GoogleErrorResponse, GoogleEmbedResponse } from './types';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
 import { GoogleErrorResponseTransform } from './utils';
@@ -12,7 +12,7 @@ import {
   transformEmbeddingInputs,
   transformEmbeddingsParameters,
 } from './transformGenerationConfig';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
 enum TASK_TYPE {
   RETRIEVAL_QUERY = 'RETRIEVAL_QUERY',

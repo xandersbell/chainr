@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const PalmApiConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://generativelanguage.googleapis.com/v1beta3',

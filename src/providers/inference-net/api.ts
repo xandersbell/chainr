@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const inferenceAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.inference.net/v1',

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const cerebrasAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.cerebras.ai/v1',

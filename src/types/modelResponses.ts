@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import * as Shared from './shared';
+import type * as Shared from './shared';
 
 export interface ParsedResponseOutputText<ParsedT> extends ResponseOutputText {
   parsed: ParsedT | null;

@@ -1,7 +1,7 @@
-// 从 Portkey 的 src/providers/utils.ts 适配而来
+// Adapted from Portkey's src/providers/utils.ts
 
 import { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import { FINISH_REASON, ErrorResponse, PROVIDER_FINISH_REASON } from './types';
+import { FINISH_REASON, type ErrorResponse, type PROVIDER_FINISH_REASON } from './types';
 import {
   AnthropicFinishReasonMap,
   finishReasonMap,
@@ -65,7 +65,7 @@ export function splitString(input: string, separator: string): SplitResult {
   };
 }
 
-// 将 provider 的 finish reason 转换为 OpenAI 格式
+// Convert provider's finish reason to OpenAI format
 export const transformFinishReason = (
   finishReason?: PROVIDER_FINISH_REASON,
   strictOpenAiCompliance?: boolean
@@ -79,7 +79,7 @@ export const transformFinishReason = (
   return transformedFinishReason;
 };
 
-// 将 provider 的 finish reason 转换为 Anthropic 格式
+// Convert provider's finish reason to Anthropic format
 export const transformToAnthropicStopReason = (
   finishReason?: PROVIDER_FINISH_REASON
 ): ANTHROPIC_STOP_REASON => {

@@ -1,5 +1,5 @@
 import { OVHCLOUD } from '../../globals';
-import { ParameterConfig, ProviderConfig } from '../types';
+import type { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
 
 const ovhcloudModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;

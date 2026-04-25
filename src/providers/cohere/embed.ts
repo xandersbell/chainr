@@ -1,10 +1,10 @@
-import { ErrorResponse, ProviderConfig } from '../types';
-import {
+import type { ErrorResponse, ProviderConfig } from '../types';
+import type {
   EmbedParams,
   EmbedResponse,
   EmbedResponseData,
 } from '../../types/embedRequestBody';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 export const LambdaAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => `https://api.lambdalabs.com/v1`,

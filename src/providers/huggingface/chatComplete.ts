@@ -1,12 +1,12 @@
 import { HUGGING_FACE } from '../../globals';
-import { Params } from '../../types/requestBody';
-import {
+import type { Params } from '../../types/requestBody';
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
 } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
-import { HuggingfaceErrorResponse } from './types';
+import type { HuggingfaceErrorResponse } from './types';
 import { HuggingfaceErrorResponseTransform } from './utils';
 
 interface HuggingfaceChatCompleteResponse extends ChatCompletionResponse {}

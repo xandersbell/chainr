@@ -4,7 +4,7 @@ import {
   embedParams,
   responseTransformers,
 } from '../open-ai-base';
-import { ProviderConfigs } from '../types';
+import type { ProviderConfigs } from '../types';
 import { dashscopeAPIConfig } from './api';
 
 export const DashScopeConfig: ProviderConfigs = {

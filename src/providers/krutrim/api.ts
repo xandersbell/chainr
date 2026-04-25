@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const KrutrimAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://cloud.olakrutrim.com/v1',

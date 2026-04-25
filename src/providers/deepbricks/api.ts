@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const DeepbricksAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.deepbricks.ai/v1',

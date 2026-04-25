@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const XAIAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.x.ai/v1',

@@ -1,4 +1,4 @@
-import {
+import type {
   ChatCompletionResponse,
   ErrorResponse,
   ProviderConfig,
@@ -8,7 +8,7 @@ import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
 } from '../utils';
-import { Params } from '../../types/requestBody';
+import type { Params } from '../../types/requestBody';
 
 export const OllamaChatCompleteConfig: ProviderConfig = {
   model: {

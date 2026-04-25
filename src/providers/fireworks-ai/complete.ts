@@ -1,10 +1,10 @@
 import { FIREWORKS_AI } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import {
-  FireworksAIErrorResponse,
+  type FireworksAIErrorResponse,
   FireworksAIErrorResponseTransform,
-  FireworksAIValidationErrorResponse,
+  type FireworksAIValidationErrorResponse,
 } from './chatComplete';
 
 export const FireworksAICompleteConfig: ProviderConfig = {

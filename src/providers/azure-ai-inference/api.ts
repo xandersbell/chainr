@@ -5,7 +5,7 @@ import {
   getAzureManagedIdentityToken,
   getAzureWorkloadIdentityToken,
 } from '../azure-openai/utils';
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const NON_INFERENCE_ENDPOINTS = [
   'createBatch',

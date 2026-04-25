@@ -1,4 +1,4 @@
-// 从 Portkey 的 src/errors/GatewayError.ts 直接复制
+// Adapted from Portkey's src/errors/GatewayError.ts
 export class GatewayError extends Error {
   constructor(
     message: string,

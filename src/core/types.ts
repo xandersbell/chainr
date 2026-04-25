@@ -92,24 +92,24 @@ export interface BinaryResult {
 }
 
 /**
- * 目标配置 — 可以是叶节点（有 provider）或嵌套策略组（有 strategy + targets）
- * 两者互斥：叶节点必须有 provider，策略组必须有 strategy + targets
+ * Target configuration - can be a leaf node (has provider) or nested strategy group (has strategy + targets)
+ * The two are mutually exclusive: leaf nodes must have provider, strategy groups must have strategy + targets
  */
 export interface TargetConfig {
-  // 叶节点字段
+  // Leaf node fields
   provider?: string;
   apiKey?: string;
   weight?: number;
   retry?: { attempts?: number; onStatusCodes?: number[] };
   overrideParams?: Record<string, unknown>;
-  // 嵌套策略字段
+  // Nested strategy fields
   strategy?: 'fallback' | 'loadbalance' | 'single';
   targets?: TargetConfig[];
-  // 超时（可在任意层级设置，子级覆盖父级）
+  // Timeout (can be set at any level, child overrides parent)
   timeout?: number;
-  // conditional routing 用的 target 名称
+  // Target name for conditional routing
   name?: string;
-  // 其他 provider 特定字段透传
+  // Other provider-specific fields passthrough
   [key: string]: unknown;
 }
 
@@ -120,16 +120,16 @@ export interface PrioraiConfig {
   imageTargets?: TargetConfig[];
   audioTargets?: TargetConfig[];
   speechTargets?: TargetConfig[];
-  // Anthropic Messages API 专用 targets（可选，默认复用 targets）
+  // Anthropic Messages API dedicated targets (optional, defaults to targets)
   messagesTargets?: TargetConfig[];
-  // OpenAI Responses API 专用 targets（可选，默认复用 targets）
+  // OpenAI Responses API dedicated targets (optional, defaults to targets)
   responsesTargets?: TargetConfig[];
   retry?: {
     attempts: number;
     onStatusCodes: number[];
   };
   timeout?: number;
-  // conditional routing 配置
+  // Conditional routing configuration
   conditions?: import('./strategies/ConditionalStrategy').ConditionConfig[];
   conditionalDefault?: string;
   metadata?: Record<string, string>;

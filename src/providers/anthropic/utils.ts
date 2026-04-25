@@ -1,6 +1,6 @@
-import { ErrorResponse } from '../types';
+import type { ErrorResponse } from '../types';
 import { generateErrorResponse } from '../utils';
-import { AnthropicErrorResponse } from './types';
+import type { AnthropicErrorResponse } from './types';
 
 export const AnthropicErrorResponseTransform: (
   response: AnthropicErrorResponse,

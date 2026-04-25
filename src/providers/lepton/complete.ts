@@ -1,5 +1,5 @@
 import { LEPTON } from '../../globals';
-import { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 
 interface LeptonCompleteResponse extends CompletionResponse {}

@@ -1,4 +1,4 @@
-import { ProviderAPIConfig } from '../types';
+import type { ProviderAPIConfig } from '../types';
 
 const AI21APIConfig: ProviderAPIConfig = {
   getBaseURL: () => 'https://api.ai21.com/studio/v1',

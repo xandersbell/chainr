@@ -29,10 +29,10 @@ export interface PalmChatCompleteResponse {
 
 interface PalmTextOutput {
   output: string;
-  safetyRatings: safetyRatings[];
+  safetyRatings: SafetyRatings[];
 }
 
-interface safetyRatings {
+interface SafetyRatings {
   category:
     | 'HARM_CATEGORY_DEROGATORY'
     | 'HARM_CATEGORY_TOXICITY'

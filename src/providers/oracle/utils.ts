@@ -1,6 +1,6 @@
-import { OpenAIMessageRole } from '../../types/requestBody';
+import type { OpenAIMessageRole } from '../../types/requestBody';
 import { CryptoUtils } from '../../utils/CryptoUtils';
-import { OracleMessageRole } from './types/ChatDetails';
+import type { OracleMessageRole } from './types/ChatDetails';
 
 export const openAIToOracleRoleMap: Record<
   OpenAIMessageRole,

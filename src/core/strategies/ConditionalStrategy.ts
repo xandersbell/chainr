@@ -1,7 +1,7 @@
 /**
- * Conditional routing — MongoDB 风格条件路由
- * 根据请求参数和元数据匹配条件，选择对应的 target
- * 从 Portkey 的 conditionalRouter.ts 适配而来
+ * Conditional routing — MongoDB-style conditional routing
+ * Match conditions based on request params and metadata, then select the corresponding target
+ * Adapted from Portkey's conditionalRouter.ts
  */
 import type { Params } from '../../types/requestBody';
 import type { endpointStrings } from '../../providers/types';
@@ -9,12 +9,12 @@ import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
 import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
-// MongoDB 风格查询对象
+// MongoDB-style query object
 type Query = Record<string, unknown>;
 
 /**
- * 条件路由上下文 — SDK 场景下只有 params（请求体）和 metadata（调用方传入）
- * 不包含 URL（SDK 没有 HTTP 路由层）
+ * Conditional routing context — in SDK scenarios only params (request body) and metadata (caller-provided)
+ * No URL (SDK has no HTTP routing layer)
  */
 export interface ConditionalContext {
   metadata?: Record<string, string>;
@@ -22,7 +22,7 @@ export interface ConditionalContext {
 }
 
 /**
- * 条件配置 — 每个条件包含查询表达式和匹配后的 target 名称
+ * Condition config — each condition contains a query expression and the target name to use on match
  */
 export interface ConditionConfig {
   query: Query;
@@ -30,7 +30,7 @@ export interface ConditionConfig {
 }
 
 /**
- * 支持的比较和逻辑运算符
+ * Supported comparison and logical operators
  */
 enum Operator {
   Equal = '$eq',
@@ -48,8 +48,8 @@ enum Operator {
 
 export class ConditionalStrategy {
   /**
-   * 非流式条件路由
-   * 根据 conditions 匹配第一个满足条件的 target，未匹配则走 default
+   * Non-streaming conditional routing
+   * Match the first condition to select a target; fall back to default if none match
    */
   async execute(
     targets: TargetConfig[],
@@ -67,7 +67,7 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 流式条件路由
+   * Streaming conditional routing
    */
   async executeStream(
     targets: TargetConfig[],
@@ -85,7 +85,7 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 条件匹配 — 遍历 conditions，返回第一个匹配的 target
+   * Condition matching — iterate conditions, return the first matched target
    */
   private resolveTarget(
     targets: TargetConfig[],
@@ -109,7 +109,7 @@ export class ConditionalStrategy {
       }
     }
 
-    // 所有条件都不匹配，走 default
+    // No condition matched, fall back to default
     if (defaultTarget) {
       return this.findTarget(targets, defaultTarget);
     }
@@ -118,30 +118,30 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 递归评估查询表达式
-   * 支持 $and/$or 逻辑组合，以及字段级比较运算符
+   * Recursively evaluate a query expression
+   * Supports $and/$or logical combinators and field-level comparison operators
    */
   private evaluateQuery(query: Query, context: ConditionalContext): boolean {
     for (const [key, value] of Object.entries(query)) {
-      // 逻辑运算符 $or
+      // Logical operator $or
       if (key === Operator.Or && Array.isArray(value)) {
         return value.some((sub: Query) => this.evaluateQuery(sub, context));
       }
-      // 逻辑运算符 $and
+      // Logical operator $and
       if (key === Operator.And && Array.isArray(value)) {
         return value.every((sub: Query) => this.evaluateQuery(sub, context));
       }
 
-      // 字段比较 — 从上下文中取值
+      // Field comparison — retrieve value from context
       const contextValue = this.getContextValue(key, context);
 
       if (typeof value === 'object' && value !== null) {
-        // 运算符对象，如 { $gt: 100 }
+        // Operator object, e.g. { $gt: 100 }
         if (!this.evaluateOperator(value as Record<string, unknown>, contextValue)) {
           return false;
         }
       } else if (contextValue !== value) {
-        // 直接相等比较
+        // Direct equality comparison
         return false;
       }
     }
@@ -149,7 +149,7 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 评估运算符表达式
+   * Evaluate an operator expression
    */
   private evaluateOperator(operator: Record<string, unknown>, value: unknown): boolean {
     for (const [op, compareValue] of Object.entries(operator)) {
@@ -192,7 +192,7 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 按名称查找 target
+   * Find a target by name
    */
   private findTarget(targets: TargetConfig[], name: string): TargetConfig {
     const target = targets.find(t => t.name === name);
@@ -203,8 +203,8 @@ export class ConditionalStrategy {
   }
 
   /**
-   * 从上下文中按点分路径取值
-   * 支持 "params.model"、"metadata.user_id" 等路径
+   * Retrieve a value from context by dot-separated path
+   * Supports paths like "params.model", "metadata.user_id", etc.
    */
   private getContextValue(key: string, context: ConditionalContext): unknown {
     const parts = key.split('.');
@@ -213,7 +213,7 @@ export class ConditionalStrategy {
     const field = parts.slice(1).join('.');
     const obj = context[root];
     if (!obj) return undefined;
-    // 支持多级嵌套路径
+    // Support multi-level nested paths
     return field.split('.').reduce<unknown>(
       (acc, part) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined),
       obj
