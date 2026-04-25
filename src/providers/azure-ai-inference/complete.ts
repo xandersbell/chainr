@@ -56,7 +56,7 @@ interface AzureAIInferenceCompleteResponse extends CompletionResponse {}
 export const AzureAIInferenceCompleteResponseTransform = (provider: string) => {
   const transformer: (
     response: AzureAIInferenceCompleteResponse | ErrorResponse,
-    responseStatus: number
+    responseStatus: number,
   ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200 && 'error' in response) {
       return OpenAIErrorResponseTransform(response, provider);

@@ -10,6 +10,7 @@ import {
   LeptonCompleteResponseTransform,
   LeptonCompleteStreamChunkTransform,
 } from './complete';
+
 const LeptonConfig: ProviderConfigs = {
   chatComplete: LeptonChatCompleteConfig,
   complete: LeptonCompleteConfig,

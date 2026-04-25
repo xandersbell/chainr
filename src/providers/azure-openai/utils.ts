@@ -7,7 +7,7 @@ export async function getAccessTokenFromEntraId(
   tenantId: string,
   clientId: string,
   clientSecret: string,
-  scope = 'https://cognitiveservices.azure.com/.default'
+  scope = 'https://cognitiveservices.azure.com/.default',
 ) {
   try {
     const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
@@ -41,10 +41,7 @@ export async function getAccessTokenFromEntraId(
   }
 }
 
-export async function getAzureManagedIdentityToken(
-  resource: string,
-  clientId?: string
-) {
+export async function getAzureManagedIdentityToken(resource: string, clientId?: string) {
   try {
     const response = await fetch(
       `http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=${encodeURIComponent(resource)}${clientId ? `&client_id=${encodeURIComponent(clientId)}` : ''}`,
@@ -53,7 +50,7 @@ export async function getAzureManagedIdentityToken(
         headers: {
           Metadata: 'true',
         },
-      }
+      },
     );
     if (!response.ok) {
       const errorMessage = await response.text();
@@ -75,15 +72,14 @@ export async function getAzureWorkloadIdentityToken(
   tenantId: string,
   clientId: string,
   federatedToken: string,
-  scope = 'https://cognitiveservices.azure.com/.default'
+  scope = 'https://cognitiveservices.azure.com/.default',
 ) {
   try {
     const url = `${authorityHost}/${tenantId}/oauth2/v2.0/token`;
     const params = new URLSearchParams({
       client_id: clientId,
       client_assertion: federatedToken,
-      client_assertion_type:
-        'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
       scope: scope,
       grant_type: 'client_credentials',
     });
@@ -111,7 +107,7 @@ export async function getAzureWorkloadIdentityToken(
 
 export const AzureOpenAIFinetuneResponseTransform = (
   response: Response | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ): Response | ErrorResponse => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);
@@ -126,12 +122,8 @@ export const AzureOpenAIFinetuneResponseTransform = (
   return _response;
 };
 
-export const getAzureModelValue = (
-  params: Params,
-  providerOptions?: Options
-) => {
-  const { apiVersion: azureApiVersion, deploymentId: azureDeploymentName } =
-    providerOptions ?? {};
+export const getAzureModelValue = (params: Params, providerOptions?: Options) => {
+  const { apiVersion: azureApiVersion, deploymentId: azureDeploymentName } = providerOptions ?? {};
   if (azureApiVersion && azureApiVersion.trim() === 'v1') {
     return azureDeploymentName;
   }

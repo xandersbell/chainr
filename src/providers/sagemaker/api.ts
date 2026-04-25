@@ -1,19 +1,12 @@
 import { GatewayError } from '../../errors/GatewayError';
-import {
-  generateAWSHeaders,
-  getAssumedRoleCredentials,
-} from '../bedrock/utils';
+import { generateAWSHeaders, getAssumedRoleCredentials } from '../bedrock/utils';
 import type { ProviderAPIConfig } from '../types';
 
 const SagemakerAPIConfig: ProviderAPIConfig = {
   getBaseURL: ({ providerOptions }) => {
     return `https://runtime.sagemaker.${providerOptions.awsRegion}.amazonaws.com`;
   },
-  headers: async ({
-    providerOptions,
-    transformedRequestBody,
-    transformedRequestUrl,
-  }) => {
+  headers: async ({ providerOptions, transformedRequestBody, transformedRequestUrl }) => {
     const headers: Record<string, string> = {
       'content-type': 'application/json',
     };
@@ -24,7 +17,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
         const sourceRoleCredentials = await getAssumedRoleCredentials(
           process.env.AWS_ASSUME_ROLE_SOURCE_ARN || '', // Role ARN in the source account
           process.env.AWS_ASSUME_ROLE_SOURCE_EXTERNAL_ID || '', // External ID for source role (if needed)
-          providerOptions.awsRegion || ''
+          providerOptions.awsRegion || '',
         );
 
         if (!sourceRoleCredentials) {
@@ -41,7 +34,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
               accessKeyId: sourceRoleCredentials.accessKeyId,
               secretAccessKey: sourceRoleCredentials.secretAccessKey,
               sessionToken: sourceRoleCredentials.sessionToken,
-            }
+            },
           )) || {};
         providerOptions.awsAccessKeyId = accessKeyId;
         providerOptions.awsSecretAccessKey = secretAccessKey;
@@ -60,7 +53,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
       providerOptions.awsRegion || '',
       providerOptions.awsAccessKeyId || '',
       providerOptions.awsSecretAccessKey || '',
-      providerOptions.awsSessionToken || ''
+      providerOptions.awsSessionToken || '',
     );
 
     if (providerOptions.amznSagemakerCustomAttributes) {
@@ -69,13 +62,11 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerTargetModel) {
-      awsHeaders['x-amzn-sagemaker-target-model'] =
-        providerOptions.amznSagemakerTargetModel;
+      awsHeaders['x-amzn-sagemaker-target-model'] = providerOptions.amznSagemakerTargetModel;
     }
 
     if (providerOptions.amznSagemakerTargetVariant) {
-      awsHeaders['x-amzn-sagemaker-target-variant'] =
-        providerOptions.amznSagemakerTargetVariant;
+      awsHeaders['x-amzn-sagemaker-target-variant'] = providerOptions.amznSagemakerTargetVariant;
     }
 
     if (providerOptions.amznSagemakerTargetContainerHostname) {
@@ -84,8 +75,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerInferenceId) {
-      awsHeaders['x-amzn-sagemaker-inference-id'] =
-        providerOptions.amznSagemakerInferenceId;
+      awsHeaders['x-amzn-sagemaker-inference-id'] = providerOptions.amznSagemakerInferenceId;
     }
 
     if (providerOptions.amznSagemakerEnableExplanations) {
@@ -99,8 +89,7 @@ const SagemakerAPIConfig: ProviderAPIConfig = {
     }
 
     if (providerOptions.amznSagemakerSessionId) {
-      awsHeaders['x-amzn-sagemaker-session-id'] =
-        providerOptions.amznSagemakerSessionId;
+      awsHeaders['x-amzn-sagemaker-session-id'] = providerOptions.amznSagemakerSessionId;
     }
     return awsHeaders;
   },

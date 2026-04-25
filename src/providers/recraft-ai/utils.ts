@@ -3,7 +3,7 @@ import { generateErrorResponse } from '../utils';
 
 export const RecraftAIErrorResponseTransform: (
   response: ErrorResponse,
-  provider: string
+  provider: string,
 ) => ErrorResponse = (response, provider) => {
   return generateErrorResponse(
     {
@@ -12,6 +12,6 @@ export const RecraftAIErrorResponseTransform: (
       param: response.error?.param || null,
       code: response.error?.code || null,
     },
-    provider
+    provider,
   );
 };

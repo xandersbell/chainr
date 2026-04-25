@@ -1,9 +1,5 @@
 import { MODAL } from '../../globals';
-import {
-  chatCompleteParams,
-  completeParams,
-  responseTransformers,
-} from '../open-ai-base';
+import { chatCompleteParams, completeParams, responseTransformers } from '../open-ai-base';
 import type { ProviderConfigs } from '../types';
 import { ModalAPIConfig } from './api';
 

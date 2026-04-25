@@ -5,10 +5,7 @@ import AI21Config from './ai21';
 import AIBadgrConfig from './aibadgr';
 import AnthropicConfig from './anthropic';
 import AnyscaleConfig from './anyscale';
-import {
-  AzureAIInferenceAPIConfig,
-  GithubModelAPiConfig,
-} from './azure-ai-inference';
+import { AzureAIInferenceAPIConfig, GithubModelAPiConfig } from './azure-ai-inference';
 import AzureOpenAIConfig from './azure-openai';
 import BedrockConfig from './bedrock';
 import BytezConfig from './bytez';
@@ -16,8 +13,8 @@ import { cerebrasProviderAPIConfig } from './cerebras';
 import CohereConfig from './cohere';
 import CometAPIConfig from './cometapi';
 import CortexConfig from './cortex';
-import DatabricksConfig from './databricks';
 import { DashScopeConfig } from './dashscope';
+import DatabricksConfig from './databricks';
 import DeepbricksConfig from './deepbricks';
 import DeepInfraConfig from './deepinfra';
 import DeepSeekConfig from './deepseek';
@@ -68,13 +65,13 @@ import StabilityAIConfig from './stability-ai';
 import TogetherAIConfig from './together-ai';
 import Tripo3DConfig from './tripo3d';
 import TritonConfig from './triton';
+import type { ProviderConfigs } from './types';
 import { UpstageConfig } from './upstage';
 import VoyageConfig from './voyage';
 import WorkersAiConfig from './workers-ai';
 import XAIConfig from './x-ai';
 import ZAIConfig from './z-ai';
 import ZhipuConfig from './zhipu';
-import type { ProviderConfigs } from './types';
 
 const Providers: { [key: string]: ProviderConfigs } = {
   openai: OpenAIConfig,

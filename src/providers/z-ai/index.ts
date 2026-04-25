@@ -1,7 +1,7 @@
-import type { ProviderConfigs } from '../types';
 import { Z_AI } from '../../globals';
-import ZAIAPIConfig from './api';
 import { chatCompleteParams, responseTransformers } from '../open-ai-base';
+import type { ProviderConfigs } from '../types';
+import ZAIAPIConfig from './api';
 
 const ZAIConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams([], { model: 'glm-4.6' }),

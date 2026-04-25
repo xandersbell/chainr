@@ -24,7 +24,7 @@ const DatabricksConfig: ProviderConfigs = {
         param: 'reasoning_effort',
         required: false,
       },
-    }
+    },
   ),
   responseTransforms: responseTransformers(DATABRICKS, {
     complete: true,

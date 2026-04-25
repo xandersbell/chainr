@@ -21,7 +21,7 @@ interface AzureAIInferenceEmbedResponse extends EmbedResponse {}
 export const AzureAIInferenceEmbedResponseTransform = (provider: string) => {
   const transformer: (
     response: AzureAIInferenceEmbedResponse | ErrorResponse,
-    responseStatus: number
+    responseStatus: number,
   ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
     if (responseStatus !== 200 && 'error' in response) {
       return OpenAIErrorResponseTransform(response, provider);

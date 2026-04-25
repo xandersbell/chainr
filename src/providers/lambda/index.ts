@@ -1,9 +1,5 @@
 import { LAMBDA } from '../../globals';
-import {
-  chatCompleteParams,
-  completeParams,
-  responseTransformers,
-} from '../open-ai-base';
+import { chatCompleteParams, completeParams, responseTransformers } from '../open-ai-base';
 import type { ProviderConfigs } from '../types';
 import { LambdaAPIConfig } from './api';
 

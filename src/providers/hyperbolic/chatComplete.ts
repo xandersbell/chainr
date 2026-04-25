@@ -1,4 +1,5 @@
 import { HYPERBOLIC } from '../../globals';
+
 interface HyperbolicStreamChunk {
   id: string;
   object: string;
@@ -19,9 +20,7 @@ interface HyperbolicStreamChunk {
   };
 }
 
-export const HyperbolicChatCompleteStreamChunkTransform = (
-  responseChunk: string
-) => {
+export const HyperbolicChatCompleteStreamChunkTransform = (responseChunk: string) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

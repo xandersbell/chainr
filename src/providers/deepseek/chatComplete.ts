@@ -1,11 +1,7 @@
 import { DEEPSEEK } from '../../globals';
 import type { Params } from '../../types/requestBody';
 
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -145,12 +141,12 @@ export const DeepSeekChatCompleteResponseTransform: (
   response: DeepSeekChatCompleteResponse | DeepSeekErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance
+  strictOpenAiCompliance,
 ) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -160,7 +156,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      DEEPSEEK
+      DEEPSEEK,
     );
   }
 
@@ -181,7 +177,7 @@ export const DeepSeekChatCompleteResponseTransform: (
         },
         finish_reason: transformFinishReason(
           c.finish_reason as DEEPSEEK_STOP_REASON,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
         ),
       })),
       usage: {
@@ -200,13 +196,13 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: any,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   _fallbackId,
   _streamState,
   strictOpenAiCompliance,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -218,7 +214,7 @@ export const DeepSeekChatCompleteStreamChunkTransform: (
   const finishReason = parsedChunk.choices[0].finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason as DEEPSEEK_STOP_REASON,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
       )
     : null;
   return (

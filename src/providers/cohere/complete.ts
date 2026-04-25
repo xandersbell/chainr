@@ -105,7 +105,7 @@ export interface CohereStreamChunk {
 
 export const CohereCompleteResponseTransform: (
   response: CohereCompleteResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     return generateErrorResponse(
@@ -115,7 +115,7 @@ export const CohereCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      COHERE
+      COHERE,
     );
   }
 
@@ -139,13 +139,13 @@ export const CohereCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, boolean>,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -166,12 +166,10 @@ export const CohereCompleteStreamChunkTransform: (
       provider: COHERE,
       choices: [
         {
-          text:
-            parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
+          text: parsedChunk.response?.generations?.[0]?.text ?? parsedChunk.text,
           index: parsedChunk.index ?? 0,
           logprobs: null,
-          finish_reason:
-            parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
+          finish_reason: parsedChunk.response?.generations?.[0]?.finish_reason ?? null,
         },
       ],
     })}` + '\n\n'

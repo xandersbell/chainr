@@ -30,9 +30,9 @@ export interface SambaNovaStreamChunk {
   };
 }
 
-export const SambaNovaChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const SambaNovaChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

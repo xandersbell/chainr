@@ -1,10 +1,7 @@
 import { PALM } from '../../globals';
 import type { Params } from '../../types/requestBody';
 import type { PalmCompleteResponse } from '../../types/responseBody';
-import {
-  type GoogleErrorResponse,
-  GoogleErrorResponseTransform,
-} from '../google/chatComplete';
+import { type GoogleErrorResponse, GoogleErrorResponseTransform } from '../google/chatComplete';
 import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
@@ -63,13 +60,10 @@ export const PalmCompleteConfig: ProviderConfig = {
 
 export const PalmCompleteResponseTransform: (
   response: PalmCompleteResponse | GoogleErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse,
-      PALM
-    );
+    const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
     if (errorResponse) return errorResponse;
   }
 

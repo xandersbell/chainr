@@ -1,10 +1,7 @@
 import { NOMIC } from '../../globals';
 import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import type { ErrorResponse, ProviderConfig } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const NomicEmbedConfig: ProviderConfig = {
   model: {
@@ -50,7 +47,7 @@ export interface NomicErrorResponse {
 }
 
 export const NomicErrorResponseTransform: (
-  response: NomicValidationErrorResponse | NomicErrorResponse
+  response: NomicValidationErrorResponse | NomicErrorResponse,
 ) => ErrorResponse = (response) => {
   let firstError: Record<string, any> | undefined;
   let errorField: string | null = null;
@@ -73,22 +70,15 @@ export const NomicErrorResponseTransform: (
       param: null,
       code: null,
     },
-    NOMIC
+    NOMIC,
   );
 };
 
 export const NomicEmbedResponseTransform: (
-  response:
-    | NomicEmbedResponse
-    | NomicValidationErrorResponse
-    | NomicErrorResponse,
-  responseStatus: number
+  response: NomicEmbedResponse | NomicValidationErrorResponse | NomicErrorResponse,
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
-  if (
-    'detail' in response &&
-    responseStatus !== 200 &&
-    response.detail.length
-  ) {
+  if ('detail' in response && responseStatus !== 200 && response.detail.length) {
     return NomicErrorResponseTransform(response);
   }
 

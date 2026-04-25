@@ -1,11 +1,7 @@
 import { LATITUDE } from '../../globals';
 import type { Params } from '../../types/requestBody';
 
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -134,12 +130,12 @@ export const LatitudeChatCompleteResponseTransform: (
   response: LatitudeChatCompleteResponse | LatitudeErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance
+  strictOpenAiCompliance,
 ) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -149,7 +145,7 @@ export const LatitudeChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      LATITUDE
+      LATITUDE,
     );
   }
 
@@ -169,7 +165,7 @@ export const LatitudeChatCompleteResponseTransform: (
         },
         finish_reason: transformFinishReason(
           c.finish_reason as LATITUDE_STOP_REASON,
-          strictOpenAiCompliance
+          strictOpenAiCompliance,
         ),
       })),
       usage: {
@@ -188,13 +184,13 @@ export const LatitudeChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: any,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   _fallbackId,
   _streamState,
   strictOpenAiCompliance,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -206,7 +202,7 @@ export const LatitudeChatCompleteStreamChunkTransform: (
   const finishReason = parsedChunk.choices[0].finish_reason
     ? transformFinishReason(
         parsedChunk.choices[0].finish_reason as LATITUDE_STOP_REASON,
-        strictOpenAiCompliance
+        strictOpenAiCompliance,
       )
     : null;
   return (

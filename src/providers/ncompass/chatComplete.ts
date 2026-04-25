@@ -1,14 +1,7 @@
 import { NCOMPASS } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration might have to check on the max value of n
 
@@ -104,13 +97,9 @@ interface NCompassStreamChunk {
 
 export const NCompassChatCompleteResponseTransform: (
   response: ChatCompletionResponse | NCompassErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (
-    'detail' in response &&
-    responseStatus !== 200 &&
-    response.detail.length
-  ) {
+  if ('detail' in response && responseStatus !== 200 && response.detail.length) {
     let firstError: Record<string, any> | undefined;
     let errorField: string | null = null;
     let errorMessage: string | undefined;
@@ -132,7 +121,7 @@ export const NCompassChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      NCOMPASS
+      NCOMPASS,
     );
   }
 
@@ -162,9 +151,9 @@ export const NCompassChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, NCOMPASS);
 };
 
-export const NCompassChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const NCompassChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

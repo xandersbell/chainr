@@ -70,12 +70,10 @@ export const TogetherAICompleteResponseTransform: (
     | TogetherAICompleteResponse
     | TogetherAIErrorResponse
     | TogetherAIOpenAICompatibleErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = TogetherAIErrorResponseTransform(
-      response as TogetherAIErrorResponse
-    );
+    const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -103,9 +101,9 @@ export const TogetherAICompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, TOGETHER_AI);
 };
 
-export const TogetherAICompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const TogetherAICompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

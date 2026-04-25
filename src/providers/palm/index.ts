@@ -1,9 +1,6 @@
 import type { ProviderConfigs } from '../types';
 import PalmApiConfig from './api';
-import {
-  PalmChatCompleteConfig,
-  PalmChatCompleteResponseTransform,
-} from './chatComplete';
+import { PalmChatCompleteConfig, PalmChatCompleteResponseTransform } from './chatComplete';
 import { PalmCompleteConfig, PalmCompleteResponseTransform } from './complete';
 import { PalmEmbedConfig, PalmEmbedResponseTransform } from './embed';
 

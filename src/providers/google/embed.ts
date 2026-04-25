@@ -1,12 +1,9 @@
-import type { ErrorResponse, ProviderConfig } from '../types';
+import { GOOGLE } from '../../globals';
 import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
 import type { Params } from '../../types/requestBody';
-import { GOOGLE } from '../../globals';
-import {
-  type GoogleErrorResponse,
-  GoogleErrorResponseTransform,
-} from './chatComplete';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
+import { type GoogleErrorResponse, GoogleErrorResponseTransform } from './chatComplete';
 
 export const GoogleEmbedConfig: ProviderConfig = {
   input: {
@@ -50,19 +47,17 @@ export const GoogleEmbedResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse
-    );
+    const errorResposne = GoogleErrorResponseTransform(response as GoogleErrorResponse);
     if (errorResposne) return errorResposne;
   }
 

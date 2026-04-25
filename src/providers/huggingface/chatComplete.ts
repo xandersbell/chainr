@@ -1,10 +1,6 @@
 import { HUGGING_FACE } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import type { HuggingfaceErrorResponse } from './types';
 import { HuggingfaceErrorResponseTransform } from './utils';
@@ -93,7 +89,7 @@ export const HuggingfaceChatCompleteConfig: ProviderConfig = {
 
 export const HuggingfaceChatCompleteResponseTransform: (
   response: HuggingfaceChatCompleteResponse | HuggingfaceErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
     return HuggingfaceErrorResponseTransform(response, responseStatus);
@@ -110,25 +106,24 @@ export const HuggingfaceChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, HUGGING_FACE);
 };
 
-export const HuggingfaceChatCompleteStreamChunkTransform: (
-  response: string
-) => string | undefined = (responseChunk) => {
-  let chunk = responseChunk.trim();
-  if (chunk.startsWith('event: ping')) {
-    return;
-  }
+export const HuggingfaceChatCompleteStreamChunkTransform: (response: string) => string | undefined =
+  (responseChunk) => {
+    let chunk = responseChunk.trim();
+    if (chunk.startsWith('event: ping')) {
+      return;
+    }
 
-  chunk = chunk.replace(/^data: /, '');
-  chunk = chunk.trim();
-  if (chunk === '[DONE]') {
-    return 'data: [DONE]\n\n';
-  }
-  const parsedChunk = JSON.parse(chunk);
-  return (
-    `data: ${JSON.stringify({
-      ...parsedChunk,
-      id: 'portkey-' + crypto.randomUUID(),
-      provider: HUGGING_FACE,
-    })}` + '\n\n'
-  );
-};
+    chunk = chunk.replace(/^data: /, '');
+    chunk = chunk.trim();
+    if (chunk === '[DONE]') {
+      return 'data: [DONE]\n\n';
+    }
+    const parsedChunk = JSON.parse(chunk);
+    return (
+      `data: ${JSON.stringify({
+        ...parsedChunk,
+        id: 'portkey-' + crypto.randomUUID(),
+        provider: HUGGING_FACE,
+      })}` + '\n\n'
+    );
+  };

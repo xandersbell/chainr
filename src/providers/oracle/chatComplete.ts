@@ -1,25 +1,9 @@
-import { ORACLE } from '../../globals';
 import { transformUsingProviderConfig } from '../../core/providerRequest';
-import type {
-  CustomToolChoice,
-  Options,
-  Params,
-} from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
-import type {
-  ChatContent,
-  Message,
-  OracleMessageRole,
-  ToolDefinition,
-} from './types/ChatDetails';
+import { ORACLE } from '../../globals';
+import type { CustomToolChoice, Options, Params } from '../../types/requestBody';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
+import type { ChatContent, Message, OracleMessageRole, ToolDefinition } from './types/ChatDetails';
 import type {
   ChatChoice,
   OracleChatCompleteResponse,
@@ -35,11 +19,7 @@ export const OracleChatCompleteConfig: ProviderConfig = {
       param: 'chatRequest',
       required: true,
       transform: (params: Params, providerOptions: Options) => {
-        return transformUsingProviderConfig(
-          OracleChatDetailsConfig,
-          params,
-          providerOptions
-        );
+        return transformUsingProviderConfig(OracleChatDetailsConfig, params, providerOptions);
       },
     },
     {
@@ -260,12 +240,8 @@ export const OracleChatDetailsConfig: ProviderConfig = {
 export const OracleChatCompleteResponseTransform: (
   response: OracleChatCompleteResponse | OracleErrorResponse,
   responseStatus: number,
-  responseHeaders: Headers
-) => ChatCompletionResponse | ErrorResponse = (
-  response,
-  responseStatus,
-  responseHeaders
-) => {
+  responseHeaders: Headers,
+) => ChatCompletionResponse | ErrorResponse = (response, responseStatus, responseHeaders) => {
   if (responseStatus !== 200 && 'code' in response) {
     return generateErrorResponse(
       {
@@ -274,7 +250,7 @@ export const OracleChatCompleteResponseTransform: (
         param: null,
         code: response.code?.toString() || null,
       },
-      ORACLE
+      ORACLE,
     );
   }
 
@@ -288,15 +264,11 @@ export const OracleChatCompleteResponseTransform: (
       model: response.modelId,
       provider: ORACLE,
       choices: response.chatResponse.choices.map((choice: ChatChoice) => {
-        const content = choice.message?.content?.find(
-          (item) => item.type === 'TEXT'
-        )?.text;
+        const content = choice.message?.content?.find((item) => item.type === 'TEXT')?.text;
         return {
           index: choice.index,
           message: {
-            role: oracleToOpenAIRoleMap[
-              choice.message.role as OracleMessageRole
-            ],
+            role: oracleToOpenAIRoleMap[choice.message.role as OracleMessageRole],
             content,
           },
           finish_reason: choice.finishReason,
@@ -308,20 +280,14 @@ export const OracleChatCompleteResponseTransform: (
         total_tokens: response.chatResponse.usage?.totalTokens ?? 0,
         completion_tokens_details: {
           accepted_prediction_tokens:
-            response.chatResponse.usage?.completionTokensDetails
-              ?.acceptedPredictionTokens ?? 0,
-          audio_tokens:
-            response.chatResponse.usage?.completionTokensDetails?.audioTokens ??
-            0,
+            response.chatResponse.usage?.completionTokensDetails?.acceptedPredictionTokens ?? 0,
+          audio_tokens: response.chatResponse.usage?.completionTokensDetails?.audioTokens ?? 0,
           rejected_prediction_tokens:
-            response.chatResponse.usage?.completionTokensDetails
-              ?.rejectedPredictionTokens ?? 0,
+            response.chatResponse.usage?.completionTokensDetails?.rejectedPredictionTokens ?? 0,
         },
         prompt_tokens_details: {
-          audio_tokens:
-            response.chatResponse.usage?.promptTokensDetails?.audioTokens ?? 0,
-          cached_tokens:
-            response.chatResponse.usage?.promptTokensDetails?.cachedTokens ?? 0,
+          audio_tokens: response.chatResponse.usage?.promptTokensDetails?.audioTokens ?? 0,
+          cached_tokens: response.chatResponse.usage?.promptTokensDetails?.cachedTokens ?? 0,
         },
       },
     };
@@ -335,13 +301,13 @@ export const OracleChatCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: any,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   if (chunk.startsWith('event: ping')) {
@@ -387,12 +353,8 @@ export const OracleChatCompleteStreamChunkTransform: (
         {
           index: parsedChunk.index,
           delta: {
-            role: oracleToOpenAIRoleMap[
-              parsedChunk.message.role as OracleMessageRole
-            ],
-            content: parsedChunk.message?.content?.find(
-              (item) => item.type === 'TEXT'
-            )?.text,
+            role: oracleToOpenAIRoleMap[parsedChunk.message.role as OracleMessageRole],
+            content: parsedChunk.message?.content?.find((item) => item.type === 'TEXT')?.text,
           },
         },
       ],

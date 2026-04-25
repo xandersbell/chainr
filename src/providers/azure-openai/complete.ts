@@ -73,7 +73,7 @@ interface AzureOpenAICompleteResponse extends CompletionResponse {}
 
 export const AzureOpenAICompleteResponseTransform: (
   response: AzureOpenAICompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);

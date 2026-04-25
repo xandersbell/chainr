@@ -1,11 +1,8 @@
+import { WORKERS_AI } from '../../globals';
 import type { Params } from '../../types/requestBody';
 import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
-import { WORKERS_AI } from '../../globals';
 import { generateInvalidProviderResponseError } from '../utils';
-import {
-  type WorkersAiErrorResponse,
-  WorkersAiErrorResponseTransform,
-} from './utils';
+import { type WorkersAiErrorResponse, WorkersAiErrorResponseTransform } from './utils';
 
 export const WorkersAiCompleteConfig: ProviderConfig = {
   prompt: {
@@ -45,19 +42,17 @@ export const WorkersAiCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => CompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = WorkersAiErrorResponseTransform(
-      response as WorkersAiErrorResponse
-    );
+    const errorResponse = WorkersAiErrorResponseTransform(response as WorkersAiErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -87,13 +82,13 @@ export const WorkersAiCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | undefined = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
 

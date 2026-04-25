@@ -1,6 +1,6 @@
 import { COMETAPI } from '../../globals';
-import type { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
+import type { ParameterConfig, ProviderConfig } from '../types';
 
 const cometAPIModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;
 
@@ -28,9 +28,9 @@ interface CometAPIStreamChunk {
   system_fingerprint?: string | null;
 }
 
-export const CometAPIChatCompleteStreamChunkTransform: (
-  responseChunk: string
-) => string = (responseChunk) => {
+export const CometAPIChatCompleteStreamChunkTransform: (responseChunk: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
 
   if (!chunk) {

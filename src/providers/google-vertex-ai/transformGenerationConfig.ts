@@ -6,22 +6,19 @@ import type { EmbedInstancesData, PortkeyGeminiParams } from './types';
  */
 export function transformGenerationConfig(params: PortkeyGeminiParams) {
   const generationConfig: Record<string, any> = {};
-  if (params['temperature'] != null && params['temperature'] != undefined) {
+  if (params['temperature'] != null && params['temperature'] !== undefined) {
     generationConfig['temperature'] = params['temperature'];
   }
-  if (params['top_p'] != null && params['top_p'] != undefined) {
+  if (params['top_p'] != null && params['top_p'] !== undefined) {
     generationConfig['topP'] = params['top_p'];
   }
-  if (params['top_k'] != null && params['top_k'] != undefined) {
+  if (params['top_k'] != null && params['top_k'] !== undefined) {
     generationConfig['topK'] = params['top_k'];
   }
-  if (params['max_tokens'] != null && params['max_tokens'] != undefined) {
+  if (params['max_tokens'] != null && params['max_tokens'] !== undefined) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
-  if (
-    params['max_completion_tokens'] != null &&
-    params['max_completion_tokens'] != undefined
-  ) {
+  if (params['max_completion_tokens'] != null && params['max_completion_tokens'] !== undefined) {
     generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
   }
   if (params['stop']) {
@@ -35,31 +32,29 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   if (params['logprobs']) {
     generationConfig['responseLogprobs'] = params['logprobs'];
   }
-  if (params['top_logprobs'] != null && params['top_logprobs'] != undefined) {
+  if (params['top_logprobs'] != null && params['top_logprobs'] !== undefined) {
     generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
-  if (params['seed'] != null && params['seed'] != undefined) {
+  if (params['seed'] != null && params['seed'] !== undefined) {
     generationConfig['seed'] = params['seed'];
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     // Newer Gemini API supports native JSON Schema; use responseJsonSchema for direct passthrough
     generationConfig['responseJsonSchema'] =
-      (responseFormat as any)?.json_schema?.schema ??
-      (responseFormat as any)?.json_schema;
+      (responseFormat as any)?.json_schema?.schema ?? (responseFormat as any)?.json_schema;
   }
 
   if (params?.thinking) {
     const { budget_tokens, type } = params.thinking;
     const thinkingConfig: Record<string, any> = {};
-    thinkingConfig['include_thoughts'] =
-      type === 'enabled' && budget_tokens ? true : false;
+    thinkingConfig['include_thoughts'] = !!(type === 'enabled' && budget_tokens);
     thinkingConfig['thinking_budget'] = budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
   if (params.modalities) {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
-      modality.toUpperCase()
+      modality.toUpperCase(),
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {

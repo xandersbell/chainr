@@ -14,8 +14,7 @@ const MistralAIConfig: ProviderConfigs = {
   api: MistralAIAPIConfig,
   responseTransforms: {
     chatComplete: GetMistralAIChatCompleteResponseTransform(MISTRAL_AI),
-    'stream-chatComplete':
-      GetMistralAIChatCompleteStreamChunkTransform(MISTRAL_AI),
+    'stream-chatComplete': GetMistralAIChatCompleteStreamChunkTransform(MISTRAL_AI),
     embed: MistralAIEmbedResponseTransform,
   },
 };

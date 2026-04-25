@@ -10,6 +10,6 @@ export const CohereErrorResponseTransform = (response: CohereErrorResponse) => {
       param: null,
       code: null,
     },
-    COHERE
+    COHERE,
   );
 };

@@ -1,7 +1,6 @@
 import type { ProviderAPIConfig } from '../types';
 
-const DEFAULT_OVHCLOUD_BASE_URL =
-  'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1';
+const DEFAULT_OVHCLOUD_BASE_URL = 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1';
 
 const OVHcloudAPIConfig: ProviderAPIConfig = {
   getBaseURL: () => DEFAULT_OVHCLOUD_BASE_URL,

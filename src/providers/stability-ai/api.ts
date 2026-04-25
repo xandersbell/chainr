@@ -16,11 +16,7 @@ const StabilityAIAPIConfig: ProviderAPIConfig = {
   getEndpoint: ({ fn, gatewayRequestBodyJSON, providerOptions }) => {
     let mappedFn = fn;
     const { urlToFetch } = providerOptions;
-    if (
-      fn === 'proxy' &&
-      urlToFetch &&
-      urlToFetch?.indexOf('text-to-image') > -1
-    ) {
+    if (fn === 'proxy' && urlToFetch && urlToFetch?.indexOf('text-to-image') > -1) {
       mappedFn = 'imageGenerate';
     }
 

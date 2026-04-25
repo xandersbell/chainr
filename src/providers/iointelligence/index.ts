@@ -1,12 +1,12 @@
-import type { ProviderConfigs } from '../types';
-import IOIntelligenceAPIConfig from './api';
+import { IO_INTELLIGENCE } from '../../globals';
 import {
   chatCompleteParams,
+  createModelResponseParams,
   embedParams,
   responseTransformers,
-  createModelResponseParams,
 } from '../open-ai-base';
-import { IO_INTELLIGENCE } from '../../globals';
+import type { ProviderConfigs } from '../types';
+import IOIntelligenceAPIConfig from './api';
 
 const IOIntelligenceConfig: ProviderConfigs = {
   api: IOIntelligenceAPIConfig,

@@ -1,10 +1,7 @@
 import { AZURE_AI_INFERENCE } from '../../globals';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 
-export const AzureAIInferenceResponseTransform = (
-  response: any,
-  responseStatus: number
-) => {
+export const AzureAIInferenceResponseTransform = (response: any, responseStatus: number) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
   }
@@ -14,7 +11,7 @@ export const AzureAIInferenceResponseTransform = (
 
 export const AzureAIInferenceCreateSpeechResponseTransform = (
   response: any,
-  responseStatus: number
+  responseStatus: number,
 ) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
@@ -25,7 +22,7 @@ export const AzureAIInferenceCreateSpeechResponseTransform = (
 
 export const AzureAIInferenceCreateTranscriptionResponseTransform = (
   response: any,
-  responseStatus: number
+  responseStatus: number,
 ) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);
@@ -36,7 +33,7 @@ export const AzureAIInferenceCreateTranscriptionResponseTransform = (
 
 export const AzureAIInferenceCreateTranslationResponseTransform = (
   response: any,
-  responseStatus: number
+  responseStatus: number,
 ) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_AI_INFERENCE);

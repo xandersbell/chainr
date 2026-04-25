@@ -2,21 +2,18 @@
 // Changed google/types import to use the inlined enum from ../types
 
 import { ANTHROPIC_STOP_REASON } from '../anthropic/types';
+import { BEDROCK_CONVERSE_STOP_REASON, TITAN_STOP_REASON } from '../bedrock/types';
+import { COHERE_STOP_REASON } from '../cohere/types';
+import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
+import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
+import { LATITUDE_STOP_REASON } from '../latitude/types';
+import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
+import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
 import {
   FINISH_REASON,
   GOOGLE_GENERATE_CONTENT_FINISH_REASON,
   type PROVIDER_FINISH_REASON,
 } from '../types';
-import {
-  BEDROCK_CONVERSE_STOP_REASON,
-  TITAN_STOP_REASON,
-} from '../bedrock/types';
-import { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from '../google-vertex-ai/types';
-import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
-import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
-import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
-import { COHERE_STOP_REASON } from '../cohere/types';
-import { LATITUDE_STOP_REASON } from '../latitude/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // Anthropic
@@ -95,10 +92,7 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [LATITUDE_STOP_REASON.content_filter, FINISH_REASON.content_filter],
 ]);
 
-export const AnthropicFinishReasonMap = new Map<
-  PROVIDER_FINISH_REASON,
-  ANTHROPIC_STOP_REASON
->([
+export const AnthropicFinishReasonMap = new Map<PROVIDER_FINISH_REASON, ANTHROPIC_STOP_REASON>([
   [BEDROCK_CONVERSE_STOP_REASON.end_turn, ANTHROPIC_STOP_REASON.end_turn],
   [BEDROCK_CONVERSE_STOP_REASON.tool_use, ANTHROPIC_STOP_REASON.tool_use],
   [BEDROCK_CONVERSE_STOP_REASON.max_tokens, ANTHROPIC_STOP_REASON.max_tokens],

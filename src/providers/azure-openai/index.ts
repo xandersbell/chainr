@@ -1,21 +1,4 @@
-import type { ProviderConfigs } from '../types';
-import {
-  AzureOpenAICompleteConfig,
-  AzureOpenAICompleteResponseTransform,
-} from './complete';
-import {
-  AzureOpenAIEmbedConfig,
-  AzureOpenAIEmbedResponseTransform,
-} from './embed';
-import AzureOpenAIAPIConfig from './api';
-import {
-  AzureOpenAIChatCompleteConfig,
-  AzureOpenAIResponseTransform,
-} from './chatComplete';
-import {
-  AzureOpenAIFinetuneResponseTransform,
-  getAzureModelValue,
-} from './utils';
+import { AZURE_OPEN_AI } from '../../globals';
 import {
   createModelResponseParams,
   OpenAICreateModelResponseTransformer,
@@ -23,7 +6,12 @@ import {
   OpenAIGetModelResponseTransformer,
   OpenAIListInputItemsResponseTransformer,
 } from '../open-ai-base';
-import { AZURE_OPEN_AI } from '../../globals';
+import type { ProviderConfigs } from '../types';
+import AzureOpenAIAPIConfig from './api';
+import { AzureOpenAIChatCompleteConfig, AzureOpenAIResponseTransform } from './chatComplete';
+import { AzureOpenAICompleteConfig, AzureOpenAICompleteResponseTransform } from './complete';
+import { AzureOpenAIEmbedConfig, AzureOpenAIEmbedResponseTransform } from './embed';
+import { AzureOpenAIFinetuneResponseTransform, getAzureModelValue } from './utils';
 
 const AzureOpenAIConfig: ProviderConfigs = {
   complete: AzureOpenAICompleteConfig,
@@ -44,7 +32,7 @@ const AzureOpenAIConfig: ProviderConfigs = {
         param: 'model',
         transform: getAzureModelValue,
       },
-    }
+    },
   ),
   getModelResponse: {},
   deleteModelResponse: {},

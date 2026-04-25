@@ -10,10 +10,7 @@ import {
   FireworksAICompleteResponseTransform,
   FireworksAICompleteStreamChunkTransform,
 } from './complete';
-import {
-  FireworksAIEmbedConfig,
-  FireworksAIEmbedResponseTransform,
-} from './embed';
+import { FireworksAIEmbedConfig, FireworksAIEmbedResponseTransform } from './embed';
 
 const FireworksAIConfig: ProviderConfigs = {
   complete: FireworksAICompleteConfig,

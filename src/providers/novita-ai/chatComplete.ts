@@ -1,14 +1,7 @@
 import { NOVITA_AI } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -116,12 +109,12 @@ export interface NovitaAIChatCompletionStreamChunk {
 }
 
 export const NovitaAIErrorResponseTransform: (
-  response: NovitaAIErrorResponse | NovitaAIOpenAICompatibleErrorResponse
+  response: NovitaAIErrorResponse | NovitaAIOpenAICompatibleErrorResponse,
 ) => ErrorResponse | false = (response) => {
   if ('error' in response && typeof response.error === 'string') {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },
-      NOVITA_AI
+      NOVITA_AI,
     );
   }
 
@@ -133,7 +126,7 @@ export const NovitaAIErrorResponseTransform: (
         param: response.error?.param || null,
         code: response.error?.code || null,
       },
-      NOVITA_AI
+      NOVITA_AI,
     );
   }
 
@@ -145,7 +138,7 @@ export const NovitaAIErrorResponseTransform: (
         param: null,
         code: null,
       },
-      NOVITA_AI
+      NOVITA_AI,
     );
   }
 
@@ -157,12 +150,10 @@ export const NovitaAIChatCompleteResponseTransform: (
     | NovitaAIChatCompleteResponse
     | NovitaAIErrorResponse
     | NovitaAIOpenAICompatibleErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = NovitaAIErrorResponseTransform(
-      response as NovitaAIErrorResponse
-    );
+    const errorResponse = NovitaAIErrorResponseTransform(response as NovitaAIErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -202,9 +193,9 @@ export const NovitaAIChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, NOVITA_AI);
 };
 
-export const NovitaAIChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const NovitaAIChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

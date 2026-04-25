@@ -1,3 +1,11 @@
+import { GOOGLE_VERTEX_AI } from '../../globals';
+import type { Params } from '../../types/requestBody';
+import {
+  GetMistralAIChatCompleteResponseTransform,
+  GetMistralAIChatCompleteStreamChunkTransform,
+  MistralAIChatCompleteConfig,
+} from '../mistral-ai/chatComplete';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import type { ProviderConfigs } from '../types';
 import VertexApiConfig, { GoogleApiConfig } from './api';
 import {
@@ -12,20 +20,12 @@ import {
   VertexLlamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
 import { GoogleEmbedConfig, GoogleEmbedResponseTransform } from './embed';
-import { getModelAndProvider } from './utils';
-import { chatCompleteParams, responseTransformers } from '../open-ai-base';
-import { GOOGLE_VERTEX_AI } from '../../globals';
-import type { Params } from '../../types/requestBody';
 import {
   VertexAnthropicMessagesConfig,
   VertexAnthropicMessagesResponseTransform,
 } from './messages';
 import { VertexAnthropicMessagesCountTokensConfig } from './messagesCountTokens';
-import {
-  GetMistralAIChatCompleteResponseTransform,
-  GetMistralAIChatCompleteStreamChunkTransform,
-  MistralAIChatCompleteConfig,
-} from '../mistral-ai/chatComplete';
+import { getModelAndProvider } from './utils';
 
 const VertexConfig: ProviderConfigs = {
   api: VertexApiConfig,
@@ -56,8 +56,7 @@ const VertexConfig: ProviderConfigs = {
           messages: VertexAnthropicMessagesConfig,
           messagesCountTokens: VertexAnthropicMessagesCountTokensConfig,
           responseTransforms: {
-            'stream-chatComplete':
-              VertexAnthropicChatCompleteStreamChunkTransform,
+            'stream-chatComplete': VertexAnthropicChatCompleteStreamChunkTransform,
             chatComplete: VertexAnthropicChatCompleteResponseTransform,
             messages: VertexAnthropicMessagesResponseTransform,
           },
@@ -84,7 +83,7 @@ const VertexConfig: ProviderConfigs = {
                   return _model?.replace('endpoints.', '');
                 },
               },
-            }
+            },
           ),
           api: GoogleApiConfig,
           responseTransforms: {
@@ -98,10 +97,8 @@ const VertexConfig: ProviderConfigs = {
           chatComplete: MistralAIChatCompleteConfig,
           api: GoogleApiConfig,
           responseTransforms: {
-            chatComplete:
-              GetMistralAIChatCompleteResponseTransform(GOOGLE_VERTEX_AI),
-            'stream-chatComplete':
-              GetMistralAIChatCompleteStreamChunkTransform(GOOGLE_VERTEX_AI),
+            chatComplete: GetMistralAIChatCompleteResponseTransform(GOOGLE_VERTEX_AI),
+            'stream-chatComplete': GetMistralAIChatCompleteStreamChunkTransform(GOOGLE_VERTEX_AI),
           },
         };
       default:

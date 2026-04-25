@@ -2,17 +2,17 @@ import { AI21, ANTHROPIC, COHERE } from '../../globals';
 import type { ProviderConfigs } from '../types';
 import BedrockAPIConfig from './api';
 import {
-  BedrockConverseChatCompleteConfig,
-  BedrockChatCompleteStreamChunkTransform,
-  BedrockChatCompleteResponseTransform,
-  BedrockCohereChatCompleteConfig,
-  BedrockCohereChatCompleteStreamChunkTransform,
-  BedrockCohereChatCompleteResponseTransform,
   BedrockAI21ChatCompleteConfig,
   BedrockAI21ChatCompleteResponseTransform,
-  BedrockConverseAnthropicChatCompleteConfig,
-  BedrockConverseCohereChatCompleteConfig,
+  BedrockChatCompleteResponseTransform,
+  BedrockChatCompleteStreamChunkTransform,
+  BedrockCohereChatCompleteConfig,
+  BedrockCohereChatCompleteResponseTransform,
+  BedrockCohereChatCompleteStreamChunkTransform,
   BedrockConverseAI21ChatCompleteConfig,
+  BedrockConverseAnthropicChatCompleteConfig,
+  BedrockConverseChatCompleteConfig,
+  BedrockConverseCohereChatCompleteConfig,
 } from './chatComplete';
 import {
   BedrockAI21CompleteConfig,
@@ -34,6 +34,11 @@ import {
   BedrockTitanCompleteStreamChunkTransform,
 } from './complete';
 import {
+  BedrockAnthropicMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensResponseTransform,
+} from './countTokens';
+import {
   BedrockCohereEmbedConfig,
   BedrockCohereEmbedResponseTransform,
   BedrockTitanEmbedConfig,
@@ -45,11 +50,6 @@ import {
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
 } from './messages';
-import {
-  BedrockAnthropicMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensConfig,
-  BedrockConverseMessageCountTokensResponseTransform,
-} from './countTokens';
 import { getBedrockModelWithoutRegion } from './utils';
 
 const BedrockConfig: ProviderConfigs = {
@@ -95,8 +95,7 @@ const BedrockConfig: ProviderConfigs = {
             config.chatComplete = BedrockCohereChatCompleteConfig;
             config.responseTransforms['stream-chatComplete'] =
               BedrockCohereChatCompleteStreamChunkTransform;
-            config.responseTransforms.chatComplete =
-              BedrockCohereChatCompleteResponseTransform;
+            config.responseTransforms.chatComplete = BedrockCohereChatCompleteResponseTransform;
           }
           break;
         case 'meta':
@@ -142,8 +141,7 @@ const BedrockConfig: ProviderConfigs = {
           };
           if (['j2-mid-v1', 'j2-ultra-v1'].includes(model)) {
             config.chatComplete = BedrockAI21ChatCompleteConfig;
-            config.responseTransforms.chatComplete =
-              BedrockAI21ChatCompleteResponseTransform;
+            config.responseTransforms.chatComplete = BedrockAI21ChatCompleteResponseTransform;
           }
           break;
         case 'stability':
@@ -182,8 +180,7 @@ const BedrockConfig: ProviderConfigs = {
           'stream-messages': BedrockConverseMessagesStreamChunkTransform,
         }),
         ...(!config.responseTransforms?.messagesCountTokens && {
-          messagesCountTokens:
-            BedrockConverseMessageCountTokensResponseTransform,
+          messagesCountTokens: BedrockConverseMessageCountTokensResponseTransform,
         }),
       };
     }

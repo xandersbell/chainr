@@ -79,13 +79,7 @@ export interface CohereCreateBatchResponse {
 
 export interface CohereBatch {
   job_id: string;
-  status:
-    | string
-    | 'processing'
-    | 'complete'
-    | 'cancelling'
-    | 'cancelled'
-    | 'failed';
+  status: string | 'processing' | 'complete' | 'cancelling' | 'cancelled' | 'failed';
   created_at: string;
   input_dataset_id: string;
   model: string;

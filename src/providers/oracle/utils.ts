@@ -2,10 +2,7 @@ import type { OpenAIMessageRole } from '../../types/requestBody';
 import { CryptoUtils } from '../../utils/CryptoUtils';
 import type { OracleMessageRole } from './types/ChatDetails';
 
-export const openAIToOracleRoleMap: Record<
-  OpenAIMessageRole,
-  OracleMessageRole
-> = {
+export const openAIToOracleRoleMap: Record<OpenAIMessageRole, OracleMessageRole> = {
   system: 'SYSTEM',
   user: 'USER',
   assistant: 'ASSISTANT',
@@ -14,10 +11,7 @@ export const openAIToOracleRoleMap: Record<
   function: 'TOOL',
 };
 
-export const oracleToOpenAIRoleMap: Record<
-  OracleMessageRole,
-  OpenAIMessageRole
-> = {
+export const oracleToOpenAIRoleMap: Record<OracleMessageRole, OpenAIMessageRole> = {
   SYSTEM: 'system',
   USER: 'user',
   ASSISTANT: 'assistant',
@@ -44,10 +38,7 @@ export class OCIRequestSigner {
 
   constructor(config: OCIConfig) {
     this.config = config;
-    this.privateKey = CryptoUtils.loadPrivateKey(
-      config.privateKey,
-      config.keyPassphrase
-    );
+    this.privateKey = CryptoUtils.loadPrivateKey(config.privateKey, config.keyPassphrase);
   }
 
   /**
@@ -61,7 +52,7 @@ export class OCIRequestSigner {
     method: string,
     url: string,
     body?: string,
-    additionalHeaders?: SigningHeaders
+    additionalHeaders?: SigningHeaders,
   ): Promise<SigningHeaders> {
     // Parse URL to extract host and path
     let host: string;
@@ -92,9 +83,7 @@ export class OCIRequestSigner {
 
     // Add request target
     const escapedTarget = encodeURI(path);
-    signingStringParts.push(
-      `(request-target): ${method.toLowerCase()} ${escapedTarget}`
-    );
+    signingStringParts.push(`(request-target): ${method.toLowerCase()} ${escapedTarget}`);
     signingStringParts.push(`date: ${date}`);
     signingStringParts.push(`host: ${host}`);
 

@@ -1,10 +1,6 @@
 import { TOGETHER_AI } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -92,8 +88,7 @@ export interface TogetherAIErrorResponse {
   type?: string;
 }
 
-export interface TogetherAIOpenAICompatibleErrorResponse
-  extends ErrorResponse {}
+export interface TogetherAIOpenAICompatibleErrorResponse extends ErrorResponse {}
 
 export interface TogetherAIChatCompletionStreamChunk {
   id: string;
@@ -110,12 +105,12 @@ export interface TogetherAIChatCompletionStreamChunk {
 }
 
 export const TogetherAIErrorResponseTransform: (
-  response: TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse
+  response: TogetherAIErrorResponse | TogetherAIOpenAICompatibleErrorResponse,
 ) => ErrorResponse | false = (response) => {
   if ('error' in response && typeof response.error === 'string') {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },
-      TOGETHER_AI
+      TOGETHER_AI,
     );
   }
 
@@ -127,7 +122,7 @@ export const TogetherAIErrorResponseTransform: (
         param: response.error?.param || null,
         code: response.error?.code || null,
       },
-      TOGETHER_AI
+      TOGETHER_AI,
     );
   }
 
@@ -139,7 +134,7 @@ export const TogetherAIErrorResponseTransform: (
         param: null,
         code: null,
       },
-      TOGETHER_AI
+      TOGETHER_AI,
     );
   }
 
@@ -155,19 +150,17 @@ export const TogetherAIChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = TogetherAIErrorResponseTransform(
-      response as TogetherAIErrorResponse
-    );
+    const errorResponse = TogetherAIErrorResponseTransform(response as TogetherAIErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -195,7 +188,7 @@ export const TogetherAIChatCompleteResponseTransform: (
           logprobs: null,
           finish_reason: transformFinishReason(
             choice.finish_reason as TOGETHER_AI_FINISH_REASON,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
           ),
         };
       }),
@@ -215,13 +208,13 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: any,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string = (
   responseChunk,
   _fallbackId,
   _streamState,
   strictOpenAiCompliance,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -231,10 +224,7 @@ export const TogetherAIChatCompleteStreamChunkTransform: (
   }
   const parsedChunk: TogetherAIChatCompletionStreamChunk = JSON.parse(chunk);
   const finishReason = parsedChunk.choices[0]?.finish_reason
-    ? transformFinishReason(
-        parsedChunk.choices[0].finish_reason,
-        strictOpenAiCompliance
-      )
+    ? transformFinishReason(parsedChunk.choices[0].finish_reason, strictOpenAiCompliance)
     : null;
   return (
     `data: ${JSON.stringify({

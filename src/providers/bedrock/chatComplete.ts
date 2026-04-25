@@ -1,17 +1,12 @@
+import { BEDROCK, fileExtensionMimeTypeMap, imagesMimeTypes, videoMimeTypes } from '../../globals';
 import {
-  BEDROCK,
-  fileExtensionMimeTypeMap,
-  imagesMimeTypes,
-  videoMimeTypes,
-} from '../../globals';
-import {
-  type Message,
-  type Params,
-  type ToolCall,
-  SYSTEM_MESSAGE_ROLES,
   type ContentType,
-  type ToolChoiceObject,
+  type Message,
   type Options,
+  type Params,
+  SYSTEM_MESSAGE_ROLES,
+  type ToolCall,
+  type ToolChoiceObject,
 } from '../../types/requestBody';
 import type {
   ChatCompletionResponse,
@@ -74,16 +69,14 @@ export interface BedrockConverseAnthropicChatCompletionsParams
   anthropic_beta?: string | string[];
 }
 
-export interface BedrockConverseCohereChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+export interface BedrockConverseCohereChatCompletionsParams extends BedrockChatCompletionsParams {
   frequency_penalty?: number;
   presence_penalty?: number;
   logit_bias?: Record<string, number>;
   n?: number;
 }
 
-export interface BedrockConverseAI21ChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+export interface BedrockConverseAI21ChatCompletionsParams extends BedrockChatCompletionsParams {
   frequency_penalty?: number;
   presence_penalty?: number;
   frequencyPenalty?: number;
@@ -92,15 +85,11 @@ export interface BedrockConverseAI21ChatCompletionsParams
 }
 
 const getMessageTextContentArray = (
-  message: Message
+  message: Message,
 ): Array<{ text: string } | { cachePoint: { type: string } }> => {
   if (message.content && typeof message.content === 'object') {
-    const filteredContentMessages = message.content.filter(
-      (item) => item.type === 'text'
-    );
-    const finalContent: Array<
-      { text: string } | { cachePoint: { type: string } }
-    > = [];
+    const filteredContentMessages = message.content.filter((item) => item.type === 'text');
+    const finalContent: Array<{ text: string } | { cachePoint: { type: string } }> = [];
     filteredContentMessages.forEach((item) => {
       finalContent.push({
         text: item.text || '',
@@ -123,10 +112,7 @@ const getMessageTextContentArray = (
   ];
 };
 
-const transformAndAppendThinkingMessageItem = (
-  item: ContentType,
-  out: any[]
-) => {
+const transformAndAppendThinkingMessageItem = (item: ContentType, out: any[]) => {
   if (item.type === 'thinking') {
     out.push({
       reasoningContent: {
@@ -146,15 +132,13 @@ const transformAndAppendThinkingMessageItem = (
 };
 
 const getMessageContent = (message: Message) => {
-  if (!message.content && !message.tool_calls && !message.tool_call_id)
-    return [];
+  if (!message.content && !message.tool_calls && !message.tool_call_id) return [];
   if (message.role === 'tool') {
     const toolResultContent = getMessageTextContentArray(message);
     return [
       {
         toolResult: {
-          ...(toolResultContent.length &&
-          (toolResultContent[0] as { text: string })?.text
+          ...(toolResultContent.length && (toolResultContent[0] as { text: string })?.text
             ? { content: toolResultContent }
             : { content: [] }), // Bedrock allows empty array but does not allow empty string in content.
           toolUseId: message.tool_call_id,
@@ -284,9 +268,8 @@ const getMessageContent = (message: Message) => {
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
   message.tool_calls?.forEach((toolCall: ToolCall) => {
     // Null-safe arguments: default to empty object when empty string
-    const args = toolCall.function.arguments?.length > 0
-      ? JSON.parse(toolCall.function.arguments)
-      : {};
+    const args =
+      toolCall.function.arguments?.length > 0 ? JSON.parse(toolCall.function.arguments) : {};
     out.push({
       toolUse: {
         name: toolCall.function.name,
@@ -328,7 +311,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
             prevRole = msg.role;
             return acc;
           },
-          []
+          [],
         );
         return combinedMessages;
       },
@@ -338,19 +321,15 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       required: false,
       transform: (params: BedrockChatCompletionsParams) => {
         if (!params.messages) return;
-        const systemMessages: Array<
-          { text: string } | { cachePoint: { type: string } }
-        > = params.messages.reduce(
-          (
-            acc: Array<{ text: string } | { cachePoint: { type: string } }>,
-            msg
-          ) => {
-            if (SYSTEM_MESSAGE_ROLES.includes(msg.role as any))
-              return acc.concat(...getMessageTextContentArray(msg));
-            return acc;
-          },
-          []
-        );
+        const systemMessages: Array<{ text: string } | { cachePoint: { type: string } }> =
+          params.messages.reduce(
+            (acc: Array<{ text: string } | { cachePoint: { type: string } }>, msg) => {
+              if (SYSTEM_MESSAGE_ROLES.includes(msg.role as any))
+                return acc.concat(...getMessageTextContentArray(msg));
+              return acc;
+            },
+            [],
+          );
         if (!systemMessages.length) return;
         return systemMessages;
       },
@@ -385,7 +364,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
       const toolConfig = {
         tools,
       };
-      let toolChoice ;
+      let toolChoice;
       if (params.tool_choice) {
         if (typeof params.tool_choice === 'object') {
           toolChoice = {
@@ -427,28 +406,23 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
   },
   max_tokens: {
     param: 'inferenceConfig',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformInferenceConfig(params),
+    transform: (params: BedrockChatCompletionsParams) => transformInferenceConfig(params),
   },
   max_completion_tokens: {
     param: 'inferenceConfig',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformInferenceConfig(params),
+    transform: (params: BedrockChatCompletionsParams) => transformInferenceConfig(params),
   },
   stop: {
     param: 'inferenceConfig',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformInferenceConfig(params),
+    transform: (params: BedrockChatCompletionsParams) => transformInferenceConfig(params),
   },
   temperature: {
     param: 'inferenceConfig',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformInferenceConfig(params),
+    transform: (params: BedrockChatCompletionsParams) => transformInferenceConfig(params),
   },
   top_p: {
     param: 'inferenceConfig',
-    transform: (params: BedrockChatCompletionsParams) =>
-      transformInferenceConfig(params),
+    transform: (params: BedrockChatCompletionsParams) => transformInferenceConfig(params),
   },
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
@@ -467,12 +441,12 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
 };
 
 export const BedrockErrorResponseTransform: (
-  response: BedrockErrorResponse
+  response: BedrockErrorResponse,
 ) => ErrorResponse | undefined = (response) => {
   if ('message' in response) {
     return generateErrorResponse(
       { message: response.message, type: null, param: null, code: null },
-      BEDROCK
+      BEDROCK,
     );
   }
 
@@ -509,19 +483,17 @@ export const BedrockChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResponse = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -554,17 +526,11 @@ export const BedrockChatCompleteResponseTransform: (
               content_blocks: contentBlocks,
             }),
           },
-          finish_reason: transformFinishReason(
-            response.stopReason,
-            strictOpenAiCompliance
-          ),
+          finish_reason: transformFinishReason(response.stopReason, strictOpenAiCompliance),
         },
       ],
       usage: {
-        prompt_tokens:
-          response.usage.inputTokens +
-          cacheReadInputTokens +
-          cacheWriteInputTokens,
+        prompt_tokens: response.usage.inputTokens + cacheReadInputTokens + cacheWriteInputTokens,
         completion_tokens: response.usage.outputTokens,
         total_tokens: response.usage.totalTokens, // contains the cache usage as well
         prompt_tokens_details: {
@@ -587,8 +553,7 @@ export const BedrockChatCompleteResponseTransform: (
           arguments: JSON.stringify(content?.toolUse?.input),
         },
       }));
-    if (toolCalls.length > 0)
-      responseObj.choices[0].message.tool_calls = toolCalls;
+    if (toolCalls.length > 0) responseObj.choices[0].message.tool_calls = toolCalls;
     return responseObj;
   }
 
@@ -601,13 +566,13 @@ export const BedrockChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: BedrockStreamState,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   streamState,
   strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   const parsedChunk: BedrockChatCompleteStreamChunk = JSON.parse(responseChunk);
   if (parsedChunk.message) {
@@ -635,17 +600,12 @@ export const BedrockChatCompleteStreamChunkTransform: (
           {
             index: 0,
             delta: {},
-            finish_reason: transformFinishReason(
-              streamState.stopReason,
-              strictOpenAiCompliance
-            ),
+            finish_reason: transformFinishReason(streamState.stopReason, strictOpenAiCompliance),
           },
         ],
         usage: {
           prompt_tokens:
-            parsedChunk.usage.inputTokens +
-            cacheReadInputTokens +
-            cacheWriteInputTokens,
+            parsedChunk.usage.inputTokens + cacheReadInputTokens + cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
           prompt_tokens_details: {
@@ -695,13 +655,10 @@ export const BedrockChatCompleteStreamChunkTransform: (
   if (parsedChunk.delta?.reasoningContent?.text)
     contentBlockObject.delta.thinking = parsedChunk.delta.reasoningContent.text;
   if (parsedChunk.delta?.reasoningContent?.signature)
-    contentBlockObject.delta.signature =
-      parsedChunk.delta.reasoningContent.signature;
-  if (parsedChunk.delta?.text)
-    contentBlockObject.delta.text = parsedChunk.delta.text;
+    contentBlockObject.delta.signature = parsedChunk.delta.reasoningContent.signature;
+  if (parsedChunk.delta?.text) contentBlockObject.delta.text = parsedChunk.delta.text;
   if (parsedChunk.delta?.reasoningContent?.redactedContent)
-    contentBlockObject.delta.data =
-      parsedChunk.delta.reasoningContent.redactedContent;
+    contentBlockObject.delta.data = parsedChunk.delta.reasoningContent.redactedContent;
 
   return `data: ${JSON.stringify({
     id: fallbackId,
@@ -732,58 +689,37 @@ export const BedrockConverseAnthropicChatCompleteConfig: ProviderConfig = {
   ...BedrockConverseChatCompleteConfig,
   additionalModelRequestFields: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   additional_model_request_fields: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   top_k: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_version: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   user: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   thinking: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
   anthropic_beta: {
     param: 'additionalModelRequestFields',
-    transform: (
-      params: BedrockConverseAnthropicChatCompletionsParams,
-      providerOptions?: Options
-    ) =>
+    transform: (params: BedrockConverseAnthropicChatCompletionsParams, providerOptions?: Options) =>
       transformAnthropicAdditionalModelRequestFields(params, providerOptions),
   },
 };
@@ -882,9 +818,9 @@ export const BedrockCohereChatCompleteConfig: ProviderConfig = {
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;
-          } else if (msg.role == 'user') {
+          } else if (msg.role === 'user') {
             prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
+          } else if (msg.role === 'assistant') {
             prompt += `assistant: ${msg.content}\n`;
           } else {
             prompt += `${msg.role}: ${msg.content}\n`;
@@ -957,29 +893,25 @@ export const BedrockCohereChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
   const model = gatewayRequest.model || '';
 
   if ('generations' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: Date.now().toString(),
       object: 'chat.completion',
@@ -1010,13 +942,13 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, any>,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string | string[] = (
   responseChunk,
   fallbackId,
   _streamState,
   _strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
@@ -1041,10 +973,8 @@ export const BedrockCohereChatCompleteStreamChunkTransform: (
           },
         ],
         usage: {
-          prompt_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
-          completion_tokens:
-            parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
+          prompt_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount,
+          completion_tokens: parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
           total_tokens:
             parsedChunk['amazon-bedrock-invocationMetrics'].inputTokenCount +
             parsedChunk['amazon-bedrock-invocationMetrics'].outputTokenCount,
@@ -1084,9 +1014,9 @@ export const BedrockAI21ChatCompleteConfig: ProviderConfig = {
         messages.forEach((msg, index) => {
           if (index === 0 && SYSTEM_MESSAGE_ROLES.includes(msg.role as any)) {
             prompt += `system: ${messages}\n`;
-          } else if (msg.role == 'user') {
+          } else if (msg.role === 'user') {
             prompt += `user: ${msg.content}\n`;
-          } else if (msg.role == 'assistant') {
+          } else if (msg.role === 'assistant') {
             prompt += `assistant: ${msg.content}\n`;
           } else {
             prompt += `${msg.role}: ${msg.content}\n`;
@@ -1151,27 +1081,23 @@ export const BedrockAI21ChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
   if ('completions' in response) {
-    const prompt_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
-    const completion_tokens =
-      Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
+    const prompt_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || 0;
+    const completion_tokens = Number(responseHeaders.get('X-Amzn-Bedrock-Output-Token-Count')) || 0;
     return {
       id: response.id.toString(),
       object: 'chat.completion',

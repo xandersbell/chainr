@@ -1,6 +1,6 @@
 import { OVHCLOUD } from '../../globals';
-import type { ParameterConfig, ProviderConfig } from '../types';
 import { OpenAIChatCompleteConfig } from '../openai/chatComplete';
+import type { ParameterConfig, ProviderConfig } from '../types';
 
 const ovhcloudModelConfig = OpenAIChatCompleteConfig.model as ParameterConfig;
 
@@ -28,9 +28,9 @@ interface OVHcloudStreamChunk {
   system_fingerprint?: string | null;
 }
 
-export const OVHcloudChatCompleteStreamChunkTransform: (
-  responseChunk: string
-) => string = (responseChunk) => {
+export const OVHcloudChatCompleteStreamChunkTransform: (responseChunk: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
 
   if (!chunk) {

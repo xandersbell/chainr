@@ -6,7 +6,7 @@ interface KlusterAIChatCompleteResponse extends ChatCompletionResponse {}
 
 export const KlusterAIResponseTransform: (
   response: KlusterAIChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, KLUSTER_AI);

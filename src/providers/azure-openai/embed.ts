@@ -30,7 +30,7 @@ interface AzureOpenAIEmbedResponse extends EmbedResponse {}
 
 export const AzureOpenAIEmbedResponseTransform: (
   response: AzureOpenAIEmbedResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, AZURE_OPEN_AI);

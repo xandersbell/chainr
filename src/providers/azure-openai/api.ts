@@ -20,20 +20,15 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
 
     if (azureAuthMode === 'entra') {
-      const {
-        azureEntraTenantId,
-        azureEntraClientId,
-        azureEntraClientSecret,
-        azureEntraScope,
-      } = providerOptions;
+      const { azureEntraTenantId, azureEntraClientId, azureEntraClientSecret, azureEntraScope } =
+        providerOptions;
       if (azureEntraTenantId && azureEntraClientId && azureEntraClientSecret) {
-        const scope =
-          azureEntraScope || 'https://cognitiveservices.azure.com/.default';
+        const scope = azureEntraScope || 'https://cognitiveservices.azure.com/.default';
         const accessToken = await getAccessTokenFromEntraId(
           azureEntraTenantId,
           azureEntraClientId,
           azureEntraClientSecret,
-          scope
+          scope,
         );
         return {
           Authorization: `Bearer ${accessToken}`,
@@ -42,12 +37,8 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     }
     if (azureAuthMode === 'managed') {
       const { azureManagedClientId, azureEntraScope } = providerOptions;
-      const resource =
-        azureEntraScope || 'https://cognitiveservices.azure.com/';
-      const accessToken = await getAzureManagedIdentityToken(
-        resource,
-        azureManagedClientId
-      );
+      const resource = azureEntraScope || 'https://cognitiveservices.azure.com/';
+      const accessToken = await getAzureManagedIdentityToken(resource, azureManagedClientId);
       return {
         Authorization: `Bearer ${accessToken}`,
       };
@@ -62,18 +53,17 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       const federatedTokenFile = Environment().AZURE_FEDERATED_TOKEN_FILE;
 
       if (authorityHost && tenantId && clientId && federatedTokenFile) {
-        const fs = await import('fs');
+        const fs = await import('node:fs');
         const federatedToken = fs.readFileSync(federatedTokenFile, 'utf8');
 
         if (federatedToken) {
-          const scope =
-            azureEntraScope || 'https://cognitiveservices.azure.com/.default';
+          const scope = azureEntraScope || 'https://cognitiveservices.azure.com/.default';
           const accessToken = await getAzureWorkloadIdentityToken(
             authorityHost,
             tenantId,
             clientId,
             federatedToken,
-            scope
+            scope,
           );
           return {
             Authorization: `Bearer ${accessToken}`,
@@ -128,9 +118,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
     let prefix = `/deployments/${deploymentId}`;
     const isAzureV1API = apiVersion?.trim() === 'v1';
 
-    const pathname = !isAzureV1API
-      ? urlObj.pathname.replace('/v1', '')
-      : urlObj.pathname;
+    const pathname = !isAzureV1API ? urlObj.pathname.replace('/v1', '') : urlObj.pathname;
 
     if (isAzureV1API) {
       prefix = '/v1';

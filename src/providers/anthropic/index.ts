@@ -11,10 +11,7 @@ import {
   AnthropicCompleteResponseTransform,
   AnthropicCompleteStreamChunkTransform,
 } from './complete';
-import {
-  AnthropicMessagesConfig,
-  AnthropicMessagesResponseTransform,
-} from './messages';
+import { AnthropicMessagesConfig, AnthropicMessagesResponseTransform } from './messages';
 
 const AnthropicConfig: ProviderConfigs = {
   complete: AnthropicCompleteConfig,

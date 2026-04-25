@@ -5,7 +5,7 @@ import type { HuggingfaceErrorResponse } from './types';
 
 export const HuggingfaceErrorResponseTransform: (
   response: HuggingfaceErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ErrorResponse = (response, responseStatus) => {
   return generateErrorResponse(
     {
@@ -14,6 +14,6 @@ export const HuggingfaceErrorResponseTransform: (
       param: null,
       code: responseStatus.toString(),
     },
-    HUGGING_FACE
+    HUGGING_FACE,
   );
 };

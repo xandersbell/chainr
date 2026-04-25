@@ -1,15 +1,8 @@
-import type { ErrorResponse, ProviderConfig } from '../types';
-import type {
-  EmbedParams,
-  EmbedResponse,
-  EmbedResponseData,
-} from '../../types/embedRequestBody';
-import type { Params } from '../../types/requestBody';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
 import { COHERE } from '../../globals';
+import type { EmbedParams, EmbedResponse, EmbedResponseData } from '../../types/embedRequestBody';
+import type { Params } from '../../types/requestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const CohereEmbedConfig: ProviderConfig = {
   model: {
@@ -66,8 +59,7 @@ export const CohereEmbedConfig: ProviderConfig = {
     required: false,
     transform: (params: any): string[] | undefined => {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      else if (typeof params.encoding_format === 'string')
-        return [params.encoding_format];
+      else if (typeof params.encoding_format === 'string') return [params.encoding_format];
       return undefined;
     },
   },
@@ -130,14 +122,14 @@ export const CohereEmbedResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
     return generateErrorResponse(
@@ -147,7 +139,7 @@ export const CohereEmbedResponseTransform: (
         param: null,
         code: null,
       },
-      COHERE
+      COHERE,
     );
   }
 
@@ -164,13 +156,9 @@ export const CohereEmbedResponseTransform: (
       }));
     }
     const inputTokens =
-      response.meta?.tokens?.input_tokens ??
-      response.meta?.billed_units?.input_tokens ??
-      0;
+      response.meta?.tokens?.input_tokens ?? response.meta?.billed_units?.input_tokens ?? 0;
     const outputTokens =
-      response.meta?.tokens?.output_tokens ??
-      response.meta?.billed_units?.output_tokens ??
-      0;
+      response.meta?.tokens?.output_tokens ?? response.meta?.billed_units?.output_tokens ?? 0;
     const totalTokens = inputTokens + outputTokens;
     return {
       object: 'list',
@@ -210,9 +198,7 @@ interface CohereEmbedResponseBatch {
   };
 }
 
-export const CohereEmbedResponseTransformBatch = (
-  response: CohereEmbedResponseBatch
-) => {
+export const CohereEmbedResponseTransformBatch = (response: CohereEmbedResponseBatch) => {
   return {
     id: response.id,
     custom_id: response.custom_id,

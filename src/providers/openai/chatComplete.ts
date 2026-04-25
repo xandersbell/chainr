@@ -1,10 +1,6 @@
 import { ANTHROPIC, OPEN_AI } from '../../globals';
 import type { ContentBlockChunk } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { OpenAIErrorResponseTransform } from './utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
@@ -138,7 +134,7 @@ export interface OpenAIChatCompleteResponse extends ChatCompletionResponse {
 
 export const OpenAIChatCompleteResponseTransform: (
   response: OpenAIChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, OPEN_AI);
@@ -156,7 +152,7 @@ export const OpenAIChatCompleteResponseTransform: (
  */
 export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   response: OpenAIChatCompleteResponse,
-  provider: string
+  provider: string,
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, system_fingerprint, choices, citations } = response;
@@ -170,13 +166,11 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
   } = response.usage || {};
 
   let total_tokens;
-  if (prompt_tokens && completion_tokens)
-    total_tokens = prompt_tokens + completion_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
 
   const shouldSendCacheUsage =
     provider === ANTHROPIC &&
-    (Number.isInteger(cache_read_input_tokens) ||
-      Number.isInteger(cache_creation_input_tokens));
+    (Number.isInteger(cache_read_input_tokens) || Number.isInteger(cache_creation_input_tokens));
 
   const streamChunkTemplate: Record<string, any> = {
     id,
@@ -200,10 +194,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
 
   for (const [index, choice] of choices.entries()) {
     if (choice.message?.content_blocks) {
-      for (const [
-        contentBlockIndex,
-        contentBlock,
-      ] of choice.message.content_blocks.entries()) {
+      for (const [contentBlockIndex, contentBlock] of choice.message.content_blocks.entries()) {
         const contentBlockDelta: ContentBlockChunk = {
           ...contentBlock,
         } as ContentBlockChunk;
@@ -231,7 +222,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                     },
                   },
                 ],
-              })}\n\n`
+              })}\n\n`,
             );
           }
         } else if (contentBlockDelta.thinking) {
@@ -256,7 +247,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                     },
                   },
                 ],
-              })}\n\n`
+              })}\n\n`,
             );
           }
           streamChunkArray.push(
@@ -278,7 +269,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                   },
                 },
               ],
-            })}\n\n`
+            })}\n\n`,
           );
         } else if (contentBlockDelta.data) {
           for (let i = 0; i < contentBlockDelta.data.length; i += 500) {
@@ -302,22 +293,15 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                     },
                   },
                 ],
-              })}\n\n`
+              })}\n\n`,
             );
           }
         }
       }
     }
 
-    if (
-      choice.message &&
-      choice.message.tool_calls &&
-      choice.message.tool_calls.length
-    ) {
-      for (const [
-        toolCallIndex,
-        toolCall,
-      ] of choice.message.tool_calls.entries()) {
+    if (choice.message?.tool_calls?.length) {
+      for (const [toolCallIndex, toolCall] of choice.message.tool_calls.entries()) {
         const toolCallNameChunk = {
           index: toolCallIndex,
           id: toolCall.id,
@@ -348,7 +332,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
 
         streamChunkArray.push(
@@ -363,14 +347,13 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                 },
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       }
     }
 
     if (
-      choice.message &&
-      choice.message.content &&
+      choice.message?.content &&
       typeof choice.message.content === 'string' &&
       !choice.message.content_blocks
     ) {
@@ -394,7 +377,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
                 }),
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       });
     }
@@ -409,7 +392,7 @@ export const OpenAIChatCompleteJSONToStreamResponseTransform: (
             finish_reason: choice.finish_reason,
           },
         ],
-      })}\n\n`
+      })}\n\n`,
     );
   }
 

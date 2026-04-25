@@ -1,21 +1,16 @@
 // Adapted from Portkey's src/providers/utils.ts
 
 import { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import { FINISH_REASON, type ErrorResponse, type PROVIDER_FINISH_REASON } from './types';
-import {
-  AnthropicFinishReasonMap,
-  finishReasonMap,
-} from './utils/finishReasonMap';
+import { type ErrorResponse, FINISH_REASON, type PROVIDER_FINISH_REASON } from './types';
+import { AnthropicFinishReasonMap, finishReasonMap } from './utils/finishReasonMap';
 
 export const generateInvalidProviderResponseError: (
   response: Record<string, any>,
-  provider: string
+  provider: string,
 ) => ErrorResponse = (response, provider) => {
   return {
     error: {
-      message: `Invalid response received from ${provider}: ${JSON.stringify(
-        response
-      )}`,
+      message: `Invalid response received from ${provider}: ${JSON.stringify(response)}`,
       type: null,
       param: null,
       code: null,
@@ -31,7 +26,7 @@ export const generateErrorResponse: (
     param: string | null;
     code: string | null;
   },
-  provider: string
+  provider: string,
 ) => ErrorResponse = ({ message, type, param, code }, provider) => {
   return {
     error: {
@@ -68,7 +63,7 @@ export function splitString(input: string, separator: string): SplitResult {
 // Convert provider's finish reason to OpenAI format
 export const transformFinishReason = (
   finishReason?: PROVIDER_FINISH_REASON,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): FINISH_REASON | PROVIDER_FINISH_REASON => {
   if (!finishReason) return FINISH_REASON.stop;
   if (!strictOpenAiCompliance) return finishReason;
@@ -81,7 +76,7 @@ export const transformFinishReason = (
 
 // Convert provider's finish reason to Anthropic format
 export const transformToAnthropicStopReason = (
-  finishReason?: PROVIDER_FINISH_REASON
+  finishReason?: PROVIDER_FINISH_REASON,
 ): ANTHROPIC_STOP_REASON => {
   if (!finishReason) return ANTHROPIC_STOP_REASON.end_turn;
   const transformedFinishReason = AnthropicFinishReasonMap.get(finishReason);

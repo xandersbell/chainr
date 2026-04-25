@@ -30,7 +30,7 @@ interface OpenAIEmbedResponse extends EmbedResponse {}
 
 export const OpenAIEmbedResponseTransform: (
   response: OpenAIEmbedResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, OPEN_AI);

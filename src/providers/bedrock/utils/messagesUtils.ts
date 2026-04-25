@@ -20,24 +20,20 @@ export const transformInferenceConfig = (params: BedrockMessagesParams) => {
 
 export const transformAnthropicAdditionalModelRequestFields = (
   params: BedrockMessagesParams,
-  providerOptions?: Options
+  providerOptions?: Options,
 ) => {
   const additionalModelRequestFields: Record<string, any> =
-    params.additionalModelRequestFields ||
-    params.additional_model_request_fields ||
-    {};
+    params.additionalModelRequestFields || params.additional_model_request_fields || {};
   if (params['top_k']) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['anthropic_version']) {
-    additionalModelRequestFields['anthropic_version'] =
-      params['anthropic_version'];
+    additionalModelRequestFields['anthropic_version'] = params['anthropic_version'];
   }
   if (params['thinking']) {
     additionalModelRequestFields['thinking'] = params['thinking'];
   }
-  const anthropicBeta =
-    providerOptions?.anthropicBeta || params['anthropic_beta'];
+  const anthropicBeta = providerOptions?.anthropicBeta || params['anthropic_beta'];
   if (anthropicBeta) {
     if (typeof anthropicBeta === 'string') {
       additionalModelRequestFields['anthropic_beta'] = anthropicBeta
@@ -51,7 +47,7 @@ export const transformAnthropicAdditionalModelRequestFields = (
 };
 
 export const transformToolsConfig = (params: BedrockMessagesParams) => {
-  let toolChoice ;
+  let toolChoice;
   const tools = [];
   if (params.tool_choice) {
     if (params.tool_choice.type === 'auto') {

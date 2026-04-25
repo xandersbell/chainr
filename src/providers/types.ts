@@ -3,16 +3,13 @@
 
 import type { Message, Options, Params } from '../types/requestBody';
 import type { ANTHROPIC_STOP_REASON } from './anthropic/types';
-import type {
-  BEDROCK_CONVERSE_STOP_REASON,
-  TITAN_STOP_REASON,
-} from './bedrock/types';
-import type { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
+import type { BEDROCK_CONVERSE_STOP_REASON, TITAN_STOP_REASON } from './bedrock/types';
+import type { COHERE_STOP_REASON } from './cohere/types';
 import type { DEEPSEEK_STOP_REASON } from './deepseek/types';
+import type { VERTEX_GEMINI_GENERATE_CONTENT_FINISH_REASON } from './google-vertex-ai/types';
+import type { LATITUDE_STOP_REASON } from './latitude/types';
 import type { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import type { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
-import type { COHERE_STOP_REASON } from './cohere/types';
-import type { LATITUDE_STOP_REASON } from './latitude/types';
 
 /**
  * Parameter configuration interface
@@ -127,18 +124,14 @@ export interface ProviderAPIConfigs {
   [key: string]: ProviderAPIConfig;
 }
 
-export type RequestHandler<
-  T = Params | FormData | ArrayBuffer | ReadableStream,
-> = (args: {
+export type RequestHandler<T = Params | FormData | ArrayBuffer | ReadableStream> = (args: {
   providerOptions: Options;
   requestURL: string;
   requestHeaders: Record<string, string>;
   requestBody: T;
 }) => Promise<Response>;
 
-export type RequestHandlers = Partial<
-  Record<endpointStrings, RequestHandler<any>>
->;
+export type RequestHandlers = Partial<Record<endpointStrings, RequestHandler<any>>>;
 
 /**
  * Complete provider config export (each provider's index.ts exports this type)
@@ -146,10 +139,7 @@ export type RequestHandlers = Partial<
 export interface ProviderConfigs {
   [key: string]: any;
   requestHandlers?: RequestHandlers;
-  getConfig?: (args: {
-    params: Params;
-    providerOptions: Options;
-  }) => any;
+  getConfig?: (args: { params: Params; providerOptions: Options }) => any;
 }
 
 export interface BaseResponse {

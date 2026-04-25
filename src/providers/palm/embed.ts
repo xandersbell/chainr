@@ -1,10 +1,7 @@
 import { PALM } from '../../globals';
 import type { EmbedResponse } from '../../types/embedRequestBody';
 import type { Params } from '../../types/requestBody';
-import {
-  type GoogleErrorResponse,
-  GoogleErrorResponseTransform,
-} from '../google/chatComplete';
+import { type GoogleErrorResponse, GoogleErrorResponseTransform } from '../google/chatComplete';
 import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
@@ -33,20 +30,17 @@ export const PalmEmbedResponseTransform: (
   _responseHeaders: Headers,
   _strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse,
-      PALM
-    );
+    const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse, PALM);
     if (errorResponse) return errorResponse;
   }
 

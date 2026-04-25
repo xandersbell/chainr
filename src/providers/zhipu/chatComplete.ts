@@ -1,14 +1,7 @@
 import { ZHIPU } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const ZhipuChatCompleteConfig: ProviderConfig = {
   model: {
@@ -86,7 +79,7 @@ interface ZhipuStreamChunk {
 
 export const ZhipuChatCompleteResponseTransform: (
   response: ZhipuChatCompleteResponse | ZhipuErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -96,7 +89,7 @@ export const ZhipuChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      ZHIPU
+      ZHIPU,
     );
   }
 
@@ -126,9 +119,9 @@ export const ZhipuChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, ZHIPU);
 };
 
-export const ZhipuChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const ZhipuChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

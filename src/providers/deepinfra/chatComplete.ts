@@ -1,14 +1,7 @@
 import { DEEPINFRA } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 // TODOS: this configuration might have to check on the max value of n
@@ -122,13 +115,9 @@ interface DeepInfraStreamChunk {
 
 export const DeepInfraChatCompleteResponseTransform: (
   response: DeepInfraChatCompleteResponse | DeepInfraErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
-  if (
-    'detail' in response &&
-    responseStatus !== 200 &&
-    response.detail.length
-  ) {
+  if ('detail' in response && responseStatus !== 200 && response.detail.length) {
     let firstError: Record<string, any> | undefined;
     let errorField: string | null = null;
     let errorMessage: string | undefined;
@@ -150,7 +139,7 @@ export const DeepInfraChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      DEEPINFRA
+      DEEPINFRA,
     );
   }
 
@@ -180,14 +169,12 @@ export const DeepInfraChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, DEEPINFRA);
 };
 
-export const DeepInfraChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const DeepInfraChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   // Matches a ping chunk `: ping - 2025-04-13 03:55:09.637341+00:00`
   if (
-    responseChunk.match(
-      /^:\s*ping\s*-\s*\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}$/
-    )
+    responseChunk.match(/^:\s*ping\s*-\s*\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}$/)
   ) {
     return '';
   }

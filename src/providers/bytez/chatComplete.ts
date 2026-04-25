@@ -1,7 +1,7 @@
 import { BYTEZ } from '../../globals';
 import type { ProviderConfig } from '../types';
-import type { BytezResponse } from './types';
 import { generateErrorResponse } from '../utils';
+import type { BytezResponse } from './types';
 
 const BytezInferenceChatCompleteConfig: ProviderConfig = {
   messages: {
@@ -37,7 +37,7 @@ function chatComplete(
   _responseHeaders: any,
   _strictOpenAiCompliance: boolean,
   _endpoint: string,
-  requestBody: any
+  requestBody: any,
 ) {
   const { error, output } = response;
 
@@ -49,7 +49,7 @@ function chatComplete(
         param: null,
         code: null,
       },
-      BYTEZ
+      BYTEZ,
     );
   }
 

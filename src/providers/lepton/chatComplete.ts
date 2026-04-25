@@ -1,10 +1,6 @@
 import { LEPTON } from '../../globals';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 
 interface LeptonChatCompleteResponse extends ChatCompletionResponse {}
 
@@ -164,7 +160,7 @@ interface LeptonStreamChunk {
 
 export const LeptonChatCompleteResponseTransform: (
   response: LeptonChatCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, LEPTON);
@@ -178,9 +174,7 @@ export const LeptonChatCompleteResponseTransform: (
   return response;
 };
 
-export const LeptonChatCompleteStreamChunkTransform = (
-  responseChunk: string
-) => {
+export const LeptonChatCompleteStreamChunkTransform = (responseChunk: string) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

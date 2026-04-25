@@ -19,7 +19,7 @@ interface ZhipuEmbedResponse extends EmbedResponse {}
 
 export const ZhipuEmbedResponseTransform: (
   response: ZhipuEmbedResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return generateErrorResponse(
@@ -29,7 +29,7 @@ export const ZhipuEmbedResponseTransform: (
         param: response.error.param,
         code: response.error.code,
       },
-      ZHIPU
+      ZHIPU,
     );
   }
 

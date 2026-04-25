@@ -11,6 +11,7 @@ import {
   WorkersAiCompleteStreamChunkTransform,
 } from './complete';
 import { WorkersAiEmbedConfig, WorkersAiEmbedResponseTransform } from './embed';
+
 const WorkersAiConfig: ProviderConfigs = {
   complete: WorkersAiCompleteConfig,
   chatComplete: WorkersAiChatCompleteConfig,

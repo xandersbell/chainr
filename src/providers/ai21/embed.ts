@@ -1,9 +1,9 @@
-import type { ErrorResponse, ProviderConfig } from '../types';
-import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
-import type { AI21ErrorResponse } from './complete';
 import { AI21 } from '../../globals';
+import type { EmbedParams, EmbedResponse } from '../../types/embedRequestBody';
+import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 import { AI21ErrorResponseTransform } from './chatComplete';
+import type { AI21ErrorResponse } from './complete';
 
 export const AI21EmbedConfig: ProviderConfig = {
   input: {
@@ -31,12 +31,10 @@ interface AI21EmbedResponse {
 
 export const AI21EmbedResponseTransform: (
   response: AI21EmbedResponse | AI21ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResposne = AI21ErrorResponseTransform(
-      response as AI21ErrorResponse
-    );
+    const errorResposne = AI21ErrorResponseTransform(response as AI21ErrorResponse);
     if (errorResposne) return errorResposne;
   }
   if ('results' in response) {

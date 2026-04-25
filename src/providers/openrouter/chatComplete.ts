@@ -1,15 +1,7 @@
 import { OPENROUTER } from '../../globals';
 import type { Message, Params } from '../../types/requestBody';
-import type {
-  ChatChoice,
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatChoice, ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 import { transformReasoningParams, transformUsageOptions } from './utils';
 
 export const OpenrouterChatCompleteConfig: ProviderConfig = {
@@ -163,14 +155,14 @@ export const OpenrouterChatCompleteResponseTransform: (
   _responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  _gatewayRequest: Params
+  _gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
-  _gatewayRequest
+  _gatewayRequest,
 ) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -180,7 +172,7 @@ export const OpenrouterChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      OPENROUTER
+      OPENROUTER,
     );
   }
 
@@ -237,13 +229,13 @@ export const OpenrouterChatCompleteStreamChunkTransform: (
   fallbackId: string,
   _streamState: Record<string, boolean>,
   _strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string = (
   responseChunk,
   _fallbackId,
   _streamState,
   strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');

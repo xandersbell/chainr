@@ -4,6 +4,7 @@ import {
   DeepbricksChatCompleteConfig,
   DeepbricksChatCompleteResponseTransform,
 } from './chatComplete';
+
 const DeepbricksConfig: ProviderConfigs = {
   api: DeepbricksAPIConfig,
   chatComplete: DeepbricksChatCompleteConfig,

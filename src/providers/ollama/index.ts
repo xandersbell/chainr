@@ -1,11 +1,11 @@
 import type { ProviderConfigs } from '../types';
-import { OllamaEmbedConfig, OllamaEmbedResponseTransform } from './embed';
 import OllamaAPIConfig from './api';
 import {
   OllamaChatCompleteConfig,
   OllamaChatCompleteResponseTransform,
   OllamaChatCompleteStreamChunkTransform,
 } from './chatComplete';
+import { OllamaEmbedConfig, OllamaEmbedResponseTransform } from './embed';
 
 const OllamaConfig: ProviderConfigs = {
   embed: OllamaEmbedConfig,

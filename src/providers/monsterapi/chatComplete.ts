@@ -1,14 +1,7 @@
 import { MONSTERAPI } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const MonsterAPIChatCompleteConfig: ProviderConfig = {
   top_k: {
@@ -67,7 +60,7 @@ export interface MonsterAPIErrorResponse {
 
 export const MonsterAPIChatCompleteResponseTransform: (
   response: ChatCompletionResponse | MonsterAPIErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, _responseStatus) => {
   if ('error' in response) {
     return generateErrorResponse(
@@ -77,7 +70,7 @@ export const MonsterAPIChatCompleteResponseTransform: (
         param: null,
         code: response.error.code.toString(),
       },
-      MONSTERAPI
+      MONSTERAPI,
     );
   }
 

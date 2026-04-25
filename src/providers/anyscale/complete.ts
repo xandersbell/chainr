@@ -89,15 +89,12 @@ interface AnyscaleCompleteStreamChunk {
 }
 
 export const AnyscaleCompleteResponseTransform: (
-  response:
-    | AnyscaleCompleteResponse
-    | AnyscaleErrorResponse
-    | AnyscaleValidationErrorResponse,
-  responseStatus: number
+  response: AnyscaleCompleteResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AnyscaleErrorResponseTransform(
-      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse
+      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
     );
     if (errorResposne) return errorResposne;
   }
@@ -117,9 +114,9 @@ export const AnyscaleCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, ANYSCALE);
 };
 
-export const AnyscaleCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const AnyscaleCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

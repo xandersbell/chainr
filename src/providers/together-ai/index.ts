@@ -10,10 +10,7 @@ import {
   TogetherAICompleteResponseTransform,
   TogetherAICompleteStreamChunkTransform,
 } from './complete';
-import {
-  TogetherAIEmbedConfig,
-  TogetherAIEmbedResponseTransform,
-} from './embed';
+import { TogetherAIEmbedConfig, TogetherAIEmbedResponseTransform } from './embed';
 
 const TogetherAIConfig: ProviderConfigs = {
   complete: TogetherAICompleteConfig,

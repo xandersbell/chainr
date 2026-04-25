@@ -86,7 +86,7 @@ export interface OpenAICompleteResponse extends CompletionResponse {
 
 export const OpenAICompleteResponseTransform: (
   response: OpenAICompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, OPEN_AI);
@@ -104,15 +104,14 @@ export const OpenAICompleteResponseTransform: (
  */
 export const OpenAICompleteJSONToStreamResponseTransform: (
   response: OpenAICompleteResponse,
-  provider: string
+  provider: string,
 ) => Array<string> = (response, provider) => {
   const streamChunkArray: Array<string> = [];
   const { id, model, choices } = response;
   const { prompt_tokens, completion_tokens } = response.usage || {};
 
   let total_tokens;
-  if (prompt_tokens && completion_tokens)
-    total_tokens = prompt_tokens + completion_tokens;
+  if (prompt_tokens && completion_tokens) total_tokens = prompt_tokens + completion_tokens;
 
   const streamChunkTemplate = {
     id: id,
@@ -143,7 +142,7 @@ export const OpenAICompleteJSONToStreamResponseTransform: (
                 text: word,
               },
             ],
-          })}\n\n`
+          })}\n\n`,
         );
       });
     }
@@ -158,7 +157,7 @@ export const OpenAICompleteJSONToStreamResponseTransform: (
             finish_reason: choice.finish_reason,
           },
         ],
-      })}\n\n`
+      })}\n\n`,
     );
   }
 

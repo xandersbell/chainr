@@ -4,9 +4,9 @@ import {
   type Message,
   type OpenAIMessageRole,
   type Params,
+  SYSTEM_MESSAGE_ROLES,
   type ToolCall,
   type ToolChoice,
-  SYSTEM_MESSAGE_ROLES,
 } from '../../types/requestBody';
 import { VERTEX_MODALITY } from '../google-vertex-ai/types';
 import {
@@ -30,29 +30,23 @@ import {
   generateInvalidProviderResponseError,
   transformFinishReason,
 } from '../utils';
-import type {
-  GOOGLE_GENERATE_CONTENT_FINISH_REASON,
-  PortkeyGeminiParams,
-} from './types';
+import type { GOOGLE_GENERATE_CONTENT_FINISH_REASON, PortkeyGeminiParams } from './types';
 
 const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   const generationConfig: Record<string, any> = {};
-  if (params['temperature'] != null && params['temperature'] != undefined) {
+  if (params['temperature'] != null && params['temperature'] !== undefined) {
     generationConfig['temperature'] = params['temperature'];
   }
-  if (params['top_p'] != null && params['top_p'] != undefined) {
+  if (params['top_p'] != null && params['top_p'] !== undefined) {
     generationConfig['topP'] = params['top_p'];
   }
-  if (params['top_k'] != null && params['top_k'] != undefined) {
+  if (params['top_k'] != null && params['top_k'] !== undefined) {
     generationConfig['topK'] = params['top_k'];
   }
-  if (params['max_tokens'] != null && params['max_tokens'] != undefined) {
+  if (params['max_tokens'] != null && params['max_tokens'] !== undefined) {
     generationConfig['maxOutputTokens'] = params['max_tokens'];
   }
-  if (
-    params['max_completion_tokens'] != null &&
-    params['max_completion_tokens'] != undefined
-  ) {
+  if (params['max_completion_tokens'] != null && params['max_completion_tokens'] !== undefined) {
     generationConfig['maxOutputTokens'] = params['max_completion_tokens'];
   }
   if (params['stop']) {
@@ -66,31 +60,29 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   if (params['logprobs']) {
     generationConfig['responseLogprobs'] = params['logprobs'];
   }
-  if (params['top_logprobs'] != null && params['top_logprobs'] != undefined) {
+  if (params['top_logprobs'] != null && params['top_logprobs'] !== undefined) {
     generationConfig['logprobs'] = params['top_logprobs']; // range 1-5, openai supports 1-20
   }
-  if (params['seed'] != null && params['seed'] != undefined) {
+  if (params['seed'] != null && params['seed'] !== undefined) {
     generationConfig['seed'] = params['seed'];
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
     const schema =
-      (responseFormat as any)?.json_schema?.schema ??
-      (responseFormat as any)?.json_schema;
+      (responseFormat as any)?.json_schema?.schema ?? (responseFormat as any)?.json_schema;
     recursivelyDeleteUnsupportedParameters(schema);
     generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
   if (params?.thinking) {
     const thinkingConfig: Record<string, any> = {};
     const { budget_tokens, type } = params.thinking;
-    thinkingConfig['include_thoughts'] =
-      type === 'enabled' && budget_tokens ? true : false;
+    thinkingConfig['include_thoughts'] = !!(type === 'enabled' && budget_tokens);
     thinkingConfig['thinking_budget'] = params.thinking.budget_tokens;
     generationConfig['thinking_config'] = thinkingConfig;
   }
   if (params.modalities) {
     generationConfig['responseModalities'] = params.modalities.map((modality) =>
-      modality.toUpperCase()
+      modality.toUpperCase(),
     );
   }
   if (params.reasoning_effort && params.reasoning_effort !== 'none') {
@@ -176,9 +168,7 @@ export interface GoogleToolConfig {
   };
 }
 
-export const transformOpenAIRoleToGoogleRole = (
-  role: OpenAIMessageRole
-): GoogleMessageRole => {
+export const transformOpenAIRoleToGoogleRole = (role: OpenAIMessageRole): GoogleMessageRole => {
   switch (role) {
     case 'assistant':
       return 'model';
@@ -194,10 +184,9 @@ export const transformOpenAIRoleToGoogleRole = (
 type GoogleToolChoiceType = 'AUTO' | 'ANY' | 'NONE';
 
 export const transformToolChoiceForGemini = (
-  tool_choice: ToolChoice
+  tool_choice: ToolChoice,
 ): GoogleToolChoiceType | undefined => {
-  if (typeof tool_choice === 'object' && tool_choice.type === 'function')
-    return 'ANY';
+  if (typeof tool_choice === 'object' && tool_choice.type === 'function') return 'ANY';
   if (typeof tool_choice === 'string') {
     switch (tool_choice) {
       case 'auto':
@@ -273,8 +262,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 if (!url) return;
 
                 if (url.startsWith('data:')) {
-                  const [mimeTypeWithPrefix, base64Image] =
-                    url.split(';base64,');
+                  const [mimeTypeWithPrefix, base64Image] = url.split(';base64,');
                   const mimeType = mimeTypeWithPrefix.split(':')[1];
 
                   parts.push({
@@ -314,8 +302,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
 
           // @NOTE: This takes care of the "Please ensure that multiturn requests alternate between user and model."
           // error that occurs when we have multiple user messages in a row.
-          const shouldCombineMessages =
-            lastRole === role && !params.model?.includes('vision');
+          const shouldCombineMessages = lastRole === role && !params.model?.includes('vision');
 
           if (shouldCombineMessages) {
             messages[messages.length - 1].parts.push(...parts);
@@ -333,8 +320,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       default: '',
       transform: (params: Params) => {
         // systemInstruction is only supported from gemini 1.5 models
-        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string))
-          return;
+        if (SYSTEM_INSTRUCTION_DISABLED_MODELS.includes(params.model as string)) return;
 
         const firstMessage = params.messages?.[0] || null;
 
@@ -424,9 +410,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
             tools.push(...transformGoogleTools(tool));
           } else {
             if (tool.function?.parameters) {
-              tool.function.parameters = transformGeminiToolParameters(
-                tool.function.parameters
-              );
+              tool.function.parameters = transformGeminiToolParameters(tool.function.parameters);
             }
             functionDeclarations.push(tool.function);
           }
@@ -443,13 +427,12 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
     default: (params: Params) => {
       const toolConfig = {} as GoogleToolConfig;
       const googleMapsTool = params.tools?.find(
-        (tool) =>
-          tool.function?.name === 'googleMaps' ||
-          tool.function?.name === 'google_maps'
+        (tool) => tool.function?.name === 'googleMaps' || tool.function?.name === 'google_maps',
       );
       if (googleMapsTool) {
-        toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
+        toolConfig.retrievalConfig = googleMapsTool.function?.parameters?.retrievalConfig as
+          | { latLng: { latitude: number; longitude: number }; languageCode?: string }
+          | undefined;
         return toolConfig;
       }
       return;
@@ -459,28 +442,23 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
       const toolConfig = {} as GoogleToolConfig;
       if (params.tool_choice) {
         const allowedFunctionNames: string[] = [];
-        if (
-          typeof params.tool_choice === 'object' &&
-          params.tool_choice.type === 'function'
-        ) {
+        if (typeof params.tool_choice === 'object' && params.tool_choice.type === 'function') {
           allowedFunctionNames.push(params.tool_choice.function.name);
         }
         toolConfig.function_calling_config = {
           mode: transformToolChoiceForGemini(params.tool_choice),
         };
         if (allowedFunctionNames.length > 0) {
-          toolConfig.function_calling_config.allowed_function_names =
-            allowedFunctionNames;
+          toolConfig.function_calling_config.allowed_function_names = allowedFunctionNames;
         }
       }
       const googleMapsTool = params.tools?.find(
-        (tool) =>
-          tool.function?.name === 'googleMaps' ||
-          tool.function?.name === 'google_maps'
+        (tool) => tool.function?.name === 'googleMaps' || tool.function?.name === 'google_maps',
       );
       if (googleMapsTool) {
-        toolConfig.retrievalConfig =
-          googleMapsTool.function?.parameters?.retrievalConfig as { latLng: { latitude: number; longitude: number }; languageCode?: string } | undefined;
+        toolConfig.retrievalConfig = googleMapsTool.function?.parameters?.retrievalConfig as
+          | { latLng: { latitude: number; longitude: number }; languageCode?: string }
+          | undefined;
       }
       return toolConfig;
     },
@@ -589,7 +567,7 @@ interface GoogleGenerateContentResponse {
 
 export const GoogleErrorResponseTransform: (
   response: GoogleErrorResponse,
-  provider?: string
+  provider?: string,
 ) => ErrorResponse | undefined = (response, provider = GOOGLE) => {
   if ('error' in response) {
     return generateErrorResponse(
@@ -599,7 +577,7 @@ export const GoogleErrorResponseTransform: (
         param: null,
         code: response.error.code ?? null,
       },
-      provider
+      provider,
     );
   }
 
@@ -610,17 +588,15 @@ export const GoogleChatCompleteResponseTransform: (
   response: GoogleGenerateContentResponse | GoogleErrorResponse,
   responseStatus: number,
   responseHeaders: Headers,
-  strictOpenAiCompliance: boolean
+  strictOpenAiCompliance: boolean,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
-  strictOpenAiCompliance
+  strictOpenAiCompliance,
 ) => {
   if (responseStatus !== 200) {
-    const errorResponse = GoogleErrorResponseTransform(
-      response as GoogleErrorResponse
-    );
+    const errorResponse = GoogleErrorResponseTransform(response as GoogleErrorResponse);
     if (errorResponse) return errorResponse;
   }
 
@@ -693,8 +669,7 @@ export const GoogleChatCompleteResponseTransform: (
             ...(!strictOpenAiCompliance &&
               contentBlocks.length && { content_blocks: contentBlocks }),
           };
-          const logprobsContent: Logprobs[] | null =
-            transformVertexLogprobs(generation);
+          const logprobsContent: Logprobs[] | null = transformVertexLogprobs(generation);
           let logprobs;
           if (logprobsContent) {
             logprobs = {
@@ -705,10 +680,7 @@ export const GoogleChatCompleteResponseTransform: (
             message: message,
             logprobs,
             index: generation.index ?? idx,
-            finish_reason: transformFinishReason(
-              generation.finishReason,
-              strictOpenAiCompliance
-            ),
+            finish_reason: transformFinishReason(generation.finishReason, strictOpenAiCompliance),
             ...(!strictOpenAiCompliance && generation.groundingMetadata
               ? { groundingMetadata: generation.groundingMetadata }
               : {}),
@@ -737,15 +709,9 @@ export const GoogleChatCompleteStreamChunkTransform: (
   response: string,
   fallbackId: string,
   streamState: any,
-  strictOpenAiCompliance: boolean
-) => string = (
-  responseChunk,
-  fallbackId,
-  streamState,
-  strictOpenAiCompliance
-) => {
-  streamState.containsChainOfThoughtMessage =
-    streamState?.containsChainOfThoughtMessage ?? false;
+  strictOpenAiCompliance: boolean,
+) => string = (responseChunk, fallbackId, streamState, strictOpenAiCompliance) => {
+  streamState.containsChainOfThoughtMessage = streamState?.containsChainOfThoughtMessage ?? false;
   let chunk = responseChunk.trim();
   if (chunk.startsWith('[')) {
     chunk = chunk.slice(1);
@@ -769,30 +735,23 @@ export const GoogleChatCompleteStreamChunkTransform: (
   if (parsedChunk.usageMetadata) {
     usageMetadata = {
       prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-      completion_tokens: (parsedChunk.usageMetadata.candidatesTokenCount ?? 0) + (parsedChunk.usageMetadata.thoughtsTokenCount ?? 0),
+      completion_tokens:
+        (parsedChunk.usageMetadata.candidatesTokenCount ?? 0) +
+        (parsedChunk.usageMetadata.thoughtsTokenCount ?? 0),
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
-        audio_tokens:
-          parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
-            (acc, curr) => {
-              if (curr.modality === VERTEX_MODALITY.AUDIO)
-                return acc + curr.tokenCount;
-              return acc;
-            },
-            0
-          ),
+        audio_tokens: parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce((acc, curr) => {
+          if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+          return acc;
+        }, 0),
       },
       prompt_tokens_details: {
         cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
-        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
-          (acc, curr) => {
-            if (curr.modality === VERTEX_MODALITY.AUDIO)
-              return acc + curr.tokenCount;
-            return acc;
-          },
-          0
-        ),
+        audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce((acc, curr) => {
+          if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
+          return acc;
+        }, 0),
       },
     };
   }
@@ -808,10 +767,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
         parsedChunk.candidates?.map((generation, index) => {
           let message: any = { role: 'assistant', content: '' };
           const finishReason = generation.finishReason
-            ? transformFinishReason(
-                generation.finishReason,
-                strictOpenAiCompliance
-              )
+            ? transformFinishReason(generation.finishReason, strictOpenAiCompliance)
             : null;
           if (generation.content?.parts[0]?.text) {
             const contentBlocks = [];

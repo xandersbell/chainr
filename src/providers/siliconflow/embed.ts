@@ -24,7 +24,7 @@ interface SiliconFlowEmbedResponse extends EmbedResponse {}
 
 export const SiliconFlowEmbedResponseTransform: (
   response: SiliconFlowEmbedResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return SiliconFlowErrorResponseTransform(response, SILICONFLOW);

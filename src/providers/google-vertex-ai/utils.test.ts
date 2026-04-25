@@ -457,11 +457,7 @@ describe('derefer', () => {
 
   it('inlines $ref for enum via $defs (status)', () => {
     expect(derefed.properties.status.type).toBe('string');
-    expect(derefed.properties.status.enum).toEqual([
-      'ACTIVE',
-      'INACTIVE',
-      'BANNED',
-    ]);
+    expect(derefed.properties.status.enum).toEqual(['ACTIVE', 'INACTIVE', 'BANNED']);
     expect(derefed.properties.status.format).toBeUndefined();
   });
 
@@ -493,12 +489,7 @@ describe('derefer', () => {
     const arr = petsAnyOf.find((x) => x.type === 'array');
     expect(arr).toBeDefined();
     expect(arr.items.type).toBe('object');
-    expect(arr.items.properties.species.enum).toEqual([
-      'dog',
-      'cat',
-      'bird',
-      'other',
-    ]);
+    expect(arr.items.properties.species.enum).toEqual(['dog', 'cat', 'bird', 'other']);
     expect(petsAnyOf.some((x) => x && x.type === 'null')).toBe(true);
   });
 
@@ -507,12 +498,7 @@ describe('derefer', () => {
     const arr = socialAnyOf.find((x) => x.type === 'array');
     expect(arr).toBeDefined();
     expect(arr.items.type).toBe('object');
-    expect(arr.items.properties.platform.enum).toEqual([
-      'twitter',
-      'linkedin',
-      'github',
-      'other',
-    ]);
+    expect(arr.items.properties.platform.enum).toEqual(['twitter', 'linkedin', 'github', 'other']);
     expect(socialAnyOf.some((x) => x && x.type === 'null')).toBe(true);
   });
 

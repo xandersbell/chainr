@@ -1,8 +1,8 @@
+import { LEMONFOX_AI } from '../../globals';
+import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import type { ProviderConfigs } from '../types';
 import LemonfoxAIAPIConfig from './api';
-import { chatCompleteParams, responseTransformers } from '../open-ai-base';
 import { LemonfoxAIChatCompleteStreamChunkTransform } from './chatComplete';
-import { LEMONFOX_AI } from '../../globals';
 
 const LemonfoxAIConfig: ProviderConfigs = {
   chatComplete: chatCompleteParams(
@@ -21,7 +21,7 @@ const LemonfoxAIConfig: ProviderConfigs = {
     ],
     {
       model: 'zephyr-chat',
-    }
+    },
   ),
   api: LemonfoxAIAPIConfig,
   responseTransforms: {

@@ -26,15 +26,12 @@ export const AnyscaleEmbedConfig: ProviderConfig = {
 export interface AnyscaleEmbedResponse extends EmbedResponse {}
 
 export const AnyscaleEmbedResponseTransform: (
-  response:
-    | AnyscaleEmbedResponse
-    | AnyscaleErrorResponse
-    | AnyscaleValidationErrorResponse,
-  responseStatus: number
+  response: AnyscaleEmbedResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
+  responseStatus: number,
 ) => EmbedResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AnyscaleErrorResponseTransform(
-      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse
+      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
     );
     if (errorResposne) return errorResposne;
   }

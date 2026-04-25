@@ -1,14 +1,7 @@
 import { ANYSCALE } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 // TODOS: this configuration does not enforce the maximum token limit for the input parameter. If you want to enforce this, you might need to add a custom validation function or a max property to the ParameterConfig interface, and then use it in the input configuration. However, this might be complex because the token count is not a simple length check, but depends on the specific tokenization method used by the model.
 
@@ -128,7 +121,7 @@ export interface AnyscaleStreamChunk {
 }
 
 export const AnyscaleErrorResponseTransform: (
-  response: AnyscaleValidationErrorResponse | AnyscaleErrorResponse
+  response: AnyscaleValidationErrorResponse | AnyscaleErrorResponse,
 ) => ErrorResponse | undefined = (response) => {
   if ('detail' in response && response.detail.length) {
     let firstError: Record<string, any> | undefined;
@@ -152,7 +145,7 @@ export const AnyscaleErrorResponseTransform: (
         param: null,
         code: null,
       },
-      ANYSCALE
+      ANYSCALE,
     );
   }
 
@@ -164,7 +157,7 @@ export const AnyscaleErrorResponseTransform: (
         param: null,
         code: null,
       },
-      ANYSCALE
+      ANYSCALE,
     );
   }
 
@@ -172,15 +165,12 @@ export const AnyscaleErrorResponseTransform: (
 };
 
 export const AnyscaleChatCompleteResponseTransform: (
-  response:
-    | AnyscaleChatCompleteResponse
-    | AnyscaleErrorResponse
-    | AnyscaleValidationErrorResponse,
-  responseStatus: number
+  response: AnyscaleChatCompleteResponse | AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
     const errorResposne = AnyscaleErrorResponseTransform(
-      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse
+      response as AnyscaleErrorResponse | AnyscaleValidationErrorResponse,
     );
     if (errorResposne) return errorResposne;
   }
@@ -200,9 +190,9 @@ export const AnyscaleChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, ANYSCALE);
 };
 
-export const AnyscaleChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const AnyscaleChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

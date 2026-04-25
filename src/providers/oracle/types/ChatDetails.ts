@@ -7,12 +7,7 @@
 
 import type { JsonSchema } from '../../../types/requestBody';
 
-export type OracleMessageRole =
-  | 'SYSTEM'
-  | 'ASSISTANT'
-  | 'USER'
-  | 'TOOL'
-  | 'DEVELOPER';
+export type OracleMessageRole = 'SYSTEM' | 'ASSISTANT' | 'USER' | 'TOOL' | 'DEVELOPER';
 
 export interface ChatDetails {
   /**
@@ -300,15 +295,8 @@ Example: '{\"6395\": 2, \"8134\": 1, \"21943\": 0.5, \"5923\": -100}'
     */
   logitBias?: any;
   prediction?: StaticContent;
-  responseFormat?:
-    | TextResponseFormat
-    | JsonObjectResponseFormat
-    | JsonSchemaResponseFormat;
-  toolChoice?:
-    | ToolChoiceFunction
-    | ToolChoiceNone
-    | ToolChoiceAuto
-    | ToolChoiceRequired;
+  responseFormat?: TextResponseFormat | JsonObjectResponseFormat | JsonSchemaResponseFormat;
+  toolChoice?: ToolChoiceFunction | ToolChoiceNone | ToolChoiceAuto | ToolChoiceRequired;
   /**
    * Whether to enable parallel function calling during tool use.
    */

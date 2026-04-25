@@ -1,6 +1,6 @@
 import { LEPTON } from '../../globals';
-import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 
 interface LeptonCompleteResponse extends CompletionResponse {}
 
@@ -154,7 +154,7 @@ interface LeptonCompleteStreamChunk {
 
 export const LeptonCompleteResponseTransform: (
   response: LeptonCompleteResponse | ErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200 && 'error' in response) {
     return OpenAIErrorResponseTransform(response, LEPTON);

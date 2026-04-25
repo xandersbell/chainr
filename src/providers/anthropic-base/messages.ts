@@ -72,10 +72,7 @@ export const getMessagesConfig = ({
   extra = {},
 }: {
   exclude?: string[];
-  defaultValues?: Record<
-    keyof typeof messagesBaseConfig,
-    string | number | boolean
-  >;
+  defaultValues?: Record<keyof typeof messagesBaseConfig, string | number | boolean>;
   extra?: ProviderConfig;
 }): ProviderConfig => {
   const baseParams = { ...messagesBaseConfig };

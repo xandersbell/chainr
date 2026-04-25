@@ -1,10 +1,6 @@
 import { COHERE } from '../../globals';
 import type { Params } from '../../types/requestBody';
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import {
   generateErrorResponse,
   generateInvalidProviderResponseError,
@@ -145,20 +141,16 @@ export const CohereChatCompleteResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => ChatCompletionResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
-  if (
-    responseStatus !== 200 &&
-    'message' in response &&
-    typeof response.message === 'string'
-  ) {
+  if (responseStatus !== 200 && 'message' in response && typeof response.message === 'string') {
     return generateErrorResponse(
       {
         message: response.message || '',
@@ -166,19 +158,15 @@ export const CohereChatCompleteResponseTransform: (
         param: null,
         code: null,
       },
-      COHERE
+      COHERE,
     );
   }
 
   if ('message' in response && 'usage' in response) {
     const prompt_tokens =
-      response.usage?.tokens?.input_tokens ??
-      response.usage?.billed_units?.input_tokens ??
-      0;
+      response.usage?.tokens?.input_tokens ?? response.usage?.billed_units?.input_tokens ?? 0;
     const completion_tokens =
-      response.usage?.tokens?.output_tokens ??
-      response.usage?.billed_units?.output_tokens ??
-      0;
+      response.usage?.tokens?.output_tokens ?? response.usage?.billed_units?.output_tokens ?? 0;
     const total_tokens = prompt_tokens + completion_tokens;
     return {
       id: response.id,
@@ -191,7 +179,7 @@ export const CohereChatCompleteResponseTransform: (
           index: 0,
           finish_reason: transformFinishReason(
             response.finish_reason as COHERE_STOP_REASON,
-            strictOpenAiCompliance
+            strictOpenAiCompliance,
           ),
           message: {
             role: 'assistant',
@@ -222,13 +210,13 @@ export const CohereChatCompleteStreamChunkTransform: (
   fallbackId: string,
   streamState: CohereStreamState,
   strictOpenAiCompliance: boolean,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => string = (
   responseChunk,
   _fallbackId,
   streamState = { generation_id: '', lastIndex: 0 },
   strictOpenAiCompliance,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^event:.*[\r\n]*/, '');
@@ -268,7 +256,7 @@ export const CohereChatCompleteStreamChunkTransform: (
             logprobs: null,
             finish_reason: transformFinishReason(
               parsedChunk.delta?.finish_reason,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
             ),
           },
         ],

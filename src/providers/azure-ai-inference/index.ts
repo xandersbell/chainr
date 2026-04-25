@@ -1,33 +1,30 @@
+import { AZURE_AI_INFERENCE, GITHUB } from '../../globals';
+import {
+  AnthropicChatCompleteConfig,
+  getAnthropicChatCompleteResponseTransform,
+  getAnthropicStreamChunkTransform,
+} from '../anthropic/chatComplete';
 import type { ProviderConfigs } from '../types';
-import {
-  AzureAIInferenceCompleteConfig,
-  AzureAIInferenceCompleteResponseTransform,
-} from './complete';
-import {
-  AzureAIInferenceEmbedConfig,
-  AzureAIInferenceEmbedResponseTransform,
-} from './embed';
 import AzureAIInferenceAPI from './api';
 import {
   AzureAIInferenceChatCompleteConfig,
   AzureAIInferenceChatCompleteResponseTransform,
 } from './chatComplete';
-import { AZURE_AI_INFERENCE, GITHUB } from '../../globals';
+import {
+  AzureAIInferenceCompleteConfig,
+  AzureAIInferenceCompleteResponseTransform,
+} from './complete';
+import { AzureAIInferenceEmbedConfig, AzureAIInferenceEmbedResponseTransform } from './embed';
+import {
+  AzureAIInferenceMessagesConfig,
+  AzureAIInferenceMessagesResponseTransform,
+} from './messages';
 import {
   AzureAIInferenceCreateSpeechResponseTransform,
   AzureAIInferenceCreateTranscriptionResponseTransform,
   AzureAIInferenceCreateTranslationResponseTransform,
   AzureAIInferenceResponseTransform,
 } from './utils';
-import {
-  AnthropicChatCompleteConfig,
-  getAnthropicChatCompleteResponseTransform,
-  getAnthropicStreamChunkTransform,
-} from '../anthropic/chatComplete';
-import {
-  AzureAIInferenceMessagesConfig,
-  AzureAIInferenceMessagesResponseTransform,
-} from './messages';
 
 const AzureAIInferenceAPIConfig: ProviderConfigs = {
   api: AzureAIInferenceAPI,
@@ -54,16 +51,14 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       responseTransforms: {
         complete: AzureAIInferenceCompleteResponseTransform(AZURE_AI_INFERENCE),
         ...(isAnthropicModel && {
-          'stream-chatComplete':
-            getAnthropicStreamChunkTransform(AZURE_AI_INFERENCE),
+          'stream-chatComplete': getAnthropicStreamChunkTransform(AZURE_AI_INFERENCE),
         }),
         chatComplete: chatCompleteResponseTransform,
         messages: AzureAIInferenceMessagesResponseTransform,
         embed: AzureAIInferenceEmbedResponseTransform(AZURE_AI_INFERENCE),
         imageGenerate: AzureAIInferenceResponseTransform,
         createSpeech: AzureAIInferenceCreateSpeechResponseTransform,
-        createTranscription:
-          AzureAIInferenceCreateTranscriptionResponseTransform,
+        createTranscription: AzureAIInferenceCreateTranscriptionResponseTransform,
         createTranslation: AzureAIInferenceCreateTranslationResponseTransform,
         realtime: {},
         createBatch: AzureAIInferenceResponseTransform,

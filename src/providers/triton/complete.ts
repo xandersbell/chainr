@@ -1,7 +1,6 @@
-import { generateInvalidProviderResponseError } from '../utils';
-import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
 import { TRITON } from '../../globals';
-import { generateErrorResponse } from '../utils';
+import type { CompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const TritonCompleteConfig: ProviderConfig = {
   prompt: {
@@ -53,13 +52,13 @@ export interface TritonErrorResponse {
   error: string;
 }
 
-const TritonErrorResponseTransform: (
-  response: TritonErrorResponse
-) => ErrorResponse | undefined = (response) => {
+const TritonErrorResponseTransform: (response: TritonErrorResponse) => ErrorResponse | undefined = (
+  response,
+) => {
   if ('error' in response) {
     return generateErrorResponse(
       { message: response.error, type: null, param: null, code: null },
-      TRITON
+      TRITON,
     );
   }
   return undefined;
@@ -67,12 +66,10 @@ const TritonErrorResponseTransform: (
 
 export const TritonCompleteResponseTransform: (
   response: TritonCompleteResponse | TritonErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => CompletionResponse | ErrorResponse = (response, responseStatus) => {
   if (responseStatus !== 200) {
-    const errorResponse = TritonErrorResponseTransform(
-      response as TritonErrorResponse
-    );
+    const errorResponse = TritonErrorResponseTransform(response as TritonErrorResponse);
     if (errorResponse) return errorResponse;
   }
 

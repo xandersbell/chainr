@@ -1,8 +1,8 @@
 import { NEBIUS } from '../../globals';
 import {
   chatCompleteParams,
-  embedParams,
   completeParams,
+  embedParams,
   responseTransformers,
 } from '../open-ai-base';
 import type { ProviderConfigs } from '../types';

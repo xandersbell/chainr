@@ -1,15 +1,8 @@
 import { MOONSHOT } from '../../globals';
 import type { Params } from '../../types/requestBody';
 
-import type {
-  ChatCompletionResponse,
-  ErrorResponse,
-  ProviderConfig,
-} from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import type { ChatCompletionResponse, ErrorResponse, ProviderConfig } from '../types';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export const MoonshotChatCompleteConfig: ProviderConfig = {
   model: {
@@ -92,7 +85,7 @@ interface MoonshotStreamChunk {
 
 export const MoonshotChatCompleteResponseTransform: (
   response: MoonshotChatCompleteResponse | MoonshotErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('message' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -102,7 +95,7 @@ export const MoonshotChatCompleteResponseTransform: (
         param: response.param,
         code: response.code,
       },
-      MOONSHOT
+      MOONSHOT,
     );
   }
 
@@ -132,9 +125,9 @@ export const MoonshotChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, MOONSHOT);
 };
 
-export const MoonshotChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const MoonshotChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();

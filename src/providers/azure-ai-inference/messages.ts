@@ -1,8 +1,8 @@
 import { AZURE_AI_INFERENCE } from '../../globals';
 import type { MessagesResponse } from '../../types/messagesResponse';
-import { getMessagesConfig } from '../anthropic-base/messages';
 import type { AnthropicErrorResponse } from '../anthropic/types';
 import { AnthropicErrorResponseTransform } from '../anthropic/utils';
+import { getMessagesConfig } from '../anthropic-base/messages';
 import type { ErrorResponse } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
 
@@ -10,12 +10,12 @@ export const AzureAIInferenceMessagesConfig = getMessagesConfig({});
 
 export const AzureAIInferenceMessagesResponseTransform = (
   response: MessagesResponse | AnthropicErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ): MessagesResponse | ErrorResponse => {
   if (responseStatus !== 200) {
     const errorResposne = AnthropicErrorResponseTransform(
       response as AnthropicErrorResponse,
-      AZURE_AI_INFERENCE
+      AZURE_AI_INFERENCE,
     );
     if (errorResposne) return errorResposne;
   }

@@ -21,9 +21,7 @@ interface AIBadgrStreamChunk {
   };
 }
 
-export const AIBadgrChatCompleteStreamChunkTransform = (
-  responseChunk: string
-) => {
+export const AIBadgrChatCompleteStreamChunkTransform = (responseChunk: string) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -50,12 +48,7 @@ export const AIBadgrChatCompleteStreamChunkTransform = (
       })}` + '\n\n'
     );
   } catch (error) {
-    console.error(
-      'Error parsing AI Badgr stream chunk:',
-      error,
-      'Chunk:',
-      chunk
-    );
+    console.error('Error parsing AI Badgr stream chunk:', error, 'Chunk:', chunk);
     return `data: ${chunk}\n\n`;
   }
 };

@@ -1,9 +1,6 @@
 import { GROQ } from '../../globals';
 import type { ChatCompletionResponse, ErrorResponse } from '../types';
-import {
-  generateErrorResponse,
-  generateInvalidProviderResponseError,
-} from '../utils';
+import { generateErrorResponse, generateInvalidProviderResponseError } from '../utils';
 
 export interface GroqChatCompleteResponse extends ChatCompletionResponse {}
 
@@ -41,7 +38,7 @@ export interface GroqStreamChunk {
 
 export const GroqChatCompleteResponseTransform: (
   response: GroqChatCompleteResponse | GroqErrorResponse,
-  responseStatus: number
+  responseStatus: number,
 ) => ChatCompletionResponse | ErrorResponse = (response, responseStatus) => {
   if ('error' in response && responseStatus !== 200) {
     return generateErrorResponse(
@@ -51,7 +48,7 @@ export const GroqChatCompleteResponseTransform: (
         param: null,
         code: response.error.code?.toString() || null,
       },
-      GROQ
+      GROQ,
     );
   }
 
@@ -79,9 +76,9 @@ export const GroqChatCompleteResponseTransform: (
   return generateInvalidProviderResponseError(response, GROQ);
 };
 
-export const GroqChatCompleteStreamChunkTransform: (
-  response: string
-) => string = (responseChunk) => {
+export const GroqChatCompleteStreamChunkTransform: (response: string) => string = (
+  responseChunk,
+) => {
   let chunk = responseChunk.trim();
   chunk = chunk.replace(/^data: /, '');
   chunk = chunk.trim();
@@ -90,7 +87,7 @@ export const GroqChatCompleteStreamChunkTransform: (
   }
 
   const parsedChunk: GroqStreamChunk = JSON.parse(chunk);
-  if (parsedChunk['x_groq'] && parsedChunk['x_groq'].usage) {
+  if (parsedChunk['x_groq']?.usage) {
     return `data: ${JSON.stringify({
       id: parsedChunk.id,
       object: parsedChunk.object,

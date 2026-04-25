@@ -1,13 +1,23 @@
-import type { ProviderConfig } from '../types';
 import type { OpenAIResponse } from '../../types/modelResponses';
+import type { ProviderConfig } from '../types';
 import {
   getRandomId,
   getResponseCompletedEvent,
+  getResponseCreatedEvent,
+  getResponseErrorEvent,
+  getResponseFailedEvent,
+  getResponseFunctionCallArgumentsDeltaEvents,
+  getResponseIncompleteEvent,
+  getResponseInProgressEvent,
+  getResponseOutputComputerCallItemAddedEvent,
+  getResponseOutputComputerCallItemDoneEvent,
   getResponseOutputFileSearchCallCompletedEvent,
   getResponseOutputFileSearchCallInProgressEvent,
   getResponseOutputFileSearchCallSearchingEvent,
   getResponseOutputFileSearchItemAddedEvent,
   getResponseOutputFileSearchItemDoneEvent,
+  getResponseOutputFunctionCallItemAddedEvent,
+  getResponseOutputFunctionCallItemDoneEvent,
   getResponseOutputMessageItemAddedEvent,
   getResponseOutputMessageItemDoneEvent,
   getResponseOutputMessageOutputTextContentPartAddedEvent,
@@ -15,26 +25,16 @@ import {
   getResponseOutputMessageOutputTextContentPartDoneEvent,
   getResponseOutputMessageRefusalContentPartAddedEvent,
   getResponseOutputMessageRefusalContentPartDeltaEvent,
+  getResponseOutputMessageRefusalContentPartDoneEvent,
+  getResponseOutputMessageRefusalDoneEvent,
+  getResponseOutputReasoningItemAddedEvent,
+  getResponseOutputReasoningItemDoneEvent,
   getResponseOutputTextDoneEvent,
   getResponseOutputWebSearchCallCompletedEvent,
   getResponseOutputWebSearchCallInProgressEvent,
   getResponseOutputWebSearchCallSearchingEvent,
   getResponseOutputWebSearchItemAddedEvent,
   getResponseOutputWebSearchItemDoneEvent,
-  getResponseOutputMessageRefusalDoneEvent,
-  getResponseOutputMessageRefusalContentPartDoneEvent,
-  getResponseErrorEvent,
-  getResponseFailedEvent,
-  getResponseIncompleteEvent,
-  getResponseCreatedEvent,
-  getResponseFunctionCallArgumentsDeltaEvents,
-  getResponseInProgressEvent,
-  getResponseOutputFunctionCallItemAddedEvent,
-  getResponseOutputFunctionCallItemDoneEvent,
-  getResponseOutputComputerCallItemDoneEvent,
-  getResponseOutputComputerCallItemAddedEvent,
-  getResponseOutputReasoningItemDoneEvent,
-  getResponseOutputReasoningItemAddedEvent,
 } from './helpers';
 
 export const OpenAICreateModelResponseConfig: ProviderConfig = {
@@ -157,7 +157,7 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
 };
 
 export function* OpenAIModelResponseJSONToStreamGenerator(
-  response: OpenAIResponse
+  response: OpenAIResponse,
 ): Generator<string, void, unknown> {
   if (response.error?.code) {
     yield getResponseErrorEvent(response.error);
@@ -185,18 +185,14 @@ export function* OpenAIModelResponseJSONToStreamGenerator(
         index,
         outputItemId,
         functionCallId,
-        outputItem
+        outputItem,
       );
-      yield getResponseFunctionCallArgumentsDeltaEvents(
-        index,
-        outputItemId,
-        outputItem
-      );
+      yield getResponseFunctionCallArgumentsDeltaEvents(index, outputItemId, outputItem);
       yield getResponseOutputFunctionCallItemDoneEvent(
         index,
         outputItemId,
         functionCallId,
-        outputItem
+        outputItem,
       );
     } else if (outputItem.type === 'web_search_call') {
       yield getResponseOutputWebSearchItemAddedEvent(index, outputItemId);
@@ -210,90 +206,66 @@ export function* OpenAIModelResponseJSONToStreamGenerator(
       yield getResponseOutputFileSearchCallInProgressEvent(index, outputItemId);
       yield getResponseOutputFileSearchCallSearchingEvent(index, outputItemId);
       yield getResponseOutputFileSearchCallCompletedEvent(index, outputItemId);
-      yield getResponseOutputFileSearchItemDoneEvent(
-        index,
-        outputItemId,
-        outputItem
-      );
+      yield getResponseOutputFileSearchItemDoneEvent(index, outputItemId, outputItem);
     } else if (outputItem.type === 'computer_call') {
       yield getResponseOutputComputerCallItemAddedEvent(index, outputItemId);
-      yield getResponseOutputComputerCallItemDoneEvent(
-        index,
-        outputItemId,
-        outputItem
-      );
+      yield getResponseOutputComputerCallItemDoneEvent(index, outputItemId, outputItem);
     } else if (outputItem.type === 'reasoning') {
       yield getResponseOutputReasoningItemAddedEvent(index, outputItemId);
-      yield getResponseOutputReasoningItemDoneEvent(
-        index,
-        outputItemId,
-        outputItem
-      );
+      yield getResponseOutputReasoningItemDoneEvent(index, outputItemId, outputItem);
     } else if (outputItem.type === 'message') {
       yield getResponseOutputMessageItemAddedEvent(index, outputItemId);
-      for (const [
-        contentPartIndex,
-        contentPart,
-      ] of outputItem.content.entries()) {
+      for (const [contentPartIndex, contentPart] of outputItem.content.entries()) {
         if (contentPart.type === 'output_text') {
           yield getResponseOutputMessageOutputTextContentPartAddedEvent(
             index,
             outputItemId,
-            contentPartIndex
+            contentPartIndex,
           );
           for (let i = 0; i < contentPart.text.length; i += 500) {
             yield getResponseOutputMessageOutputTextContentPartDeltaEvent(
               index,
               outputItemId,
               contentPartIndex,
-              contentPart.text.slice(i, i + 500)
+              contentPart.text.slice(i, i + 500),
             );
           }
-          yield getResponseOutputTextDoneEvent(
-            index,
-            outputItemId,
-            contentPartIndex,
-            contentPart
-          );
+          yield getResponseOutputTextDoneEvent(index, outputItemId, contentPartIndex, contentPart);
           yield getResponseOutputMessageOutputTextContentPartDoneEvent(
             index,
             outputItemId,
             contentPartIndex,
-            contentPart
+            contentPart,
           );
         } else if (contentPart.type === 'refusal') {
           yield getResponseOutputMessageRefusalContentPartAddedEvent(
             index,
             outputItemId,
-            contentPartIndex
+            contentPartIndex,
           );
           for (let i = 0; i < contentPart.refusal.length; i += 500) {
             yield getResponseOutputMessageRefusalContentPartDeltaEvent(
               index,
               outputItemId,
               contentPartIndex,
-              contentPart.refusal.slice(i, i + 500)
+              contentPart.refusal.slice(i, i + 500),
             );
           }
           yield getResponseOutputMessageRefusalDoneEvent(
             index,
             outputItemId,
             contentPartIndex,
-            contentPart
+            contentPart,
           );
           yield getResponseOutputMessageRefusalContentPartDoneEvent(
             index,
             outputItemId,
             contentPartIndex,
-            contentPart
+            contentPart,
           );
         }
       }
-      yield getResponseOutputMessageItemDoneEvent(
-        index,
-        outputItemId,
-        outputItem
-      );
+      yield getResponseOutputMessageItemDoneEvent(index, outputItemId, outputItem);
     }
   }
   yield getResponseCompletedEvent(response, responseId);

@@ -1,9 +1,5 @@
 import { BEDROCK } from '../../globals';
-import type {
-  EmbedParams,
-  EmbedResponse,
-  EmbedResponseData,
-} from '../../types/embedRequestBody';
+import type { EmbedParams, EmbedResponse, EmbedResponseData } from '../../types/embedRequestBody';
 import type { Params } from '../../types/requestBody';
 import type { ErrorResponse, ProviderConfig } from '../types';
 import { generateInvalidProviderResponseError } from '../utils';
@@ -60,8 +56,7 @@ export const BedrockCohereEmbedConfig: ProviderConfig = {
     required: false,
     transform: (params: any): string[] | undefined => {
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      else if (typeof params.encoding_format === 'string')
-        return [params.encoding_format];
+      else if (typeof params.encoding_format === 'string') return [params.encoding_format];
       return undefined;
     },
   },
@@ -116,9 +111,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
     {
       param: 'embeddingConfig',
       required: false,
-      transform: (
-        params: EmbedParams
-      ): { outputEmbeddingLength: number } | undefined => {
+      transform: (params: EmbedParams): { outputEmbeddingLength: number } | undefined => {
         if (Array.isArray(params.input) && params.dimensions) {
           return {
             outputEmbeddingLength: params.dimensions,
@@ -135,8 +128,7 @@ export const BedrockTitanEmbedConfig: ProviderConfig = {
       const model = params.foundationModel || params.model || '';
       if (g1EmbedModels.includes(model)) return undefined;
       if (Array.isArray(params.encoding_format)) return params.encoding_format;
-      else if (typeof params.encoding_format === 'string')
-        return [params.encoding_format];
+      else if (typeof params.encoding_format === 'string') return [params.encoding_format];
       return undefined;
     },
   },
@@ -162,19 +154,17 @@ export const BedrockTitanEmbedResponseTransform: (
   _responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   _gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   _responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
@@ -213,19 +203,17 @@ export const BedrockCohereEmbedResponseTransform: (
   responseHeaders: Headers,
   strictOpenAiCompliance: boolean,
   gatewayRequestUrl: string,
-  gatewayRequest: Params
+  gatewayRequest: Params,
 ) => EmbedResponse | ErrorResponse = (
   response,
   responseStatus,
   responseHeaders,
   _strictOpenAiCompliance,
   _gatewayRequestUrl,
-  gatewayRequest
+  gatewayRequest,
 ) => {
   if (responseStatus !== 200) {
-    const errorResposne = BedrockErrorResponseTransform(
-      response as BedrockErrorResponse
-    );
+    const errorResposne = BedrockErrorResponseTransform(response as BedrockErrorResponse);
     if (errorResposne) return errorResposne;
   }
 
@@ -252,10 +240,8 @@ export const BedrockCohereEmbedResponseTransform: (
       provider: BEDROCK,
       model,
       usage: {
-        prompt_tokens:
-          Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || -1,
-        total_tokens:
-          Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || -1,
+        prompt_tokens: Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || -1,
+        total_tokens: Number(responseHeaders.get('X-Amzn-Bedrock-Input-Token-Count')) || -1,
       },
     };
   }

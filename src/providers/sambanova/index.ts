@@ -21,7 +21,7 @@ const SambaNovaConfig: ProviderConfigs = {
     ],
     {
       model: 'Meta-Llama-3.1-8B-Instruct',
-    }
+    },
   ),
   api: SambaNovaAPIConfig,
   responseTransforms: {

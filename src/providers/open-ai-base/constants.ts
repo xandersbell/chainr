@@ -103,18 +103,17 @@ export const RESPONSE_IN_PROGRESS_EVENT: ResponseInProgressEvent = {
 };
 
 //response.output_item.added message
-export const RESPONSE_OUTPUT_MESSAGE_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'message',
-      id: '',
-      status: 'in_progress',
-      role: 'assistant',
-      content: [],
-    },
-  };
+export const RESPONSE_OUTPUT_MESSAGE_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'message',
+    id: '',
+    status: 'in_progress',
+    role: 'assistant',
+    content: [],
+  },
+};
 
 export const RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_ADDED_EVENT: ResponseContentPartAddedEvent =
   {
@@ -149,19 +148,18 @@ export const RESPONSE_OUTPUT_TEXT_DELTA_EVENT: ResponseTextDeltaEvent = {
   delta: '',
 };
 
-export const RESPONSE_OUTPUT_TEXT_ANNOTATION_ADDED_EVENT: ResponseTextAnnotationDeltaEvent =
-  {
-    type: 'response.output_text.annotation.added',
-    item_id: '',
-    output_index: 1,
-    content_index: 0,
-    annotation_index: 0,
-    annotation: {
-      type: 'file_citation',
-      index: 390,
-      file_id: '',
-    },
-  };
+export const RESPONSE_OUTPUT_TEXT_ANNOTATION_ADDED_EVENT: ResponseTextAnnotationDeltaEvent = {
+  type: 'response.output_text.annotation.added',
+  item_id: '',
+  output_index: 1,
+  content_index: 0,
+  annotation_index: 0,
+  annotation: {
+    type: 'file_citation',
+    index: 390,
+    file_id: '',
+  },
+};
 
 export const RESPONSE_OUTPUT_TEXT_DONE_EVENT: ResponseTextDoneEvent = {
   type: 'response.output_text.done',
@@ -213,39 +211,37 @@ export const RESPONSE_OUTPUT_MESSAGE_OUTPUT_TEXT_CONTENT_PART_DONE_EVENT: Respon
   };
 
 //response.output_item.done message
-export const RESPONSE_OUTPUT_MESSAGE_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'message',
-      id: '',
-      status: 'completed',
-      role: 'assistant',
-      content: [
-        {
-          type: 'output_text',
-          text: '',
-          annotations: [],
-        },
-      ],
-    },
-  };
+export const RESPONSE_OUTPUT_MESSAGE_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'message',
+    id: '',
+    status: 'completed',
+    role: 'assistant',
+    content: [
+      {
+        type: 'output_text',
+        text: '',
+        annotations: [],
+      },
+    ],
+  },
+};
 
 //response.output_item.added function_call
-export const RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'function_call',
-      id: '',
-      call_id: '',
-      name: '',
-      arguments: '',
-      status: 'in_progress',
-    },
-  };
+export const RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'function_call',
+    id: '',
+    call_id: '',
+    name: '',
+    arguments: '',
+    status: 'in_progress',
+  },
+};
 
 //response.function_call_arguments.delta
 export const RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DELTA_EVENT: ResponseFunctionCallArgumentsDeltaEvent =
@@ -266,31 +262,29 @@ export const RESPONSE_OUTPUT_FUNCTION_CALL_ARGUMENTS_DONE_EVENT: ResponseFunctio
   };
 
 //response.output_item.done function_call
-export const RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'function_call',
-      id: '',
-      call_id: '',
-      name: '',
-      arguments: '',
-      status: 'completed',
-    },
-  };
+export const RESPONSE_OUTPUT_FUNCTION_CALL_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'function_call',
+    id: '',
+    call_id: '',
+    name: '',
+    arguments: '',
+    status: 'completed',
+  },
+};
 
 //response.output_item.added web_search
-export const RESPONSE_OUTPUT_WEB_SEARCH_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'web_search_call',
-      id: '',
-      status: 'in_progress',
-    },
-  };
+export const RESPONSE_OUTPUT_WEB_SEARCH_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'web_search_call',
+    id: '',
+    status: 'in_progress',
+  },
+};
 
 //response.web_search_call.in_progress
 export const RESPONSE_OUTPUT_WEB_SEARCH_CALL_IN_PROGRESS_EVENT: ResponseWebSearchCallInProgressEvent =
@@ -316,29 +310,27 @@ export const RESPONSE_OUTPUT_WEB_SEARCH_CALL_COMPLETED_EVENT: ResponseWebSearchC
     item_id: '',
   };
 
-export const RESPONSE_OUTPUT_WEB_SEARCH_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'web_search_call',
-      id: '',
-      status: 'completed',
-    },
-  };
+export const RESPONSE_OUTPUT_WEB_SEARCH_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'web_search_call',
+    id: '',
+    status: 'completed',
+  },
+};
 
-export const RESPONSE_OUTPUT_FILE_SEARCH_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'file_search_call',
-      id: '',
-      queries: [],
-      results: [],
-      status: 'in_progress',
-    },
-  };
+export const RESPONSE_OUTPUT_FILE_SEARCH_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'file_search_call',
+    id: '',
+    queries: [],
+    results: [],
+    status: 'in_progress',
+  },
+};
 
 export const RESPONSE_OUTPUT_FILE_SEARCH_CALL_IN_PROGRESS_EVENT: ResponseFileSearchCallInProgressEvent =
   {
@@ -361,65 +353,60 @@ export const RESPONSE_OUTPUT_FILE_SEARCH_CALL_COMPLETED_EVENT: ResponseFileSearc
     item_id: '',
   };
 
-export const RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'file_search_call',
-      id: '',
-      queries: [],
-      results: [],
-      status: 'completed',
-    },
-  };
+export const RESPONSE_OUTPUT_FILE_SEARCH_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'file_search_call',
+    id: '',
+    queries: [],
+    results: [],
+    status: 'completed',
+  },
+};
 
-export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'computer_call',
-      id: '',
-      call_id: '',
-      action: null,
-      pending_safety_checks: [],
-      status: 'in_progress',
-    },
-  };
+export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'computer_call',
+    id: '',
+    call_id: '',
+    action: null,
+    pending_safety_checks: [],
+    status: 'in_progress',
+  },
+};
 
-export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'computer_call',
-      id: '',
-      call_id: '',
-      action: null,
-      pending_safety_checks: [],
-      status: 'completed',
-    },
-  };
+export const RESPONSE_OUTPUT_COMPUTER_CALL_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'computer_call',
+    id: '',
+    call_id: '',
+    action: null,
+    pending_safety_checks: [],
+    status: 'completed',
+  },
+};
 
-export const RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent =
-  {
-    type: 'response.output_item.added',
-    output_index: 0,
-    item: {
-      type: 'reasoning',
-      id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
-      summary: [],
-    },
-  };
+export const RESPONSE_OUTPUT_REASONING_ITEM_ADDED_EVENT: ResponseOutputItemAddedEvent = {
+  type: 'response.output_item.added',
+  output_index: 0,
+  item: {
+    type: 'reasoning',
+    id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
+    summary: [],
+  },
+};
 
-export const RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent =
-  {
-    type: 'response.output_item.done',
-    output_index: 0,
-    item: {
-      type: 'reasoning',
-      id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
-      summary: [],
-    },
-  };
+export const RESPONSE_OUTPUT_REASONING_ITEM_DONE_EVENT: ResponseOutputItemDoneEvent = {
+  type: 'response.output_item.done',
+  output_index: 0,
+  item: {
+    type: 'reasoning',
+    id: 'rs_67f52cb87b7c819198a16adfae0eb05004a13d81bd64355b',
+    summary: [],
+  },
+};
