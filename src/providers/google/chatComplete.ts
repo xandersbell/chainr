@@ -132,7 +132,7 @@ interface GoogleFunctionResponseMessagePart {
     name: string;
     response: {
       name?: string;
-      output: string | ContentType[];
+      content: string | ContentType[];
     };
   };
 }
@@ -256,7 +256,7 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
               functionResponse: {
                 name: message.name ?? 'gateway-tool-filler-name',
                 response: {
-                  output: message.content ?? '',
+                  content: message.content ?? '',
                 },
               },
             });

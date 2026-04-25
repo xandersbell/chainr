@@ -52,6 +52,7 @@ import {
   getMimeType,
   googleTools,
   recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
   transformGoogleTools,
   transformInputAudioPart,
   transformVertexLogprobs,
@@ -114,7 +115,7 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                   functionResponse: {
                     name: toolName,
                     response: {
-                      content: part.text,
+                      content: part.text ?? '',
                     },
                   },
                 });
@@ -297,14 +298,21 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
       const functionDeclarations: any = [];
       const tools: any = [];
       params.tools?.forEach((tool) => {
-        if (tool.type === 'function' && tool.function) {
-          // these are not supported by google
-          recursivelyDeleteUnsupportedParameters(tool.function?.parameters);
-          delete tool.function?.strict;
-          if (googleTools.includes(tool.function.name)) {
+        if (tool.type === 'function') {
+          if (googleTools.includes(tool.function?.name ?? '')) {
             tools.push(...transformGoogleTools(tool));
           } else {
-            functionDeclarations.push(tool.function);
+            if (tool.function) {
+              // 先 transform 再 delete，确保 schema 转换在过滤之前完成
+              const transformedParameters = transformGeminiToolParameters(
+                tool.function.parameters || {}
+              );
+              tool.function.parameters = recursivelyDeleteUnsupportedParameters(
+                transformedParameters
+              );
+              delete tool.function.strict;
+              functionDeclarations.push(tool.function);
+            }
           }
         }
       });
@@ -497,6 +505,8 @@ export const GoogleChatCompleteResponseTransform: (
       if (curr.modality === VERTEX_MODALITY.AUDIO) return acc + curr.tokenCount;
       return acc;
     }, 0);
+    // completion_tokens 需要包含 thinking tokens
+    const completionTokens = candidatesTokenCount + thoughtsTokenCount;
 
     return {
       id: 'portkey-' + crypto.randomUUID(),
@@ -584,7 +594,7 @@ export const GoogleChatCompleteResponseTransform: (
         }) ?? [],
       usage: {
         prompt_tokens: promptTokenCount,
-        completion_tokens: candidatesTokenCount,
+        completion_tokens: completionTokens,
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
@@ -684,12 +694,22 @@ export const GoogleChatCompleteStreamChunkTransform: (
 
   let usageMetadata;
   if (parsedChunk.usageMetadata) {
+    const {
+      promptTokenCount = 0,
+      cachedContentTokenCount = 0,
+      candidatesTokenCount = 0,
+      totalTokenCount = 0,
+      thoughtsTokenCount = 0,
+    } = parsedChunk.usageMetadata;
+    // 流式 completion_tokens 也需要包含 thinking tokens
+    const streamCompletionTokens = candidatesTokenCount + thoughtsTokenCount;
+
     usageMetadata = {
-      prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
-      total_tokens: parsedChunk.usageMetadata.totalTokenCount,
+      prompt_tokens: promptTokenCount,
+      completion_tokens: streamCompletionTokens,
+      total_tokens: totalTokenCount,
       completion_tokens_details: {
-        reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
+        reasoning_tokens: thoughtsTokenCount,
         audio_tokens:
           parsedChunk.usageMetadata?.candidatesTokensDetails?.reduce(
             (acc, curr) => {
@@ -701,7 +721,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
           ),
       },
       prompt_tokens_details: {
-        cached_tokens: parsedChunk.usageMetadata.cachedContentTokenCount,
+        cached_tokens: cachedContentTokenCount,
         audio_tokens: parsedChunk.usageMetadata?.promptTokensDetails?.reduce(
           (acc, curr) => {
             if (curr.modality === VERTEX_MODALITY.AUDIO)

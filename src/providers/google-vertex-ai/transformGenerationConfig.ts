@@ -1,7 +1,3 @@
-import {
-  recursivelyDeleteUnsupportedParameters,
-  transformGeminiToolParameters,
-} from './utils';
 import { GoogleEmbedParams } from './embed';
 import { EmbedInstancesData, PortkeyGeminiParams } from './types';
 
@@ -47,11 +43,10 @@ export function transformGenerationConfig(params: PortkeyGeminiParams) {
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    let schema =
+    // 新版 Gemini API 支持原生 JSON Schema，使用 responseJsonSchema 直接透传
+    generationConfig['responseJsonSchema'] =
       (responseFormat as any)?.json_schema?.schema ??
       (responseFormat as any)?.json_schema;
-    recursivelyDeleteUnsupportedParameters(schema);
-    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
 
   if (params?.thinking) {

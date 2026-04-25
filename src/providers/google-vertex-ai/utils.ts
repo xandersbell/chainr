@@ -208,7 +208,7 @@ export const derefer = (
     const defKey = getDefFromRef(node.$ref);
     const target = getDefObject(activeDefs, defKey);
     if (defKey && target) {
-      if (stack.has(defKey)) return node;
+      if (stack.has(defKey)) return { type: 'object' }; // 自引用替换为通用 object 类型
       stack.add(defKey);
       const resolved = derefer(target, activeDefs, stack);
       stack.delete(defKey);
@@ -282,23 +282,87 @@ export const transformGeminiToolParameters = (
   return transformNode(schema);
 };
 
-// Vertex AI does not support additionalProperties in JSON Schema
-// https://cloud.google.com/vertex-ai/docs/reference/rest/v1/Schema
-export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+// Vertex AI 仅支持 JSON Schema 的子集字段
+// 使用白名单确保不支持的字段被过滤掉
+// https://cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1beta1/Schema
+const VERTEX_AI_SUPPORTED_SCHEMA_FIELDS = new Set([
+  // 类型 & 格式
+  'type',
+  'format',
+  // 元数据
+  'title',
+  'description',
+  'nullable',
+  'default',
+  'example',
+  // 数组
+  'items',
+  'minItems',
+  'maxItems',
+  // 枚举
+  'enum',
+  // 对象
+  'properties',
+  'propertyOrdering',
+  'required',
+  'minProperties',
+  'maxProperties',
+  // 数值/整数
+  'minimum',
+  'maximum',
+  // 字符串
+  'minLength',
+  'maxLength',
+  'pattern',
+  // 组合
+  'anyOf',
+]);
+
+// 递归过滤 schema 字段，只保留 Vertex AI 支持的字段
+const filterSchemaFields = (obj: any, isSchemaObject: boolean): void => {
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return;
-  delete obj.additional_properties;
-  delete obj.additionalProperties;
-  delete obj['$schema'];
-  for (const key in obj) {
-    if (obj[key] !== null && typeof obj[key] === 'object') {
-      recursivelyDeleteUnsupportedParameters(obj[key]);
+
+  // 仅在 schema 对象上过滤 key（properties map 不过滤）
+  if (isSchemaObject) {
+    // 将数组类型转换为 anyOf 格式（Vertex AI 不支持 type 数组）
+    // 例如 {"type": ["string", "number"]} -> {"anyOf": [{"type": "string"}, {"type": "number"}]}
+    if (Array.isArray(obj.type)) {
+      const types = obj.type;
+      delete obj.type;
+      if (!obj.anyOf) {
+        obj.anyOf = types.map((t: string) => ({ type: t }));
+      }
     }
-    if (key == 'anyOf' && Array.isArray(obj[key])) {
-      obj[key].forEach((item: any) => {
-        recursivelyDeleteUnsupportedParameters(item);
-      });
+
+    for (const key in obj) {
+      if (!VERTEX_AI_SUPPORTED_SCHEMA_FIELDS.has(key)) {
+        delete obj[key];
+      }
     }
   }
+
+  // 递归处理子节点
+  if (obj.properties && typeof obj.properties === 'object') {
+    for (const propKey in obj.properties) {
+      filterSchemaFields(obj.properties[propKey], true);
+    }
+  }
+  if (obj.items && typeof obj.items === 'object') {
+    filterSchemaFields(obj.items, true);
+  }
+  if (Array.isArray(obj.anyOf)) {
+    obj.anyOf.forEach((item: any) => filterSchemaFields(item, true));
+  }
+};
+
+export const recursivelyDeleteUnsupportedParameters = (obj: any) => {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  const cloned = { ...obj };
+  delete cloned.strict;
+  delete cloned.additionalProperties;
+  delete cloned['$schema'];
+  filterSchemaFields(cloned, true);
+  return cloned;
 };
 
 // Generate Gateway specific response.
@@ -698,11 +762,15 @@ export const isEmbeddingModel = (modelName: string) => {
 export const OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING = {
   mp3: 'audio/mp3',
   wav: 'audio/wav',
-  opus: 'audio/ogg',
+  opus: 'audio/opus',
+  ogg: 'audio/ogg',
   flac: 'audio/flac',
   pcm16: 'audio/pcm',
+  pcm: 'audio/pcm',
   'x-aac': 'audio/aac',
+  aac: 'audio/aac',
   'x-m4a': 'audio/m4a',
+  m4a: 'audio/m4a',
   mpeg: 'audio/mpeg',
   mpga: 'audio/mpga',
   mp4: 'audio/mp4',
@@ -715,7 +783,7 @@ export const transformInputAudioPart = (c: ContentType): GoogleMessagePart => {
     OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING[
       c.input_audio
         ?.format as keyof typeof OPENAI_AUDIO_FORMAT_TO_VERTEX_MIME_TYPE_MAPPING
-    ];
+    ] ?? c.input_audio?.format;
   return {
     inlineData: {
       data: data ?? '',
