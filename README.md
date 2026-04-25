@@ -359,7 +359,19 @@ Default: 3 attempts, exponential backoff (100ms × 2^attempt), max 60s.
 | 500/502/503/504 | Retry with backoff, then fallback |
 | 401 Unauthorized | Fail immediately |
 
-## Testing
+## Development
+
+### Pre-commit Hook
+
+The project includes a pre-commit hook that runs `biome lint --fix` (safe fixes only) on staged `.ts`, `.js`, and `.json` files.
+
+To enable it after cloning:
+
+```bash
+ln -sf ../../pre-commit.sh .git/hooks/pre-commit
+```
+
+### Testing
 
 ```bash
 npm test           # Run all tests (250 tests)
