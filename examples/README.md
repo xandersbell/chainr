@@ -26,3 +26,4 @@ npx tsx examples/01-single-provider.ts
 | `04-vertex-ai-adc.ts` | Google Vertex AI with ADC (no API key) | `gcloud` CLI configured |
 | `05-bedrock-sigv4.ts` | AWS Bedrock with SigV4 signing | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
 | `06-streaming.ts` | Streaming chat completion | `OPENAI_API_KEY` |
+| `07-conditional-strategy.ts` | Conditional routing by request params | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` |
