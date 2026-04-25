@@ -4,7 +4,6 @@ import type { InheritedConfig } from '../../src/core/tryTarget';
 import {
   isNestedTarget,
   buildInheritedConfig,
-  tryLeafTargetStream,
   createStreamForProvider,
 } from '../../src/core/tryTarget';
 
@@ -50,7 +49,6 @@ vi.mock('../../src/core/transformOpenAIStream', () => ({
   isOpenAICompatibleProvider: vi.fn().mockReturnValue(false),
 }));
 
-import { retryRequestForStream } from '../../src/core/RetryHandler';
 import { createAnthropicStream, isAnthropicProvider } from '../../src/core/transformAnthropicStream';
 import { createGoogleStream, isGoogleProvider } from '../../src/core/transformGoogleStream';
 import { createCohereStream, isCohereProvider } from '../../src/core/transformCohereStream';
