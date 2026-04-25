@@ -1,7 +1,7 @@
 # Portkey 2.0.0 分支 vs main 差异分析
 
 **创建时间**: 2026-04-25 06:59 EEST
-**最后更新**: 2026-04-25 07:38 EEST
+**最后更新**: 2026-04-25 07:44 EEST
 **Portkey main**: v1.15.2+17 (351692fd) — Chainr 当前参考版本
 **Portkey 2.0.0**: 分支 (8febc1dc) — Pre-Release，比 main 多 30 commits
 **总变更**: 687 文件，+141,463 / -25,098 行
@@ -137,7 +137,9 @@ chatComplete.ts 中 tool call arguments 缺少空值保护。
 
 ### 3.5 ✅ Anthropic — `chunkPatternsToIgnore` 流式过滤扩展
 
-### 3.6 Google/Vertex — Gemini 2.5 vs 3.0+ thinking 配置分化
+### 3.6 ✅ Google/Vertex — Gemini 2.5 vs 3.0+ thinking 配置分化
+
+Chainr 已实现：`params.thinking` → `thinking_config`（Gemini 2.5），`params.reasoning_effort` → `thinkingConfig.thinkingLevel`（Gemini 3.0+）。
 
 `reasoning_effort` 根据模型版本使用不同配置格式：
 
@@ -154,19 +156,29 @@ if (model?.includes('gemini-2.5')) {
 }
 ```
 
-### 3.7 Google/Vertex — Thought Signature（Gemini 3.0+ tool calling 必需）
+### 3.7 ✅ Google/Vertex — Thought Signature（Gemini 3.0+ tool calling 必需）
+
+Chainr 已实现：请求侧 `tool_call.function.thought_signature` → `part.thoughtSignature`，响应侧 `part.thoughtSignature` → `tool_call.function.thought_signature`（非严格模式）。
 
 新增 `getThoughtSignature` 函数，为 3.0+ 模型自动注入 thought signature。
 
-### 3.8 Google/Vertex — `media_resolution` 支持
+### 3.8 ✅ Google/Vertex — `media_resolution` 支持
 
-### 3.9 Google/Vertex — `cached_content` 参数透传
+Portkey 2.0 中未实现此功能，无需同步。
 
-### 3.10 Bedrock — Anthropic Invoke API 直连路径
+### 3.9 ✅ Google/Vertex — `cached_content` 参数透传
+
+Portkey 2.0 中 `cached_content` 仅作为响应侧 `cachedContentTokenCount` 存在（Chainr 已有），无请求参数透传逻辑。
+
+### 3.10 ⏭️ Bedrock — Anthropic Invoke API 直连路径
+
+Portkey 2.0 中未实现，Anthropic 模型仍走 Converse API。无可同步代码，跳过。
 
 Anthropic 模型不再走 Converse API 而是走原生 Invoke API，涉及 messages.ts、index.ts、api.ts 联动。
 
-### 3.11 Bedrock — `output_config` 支持
+### 3.11 ⏭️ Bedrock — `output_config` 支持
+
+Portkey 2.0 中未实现，utils.ts 中无 output_config 相关代码。跳过。
 
 utils.ts 中新增 output_config 映射。
 
@@ -204,8 +216,8 @@ utils.ts 中新增 output_config 映射。
 
 **第二批（新功能 — 应该做）**:
 6. ✅ Anthropic 新功能 (3.1, 3.2, 3.3, 3.4, 3.5)
-7. ⬜ Google/Vertex Gemini 2.5/3.0+ 支持 (3.6, 3.7, 3.8, 3.9)
-8. ⬜ Bedrock Anthropic 直连 + output_config (3.10, 3.11)
+7. ✅ Google/Vertex Gemini 2.5/3.0+ 支持 (3.6, 3.7, 3.8, 3.9)
+8. ⏭️ Bedrock Anthropic 直连 + output_config (3.10, 3.11) — Portkey 未实现，跳过
 
 **第三批（按需 — 可以后做）**:
 9. ⬜ 新 Provider (databricks, latitude, pinecone)
