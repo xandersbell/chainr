@@ -225,58 +225,36 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 
 ## 9. 总结
 
-```mermaid
-graph LR
-    subgraph "已对齐 ✅"
-        A[72 Providers]
-        B[4 路由策略]
-        C[重试 + 退避]
-        D[6 种流式转换]
-        E[16 种端点类型]
-        F[请求/响应转换]
-        G[Config 验证]
-        H[Request Timeout]
-        I[嵌套策略]
-        K[retry-after header]
-        S[Tool Calling]
-        T[Provider 特定参数]
-        U[Messages API]
-        V[Responses API]
-        W[Conditional 路由]
-        X[ConnectTimeout]
-        Y[Azure chunk delay]
-    end
+### ✅ 已对齐（核心 LLM 调用能力）
 
-    subgraph "明确不做 ❌"
-        N[Hooks/Guardrails]
-        O[缓存系统]
-        P[日志/监控]
-        Q[Virtual Key]
-        R[Web 服务器]
-    end
+| 类别 | 详情 |
+|------|------|
+| Provider 覆盖 | 72 个（Portkey 75 个，差 3 个非 LLM/自引用） |
+| 路由策略 | single、fallback、loadbalance、conditional + 嵌套递归 |
+| 重试机制 | 指数退避、retry-after header（60s 预算）、ConnectTimeout → 503 |
+| 流式处理 | SSE 解析、AWS EventStream 二进制帧、Azure 1ms chunk、首 chunk 延迟 |
+| 端点类型 | 16 种（chat、complete、embed、image、audio、speech、messages、responses、files、batch、finetune 等） |
+| 请求转换 | 参数映射、min/max/default 钳位、transform 函数、嵌套路径、FormData |
+| 高级功能 | Tool/Function Calling、Provider 特定参数、Config 验证、Request Timeout |
 
-    style A fill:#d4edda,color:#000
-    style B fill:#d4edda,color:#000
-    style C fill:#d4edda,color:#000
-    style D fill:#d4edda,color:#000
-    style E fill:#d4edda,color:#000
-    style F fill:#d4edda,color:#000
-    style G fill:#d4edda,color:#000
-    style H fill:#d4edda,color:#000
-    style I fill:#d4edda,color:#000
-    style K fill:#d4edda,color:#000
-    style S fill:#d4edda,color:#000
-    style T fill:#d4edda,color:#000
-    style U fill:#d4edda,color:#000
-    style V fill:#d4edda,color:#000
-    style W fill:#d4edda,color:#000
-    style X fill:#d4edda,color:#000
-    style Y fill:#d4edda,color:#000
-    style N fill:#f8d7da,color:#000
-    style O fill:#f8d7da,color:#000
-    style P fill:#f8d7da,color:#000
-    style Q fill:#f8d7da,color:#000
-    style R fill:#f8d7da,color:#000
-```
+### ❌ 明确不做
+
+| 功能 | 原因 |
+|------|------|
+| Hooks / Guardrails | SDK 场景下调用方自行处理 |
+| 缓存系统 | 不在 SDK 范围内 |
+| 日志 / 监控 | 不在 SDK 范围内 |
+| Virtual Key | 不在 SDK 范围内 |
+| Web 服务器 | 架构定位不同 |
+
+### 🟡 低优先级（按需添加）
+
+| 功能 | 说明 |
+|------|------|
+| Circuit Breaker | Portkey 开源版也仅空壳，需从零实现 |
+| proxy 模式 | SDK 场景下调用方可直接 fetch |
+| realtime (WebSocket) | 仅 OpenAI 一家，架构不匹配 |
+| moderate | 仅 OpenAI 一家，属 Guardrails 范畴 |
+| rerank | Portkey 也仅类型占位，无实现 |
 
 **核心结论**：Chainr 在 provider 覆盖（72 个）、路由策略（fallback/loadbalance/single/conditional + 嵌套递归）、流式处理（含 Azure chunk delay）、请求转换、Tool Calling、Provider 特定参数、retry-after、ConnectTimeout 区分、Anthropic Messages API、OpenAI Responses API、文件操作、Batch API、Fine-tune API 等所有核心 LLM 调用能力方面已与 Portkey 完全对齐。rerank 端点 Portkey 也仅有类型占位未实现，跳过。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
