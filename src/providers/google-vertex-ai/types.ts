@@ -16,7 +16,7 @@ export interface GoogleGenerateFunctionCall {
 }
 
 export interface GoogleResponseCandidate {
-  content: {
+  content?: {
     parts: {
       text?: string;
       thought?: string; // for models like gemini-2.0-flash-thinking-exp refer: https://ai.google.dev/gemini-api/docs/thinking-mode#streaming_model_thinking
@@ -47,6 +47,7 @@ export interface GoogleResponseCandidate {
     ];
   };
   finishReason: string;
+  finishMessage?: string;
   index: 0;
   safetyRatings: {
     category: string;

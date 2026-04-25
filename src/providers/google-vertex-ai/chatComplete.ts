@@ -97,14 +97,29 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
               });
             });
           } else if (message.role === 'tool') {
-            parts.push({
-              functionResponse: {
-                name: message.name ?? 'gateway-tool-filler-name',
-                response: {
-                  output: message.content ?? '',
+            // OpenAI tool message content 可以是 string 或 ContentType[]
+            const toolName = message.name ?? 'gateway-tool-filler-name';
+            if (typeof message.content === 'string') {
+              parts.push({
+                functionResponse: {
+                  name: toolName,
+                  response: {
+                    content: message.content,
+                  },
                 },
-              },
-            });
+              });
+            } else if (Array.isArray(message.content)) {
+              (message.content as ContentType[]).forEach((part) => {
+                parts.push({
+                  functionResponse: {
+                    name: toolName,
+                    response: {
+                      content: part.text,
+                    },
+                  },
+                });
+              });
+            }
           } else if (message.content && typeof message.content === 'object') {
             message.content.forEach((c: ContentType) => {
               if (c.type === 'text') {
@@ -526,6 +541,15 @@ export const GoogleChatCompleteResponseTransform: (
             }
           }
 
+          // 当 content 为空时（如 MALFORMED_FUNCTION_CALL），用 finishMessage 兜底
+          if (
+            content === undefined &&
+            toolCalls.length === 0 &&
+            generation.finishMessage
+          ) {
+            content = generation.finishMessage;
+          }
+
           const message = {
             role: 'assistant' as const,
             ...(toolCalls.length && { tool_calls: toolCalls }),
@@ -706,7 +730,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             )
           : null;
         let message: any = { role: 'assistant', content: '' };
-        if (generation.content?.parts[0]?.text) {
+        if (generation.content?.parts?.[0]?.text) {
           const contentBlocks = [];
           let content = '';
           for (const part of generation.content.parts) {
@@ -730,7 +754,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
             ...(!strictOpenAiCompliance &&
               contentBlocks.length && { content_blocks: contentBlocks }),
           };
-        } else if (generation.content?.parts[0]?.functionCall) {
+        } else if (generation.content?.parts?.[0]?.functionCall) {
           message = {
             role: 'assistant',
             tool_calls: generation.content.parts.map((part, idx) => {
@@ -752,7 +776,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
               return undefined;
             }),
           };
-        } else if (generation.content?.parts[0]?.inlineData) {
+        } else if (generation.content?.parts?.[0]?.inlineData) {
           const part = generation.content.parts[0];
           const contentBlocks = [
             {
@@ -768,6 +792,12 @@ export const GoogleChatCompleteStreamChunkTransform: (
           message = {
             role: 'assistant',
             content_blocks: contentBlocks,
+          };
+        } else if (generation.finishMessage) {
+          // 当 content 为空时（如 MALFORMED_FUNCTION_CALL），用 finishMessage 兜底
+          message = {
+            role: 'assistant',
+            content: generation.finishMessage,
           };
         }
         return {
