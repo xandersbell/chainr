@@ -270,7 +270,10 @@ export class Priorai {
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
-      'chatComplete'
+      'chatComplete',
+      200,
+      {},
+      params.model as string
     );
     return transformed as ChatCompletionResponse | ErrorResponse;
   }
@@ -288,7 +291,10 @@ export class Priorai {
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'anthropic',
-      'messages'
+      'messages',
+      200,
+      {},
+      params.model as string
     );
     return transformed as MessagesResponse | ErrorResponse;
   }
@@ -310,7 +316,10 @@ export class Priorai {
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
-      'createModelResponse'
+      'createModelResponse',
+      200,
+      {},
+      params.model as string
     );
     return transformed as Record<string, unknown> | ErrorResponse;
   }
@@ -366,7 +375,10 @@ export class Priorai {
     const transformed = transformProviderResponse(
       result.response,
       result.provider || 'openai',
-      'complete'
+      'complete',
+      200,
+      {},
+      params.model as string
     );
     return transformed as Record<string, unknown> | ErrorResponse;
   }
@@ -398,7 +410,7 @@ export class Priorai {
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, endpoint);
+        const transformed = transformProviderResponse(data, provider, endpoint, 200, {}, params.model as string);
         return transformed as Record<string, unknown>;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -430,7 +442,7 @@ export class Priorai {
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, 'embed');
+        const transformed = transformProviderResponse(data, provider, 'embed', 200, {}, params.model as string);
         return transformed as unknown as EmbedResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -462,7 +474,7 @@ export class Priorai {
         }
 
         const data = await response.json();
-        const transformed = transformProviderResponse(data, provider, 'imageGenerate');
+        const transformed = transformProviderResponse(data, provider, 'imageGenerate', 200, {}, (params as any).model as string);
         return transformed as unknown as ImageGenerateResponse;
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);

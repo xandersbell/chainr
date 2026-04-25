@@ -1,7 +1,7 @@
 import { GatewayError } from '../../errors/GatewayError';
 import { Options } from '../../types/requestBody';
 import { endpointStrings, ProviderAPIConfig } from '../types';
-import { getModelAndProvider, getAccessToken, getBucketAndFile } from './utils';
+import { getModelAndProvider, getAccessToken, getBucketAndFile, getAccessTokenFromADC } from './utils';
 
 const getApiVersion = (provider: string) => {
   if (provider === 'meta') return 'v1beta1';
@@ -67,8 +67,22 @@ export const GoogleApiConfig: ProviderAPIConfig = {
   headers: async ({ providerOptions, gatewayRequestBody }) => {
     const { apiKey, vertexServiceAccountJson } = providerOptions;
     let authToken = apiKey;
+
     if (vertexServiceAccountJson) {
+      // 方式一：显式传入 service account JSON
       authToken = await getAccessToken(vertexServiceAccountJson as Record<string, any>);
+    } else if (!apiKey) {
+      // 方式二：ADC 自动发现（本地开发场景）
+      // 当 apiKey 和 vertexServiceAccountJson 都未提供时，
+      // 自动从 GOOGLE_APPLICATION_CREDENTIALS 或 ~/.config/gcloud/ 读取凭证
+      const adcResult = await getAccessTokenFromADC();
+      if (adcResult) {
+        authToken = adcResult.token;
+        // 如果用户未指定 vertexProjectId，尝试从 ADC 凭证中获取
+        if (!providerOptions.vertexProjectId && adcResult.projectId) {
+          providerOptions.vertexProjectId = adcResult.projectId;
+        }
+      }
     }
     const anthropicBeta =
       providerOptions?.['anthropicBeta'] ??
@@ -96,8 +110,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
       mappedFn = `stream-${fn}` as endpointStrings;
     }
 
-    const url = new URL(gatewayRequestURL);
-    const searchParams = url.searchParams;
+    const url = gatewayRequestURL ? new URL(gatewayRequestURL) : null;
+    const searchParams = url?.searchParams ?? new URLSearchParams();
 
     if (NON_INFERENCE_ENDPOINTS.includes(fn)) {
       const jobIdIndex = [
@@ -109,8 +123,8 @@ export const GoogleApiConfig: ProviderAPIConfig = {
         : -1;
       const jobId = gatewayRequestURL.split('/').at(jobIdIndex);
 
-      const url = new URL(gatewayRequestURL);
-      const params = new URLSearchParams(url.search);
+      const url = gatewayRequestURL ? new URL(gatewayRequestURL) : null;
+      const params = new URLSearchParams(url?.search ?? '');
       const pageSize = params.get('limit') ?? 20;
       const after = params.get('after') ?? '';
 

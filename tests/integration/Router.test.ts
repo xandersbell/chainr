@@ -194,7 +194,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         expect.anything(),
         'anthropic',
-        'chatComplete'
+        'chatComplete',
+        200,
+        {},
+        'gpt-4o'
       );
     });
 
@@ -218,7 +221,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         expect.anything(),
         'openai',
-        'chatComplete'
+        'chatComplete',
+        200,
+        {},
+        'gpt-4o'
       );
     });
   });
@@ -253,7 +259,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         strategyResult.response as unknown as Record<string, unknown>,
         'openai',
-        'chatComplete'
+        'chatComplete',
+        200,
+        {},
+        'gpt-4o'
       );
       expect(result).toEqual(mockChatCompletionResponse);
     });
@@ -388,7 +397,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockMessagesResponse,
         'anthropic',
-        'messages'
+        'messages',
+        200,
+        {},
+        'claude-sonnet-4-20250514'
       );
       expect(result).toEqual(mockMessagesResponse);
     });
@@ -444,7 +456,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockMessagesResponse,
         'anthropic',
-        'messages'
+        'messages',
+        200,
+        {},
+        'claude-sonnet-4-20250514'
       );
     });
 
@@ -531,7 +546,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockResponsesResult,
         'openai',
-        'createModelResponse'
+        'createModelResponse',
+        200,
+        {},
+        'gpt-4o'
       );
       expect(result).toEqual(mockResponsesResult);
     });
@@ -587,7 +605,10 @@ describe('Priorai (Router) 集成测试', () => {
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockResponsesResult,
         'openai',
-        'createModelResponse'
+        'createModelResponse',
+        200,
+        {},
+        'gpt-4o'
       );
     });
 
