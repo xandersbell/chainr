@@ -470,7 +470,7 @@ export const BedrockMessagesResponseTransform = (
       type: 'message',
       role: 'assistant',
       content: transformedContent,
-      stop_reason: transformToAnthropicStopReason(response.stopReason),
+      stop_reason: transformToAnthropicStopReason(response.stopReason) as MessagesResponse['stop_reason'],
       usage: {
         cache_read_input_tokens: response.usage.cacheReadInputTokens,
         cache_creation_input_tokens: response.usage.cacheWriteInputTokens,

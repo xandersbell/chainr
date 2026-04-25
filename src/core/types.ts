@@ -113,7 +113,7 @@ export interface TargetConfig {
   [key: string]: unknown;
 }
 
-export interface ChainrConfig {
+export interface PrioraiConfig {
   strategy: 'fallback' | 'loadbalance' | 'single' | 'conditional';
   targets: TargetConfig[];
   embedTargets?: TargetConfig[];

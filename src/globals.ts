@@ -1,9 +1,9 @@
-// Chainr - 全局常量与 Provider 定义
+// Priorai - 全局常量与 Provider 定义
 // 对齐 Portkey 的 src/globals.ts，确保所有 provider 文件的 import 都能解析
 
 import type { endpointStrings } from './providers/types';
 
-export const POWERED_BY: string = 'chainr';
+export const POWERED_BY: string = 'priorai';
 
 // 重试配置
 export const MAX_RETRY_LIMIT_MS = 60 * 1000;

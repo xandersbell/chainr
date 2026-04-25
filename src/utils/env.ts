@@ -1,5 +1,5 @@
 // 从 Portkey 的 src/utils/env.ts 适配而来
-// 移除了 Hono Context 依赖，Chainr 是纯 Node.js SDK，直接读 process.env
+// 移除了 Hono Context 依赖，Priorai 是纯 Node.js SDK，直接读 process.env
 
 // 如果值看起来像文件路径，尝试读取文件内容
 function getValueOrFileContents(value?: string, ignore?: boolean): string | undefined {
@@ -26,7 +26,7 @@ function getValueOrFileContents(value?: string, ignore?: boolean): string | unde
   }
 }
 
-// Chainr 不需要 Hono Context，直接从 process.env 读取
+// Priorai 不需要 Hono Context，直接从 process.env 读取
 export const Environment = () => ({
   AWS_ACCESS_KEY_ID: getValueOrFileContents(process.env.AWS_ACCESS_KEY_ID),
   AWS_SECRET_ACCESS_KEY: getValueOrFileContents(process.env.AWS_SECRET_ACCESS_KEY),

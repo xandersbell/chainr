@@ -1,5 +1,5 @@
 {
-  "name": "chainr",
+  "name": "priorai",
   "version": "0.1.0",
   "description": "Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js",
   "main": "./dist/index.js",
@@ -7,11 +7,16 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -24,7 +29,8 @@
     "check": "biome check .",
     "check:fix": "biome check --fix .",
     "typecheck": "tsc --noEmit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "llm",

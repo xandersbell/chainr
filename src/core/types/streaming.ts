@@ -1,5 +1,5 @@
 /**
- * Chainr Streaming Support Types
+ * Priorai Streaming Support Types
  * 基于 OpenAI Chat Completions Streaming API 规范
  * 参考: Portkey-ai-gateway streaming 实现模式
  */

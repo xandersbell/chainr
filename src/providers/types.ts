@@ -82,7 +82,7 @@ export interface ProviderAPIConfig {
   }) => string;
 }
 
-// Chainr 只保留推理相关的 endpoint 类型
+// Priorai 只保留推理相关的 endpoint 类型
 export type endpointStrings =
   | 'complete'
   | 'chatComplete'
@@ -287,7 +287,7 @@ export enum FINISH_REASON {
   function_call = 'function_call',
 }
 
-// Chainr 没有独立的 google 目录，将 Google 的 finish reason 内联在此
+// Priorai 没有独立的 google 目录，将 Google 的 finish reason 内联在此
 export enum GOOGLE_GENERATE_CONTENT_FINISH_REASON {
   FINISH_REASON_UNSPECIFIED = 'FINISH_REASON_UNSPECIFIED',
   STOP = 'STOP',

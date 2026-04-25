@@ -52,7 +52,7 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
         Authorization: `Bearer ${accessToken}`,
       };
     }
-    // `AZURE_FEDERATED_TOKEN_FILE` 由运行时注入，Chainr 是纯 Node.js SDK，直接支持
+    // `AZURE_FEDERATED_TOKEN_FILE` 由运行时注入，Priorai 是纯 Node.js SDK，直接支持
     if (azureAuthMode === 'workload') {
       const { azureWorkloadClientId, azureEntraScope } = providerOptions;
 

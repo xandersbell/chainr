@@ -1,26 +1,25 @@
 import type { Params, EmbedParams, ImageGenerateParams, TranscriptionParams, SpeechParams, TranslationParams } from '../types/requestBody';
-import type { ChainrConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
+import type { PrioraiConfig, TargetConfig, StrategyResult, EmbedResponse, ImageGenerateResponse, TranscriptionResponse, SpeechResponse } from './types';
 import type { ChatCompletionChunk } from './types/streaming';
 import type { MessagesResponse } from '../types/messagesResponse';
 import { FallbackStrategy, LoadBalanceStrategy, SingleStrategy, ConditionalStrategy } from './strategies';
-import type { ConditionConfig } from './strategies';
 import { buildProviderRequest, transformProviderResponse } from './providerRequest';
 import { fetchWithTimeout } from './RetryHandler';
 
 type ChatCompletionResponse = import('./types').ChatCompletionResponse;
 type ErrorResponse = import('./types').ErrorResponse;
 
-export class Chainr {
-  private config: ChainrConfig;
+export class Priorai {
+  private config: PrioraiConfig;
   private strategy: FallbackStrategy | LoadBalanceStrategy | SingleStrategy | ConditionalStrategy;
 
-  constructor(config: ChainrConfig) {
+  constructor(config: PrioraiConfig) {
     this.validateConfig(config);
     this.config = config;
     this.strategy = this.createStrategy(config.strategy);
   }
 
-  private validateConfig(config: ChainrConfig): void {
+  private validateConfig(config: PrioraiConfig): void {
     if (!config.targets || config.targets.length === 0) {
       throw new Error('At least one target is required');
     }
