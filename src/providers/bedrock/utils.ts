@@ -171,7 +171,8 @@ export const transformCohereAdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k']) {
+  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+  if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['n']) {
@@ -198,7 +199,8 @@ export const transformAI21AdditionalModelRequestFields = (
     params.additionalModelRequestFields ||
     params.additional_model_request_fields ||
     {};
-  if (params['top_k']) {
+  // 使用 != null 避免 top_k=0 被 falsy check 过滤掉
+  if (params['top_k'] != null) {
     additionalModelRequestFields['top_k'] = params['top_k'];
   }
   if (params['frequency_penalty']) {
