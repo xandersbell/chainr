@@ -24,6 +24,8 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [ANTHROPIC_STOP_REASON.pause_turn, FINISH_REASON.stop],
   [ANTHROPIC_STOP_REASON.tool_use, FINISH_REASON.tool_calls],
   [ANTHROPIC_STOP_REASON.max_tokens, FINISH_REASON.length],
+  [ANTHROPIC_STOP_REASON.refusal, FINISH_REASON.content_filter],
+  [ANTHROPIC_STOP_REASON.model_context_window_exceeded, FINISH_REASON.length],
   // Bedrock Converse
   [BEDROCK_CONVERSE_STOP_REASON.end_turn, FINISH_REASON.stop],
   [BEDROCK_CONVERSE_STOP_REASON.tool_use, FINISH_REASON.tool_calls],

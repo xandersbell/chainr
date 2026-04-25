@@ -42,6 +42,8 @@ interface AnthropicTool {
     $defs: Record<string, any>;
   };
   type?: string;
+  // 约束解码：保证 tool call 参数严格符合 schema
+  strict?: boolean;
   display_width_px?: number;
   display_height_px?: number;
   display_number?: number;
@@ -132,6 +134,33 @@ type AnthropicMessageContentItem =
   | AnthropicUrlPdfContentItem
   | AnthropicBase64PdfContentItem
   | AnthropicPlainTextContentItem;
+
+// 构建 Anthropic output_config：将 response_format (json_schema) 和 reasoning_effort 映射
+const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null => {
+  const outputConfig: Record<string, any> = {};
+  const responseFormat = params.response_format;
+
+  // json_schema → output_config.schema
+  if (
+    typeof responseFormat === 'object' &&
+    responseFormat?.type === 'json_schema'
+  ) {
+    const jsonSchema = (responseFormat as any)?.json_schema;
+    if (jsonSchema?.schema) {
+      outputConfig.schema = jsonSchema.schema;
+      if (jsonSchema.name) {
+        outputConfig.schema.name = jsonSchema.name;
+      }
+    }
+  }
+
+  // reasoning_effort → output_config.effort
+  if (params.reasoning_effort) {
+    outputConfig.effort = params.reasoning_effort;
+  }
+
+  return Object.keys(outputConfig).length > 0 ? outputConfig : null;
+};
 
 interface AnthropicMessage extends Message {
   cache_control?: { type: 'ephemeral' };
@@ -268,7 +297,7 @@ const transformAndAppendFileContentItem = (
 export const AnthropicChatCompleteConfig: ProviderConfig = {
   model: {
     param: 'model',
-    default: 'claude-2.1',
+    default: 'claude-sonnet-4-5-20250514',
     required: true,
   },
   messages: [
@@ -382,6 +411,10 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                 required: (tool.function.parameters?.['required'] as string[]) || [],
                 $defs: (tool.function.parameters?.['$defs'] as Record<string, any>) || {},
               },
+              // strict 约束解码透传
+              ...(tool.function.strict !== undefined && {
+                strict: tool.function.strict,
+              }),
               ...(tool.cache_control && {
                 cache_control: { type: 'ephemeral' },
               }),
@@ -435,6 +468,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   max_tokens: {
     param: 'max_tokens',
     required: true,
+    default: 64000,
   },
   max_completion_tokens: {
     param: 'max_tokens',
@@ -468,6 +502,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
   thinking: {
     param: 'thinking',
     required: false,
+  },
+  // output_config：将 response_format (json_schema) 和 reasoning_effort 映射到 Anthropic 格式
+  response_format: {
+    param: 'output_config',
+    required: false,
+    transform: (params: Params) => buildAnthropicOutputConfig(params),
   },
 };
 
@@ -636,7 +676,10 @@ export const getAnthropicChatCompleteResponseTransform = (provider: string) => {
   return AnthropicChatCompleteResponseTransform;
 };
 
-export const getAnthropicStreamChunkTransform = (provider: string) => {
+export const getAnthropicStreamChunkTransform = (
+  provider: string,
+  chunkPatternsToIgnore?: string[]
+) => {
   const AnthropicChatCompleteStreamChunkTransform: (
     response: string,
     fallbackId: string,
@@ -654,7 +697,8 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
     let chunk = responseChunk.trim();
     if (
       chunk.startsWith('event: ping') ||
-      chunk.startsWith('event: content_block_stop')
+      chunk.startsWith('event: content_block_stop') ||
+      chunkPatternsToIgnore?.some((pattern) => chunk.startsWith(pattern))
     ) {
       return;
     }
@@ -733,13 +777,11 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
       );
     }
 
-    // final chunk
+    // final chunk — 计算最终 token 统计
     if (parsedChunk.type === 'message_delta' && parsedChunk.usage) {
-      const totalTokens =
-        (streamState?.usage?.prompt_tokens ?? 0) +
-        (streamState?.usage?.cache_creation_input_tokens ?? 0) +
-        (streamState?.usage?.cache_read_input_tokens ?? 0) +
-        (parsedChunk.usage.output_tokens ?? 0);
+      const promptTokens = streamState?.usage?.prompt_tokens ?? 0;
+      const completionTokens = parsedChunk.usage.output_tokens ?? 0;
+      const totalTokens = promptTokens + completionTokens;
       return (
         `data: ${JSON.stringify({
           id: fallbackId,
@@ -759,7 +801,7 @@ export const getAnthropicStreamChunkTransform = (provider: string) => {
           ],
           usage: {
             ...streamState.usage,
-            completion_tokens: parsedChunk.usage?.output_tokens,
+            completion_tokens: completionTokens,
             total_tokens: totalTokens,
             prompt_tokens_details: {
               cached_tokens: streamState.usage?.cache_read_input_tokens ?? 0,
