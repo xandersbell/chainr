@@ -1,31 +1,31 @@
-# AGENTS.md — Priorai
+# CLAUDE.md — Priorai
 
-本项目，的目的是将不同的 LLM API 通过一套统一的接口方案调用
+A unified interface SDK for calling different LLM APIs through a single, consistent abstraction.
 
-## 参考项目 PortKey
+## Reference: Portkey
 
-- portkey 的本地路径在 `./portkey`
-- 我们将其面板、管理等等功能全都彻底剥离掉
-- 只保留核心的 LLM 调用和转接能力
-- 需要同一模型不同 provider 的按优先级 fallback 能力
-- 需要其按权重分配的负载均衡能力
-- 能直接 cp 命令复制过来的代码就直接复制到本地再进行适配调整，比重写要快得多，成熟方案总比自己摸索要好
+- Portkey source is available locally at `./portkey`
+- Strip out all dashboard, management, and admin features entirely
+- Keep only the core LLM routing and proxying capabilities
+- Support priority-based fallback across different providers for the same model
+- Support weighted load balancing across providers
+- Prefer copying mature code from Portkey and adapting it locally over rewriting from scratch
 
-## 依赖策略
+## Dependency Strategy
 
-- 成熟的、必要的外部依赖可以直接引入，不执着于零依赖
-- AWS 官方 SDK（@smithy/signature-v4、@aws-crypto/sha256-js）→ 直接使用，不自己实现签名
-- Hono 框架 → 必须剥离。Hono 是 Web 服务器框架，Priorai 是嵌入式 SDK，架构不匹配。用 providerOptions + process.env 替代 Hono Context
-- 判断标准：该依赖是否在 SDK 嵌入场景下合理？合理就用，不合理就剥离
+- Use mature, necessary external dependencies freely — no obsession with zero-dependency
+- AWS SDK (`@smithy/signature-v4`, `@aws-crypto/sha256-js`) — use directly, do not reimplement signing
+- Hono framework — must be removed. Hono is a web server framework; Priorai is an embeddable SDK. Use `providerOptions` + `process.env` instead of Hono Context
+- Rule of thumb: is this dependency reasonable in an embedded SDK context? If yes, use it. If not, strip it out.
 
-## 执行中时刻记得
+## Working Guidelines
 
-- 一边工作一边更新相关文档，标记进度，记录差异等等
-- 更新文档时必须在顶部明确写入当前时间
-- 尽可能的主动完成工作，不要停下来等待
-- 这有一定工作量，但并不是一项艰难的科研级工作
-- 你有足够的智慧解决工作中遇到的所有问题，不要因为“繁琐”而退缩
-- 细心些，耐心些
-- 记得，如果遇到问题，先去看 portkey 那边已经成熟的实现，别一味的猛冲
-- 编写完善的测试确保业务健壮
-- 每个小任务结束后务必更新相关文档确保描述是最新的
+- Update relevant documentation as you work — mark progress, record differences
+- Always include the current timestamp at the top when updating docs
+- Drive work forward proactively — do not stop and wait unnecessarily
+- This is substantial work, but not research-level hard
+- You have the capability to solve every problem you encounter — do not shy away from tedious tasks
+- Be careful and patient
+- When stuck, check Portkey's mature implementation first before pushing ahead blindly
+- Write thorough tests to ensure robustness
+- Update relevant documentation after completing each subtask to keep it current
