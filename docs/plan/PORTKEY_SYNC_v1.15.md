@@ -1,10 +1,10 @@
 # Portkey v1.12.0 → HEAD 同步计划
 
 **创建时间**: 2026-04-25 06:33 EEST
-**最后更新**: 2026-04-25 06:46 EEST
+**最后更新**: 2026-04-25 06:54 EEST
 **Portkey 基线**: v1.12.0（Chainr 当前对齐版本）
 **Portkey 目标**: HEAD（351692fd，v1.15.2 之后）
-**状态**: 🔄 P0 完成，P1 进行中
+**状态**: 🔄 P0 完成，P1 完成，P2 待执行
 
 ---
 
@@ -81,7 +81,7 @@
 - `src/providers/cohere/chatComplete.ts` — 完全重写
 - `src/providers/cohere/types.ts` — 新增
 
-**状态**: ⬜
+**状态**: ✅ 同步时已完成 v2 迁移
 
 ### 2.2 Vertex AI / Google 新功能
 
@@ -101,7 +101,7 @@
 - `src/providers/google-vertex-ai/api.ts`
 - `src/providers/google-vertex-ai/transformGenerationConfig.ts`
 
-**状态**: ⬜
+**状态**: ✅ 同步时已全部带入
 
 ### 2.3 Anthropic 增强
 
@@ -116,7 +116,7 @@
 - `src/providers/anthropic/api.ts`
 - `src/providers/anthropic/chatComplete.ts`
 
-**状态**: ⬜
+**状态**: ✅ 同步时已全部带入
 
 ### 2.4 Bedrock 增强
 
@@ -131,7 +131,7 @@
 - `src/providers/bedrock/utils.ts`
 - `src/providers/bedrock/countTokens.ts` — 新增
 
-**状态**: ⬜
+**状态**: ✅ countTokens.ts 新增并注册（4290479），其余同步时已带入
 
 ### 2.5 Azure OpenAI 增强
 
@@ -145,7 +145,7 @@
 - `src/providers/azure-openai/api.ts`
 - `src/providers/azure-openai/utils.ts` — 新增
 
-**状态**: ⬜
+**状态**: ✅ 同步时已全部带入
 
 ### 2.6 Azure AI Inference 增强
 
@@ -158,7 +158,7 @@
 - `src/providers/azure-ai-inference/api.ts`
 - `src/providers/azure-ai-inference/messages.ts` — 新增
 
-**状态**: ⬜
+**状态**: ✅ 同步时已全部带入
 
 ### 2.7 其他 Provider 小改动
 
@@ -169,7 +169,7 @@
 | Groq | 新增 `reasoning_effort` 参数透传 | `groq/chatComplete.ts` |
 | open-ai-base | `chatCompleteParams` 直接展开 `OpenAIChatCompleteConfig`，避免参数遗漏 | `open-ai-base/chatComplete.ts` |
 
-**状态**: ⬜
+**状态**: ✅ 同步时已全部带入
 
 ---
 
