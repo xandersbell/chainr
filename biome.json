@@ -60,6 +60,16 @@
       }
     },
     {
+      "includes": ["examples/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noThenProperty": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/__tests__/**", "**/*.test.ts", "**/*.spec.ts"],
       "linter": {
         "rules": {
