@@ -3,11 +3,12 @@
  * Match conditions based on request params and metadata, then select the corresponding target
  * Adapted from Portkey's conditionalRouter.ts
  */
-import type { Params } from '../../types/requestBody';
+
 import type { endpointStrings } from '../../providers/types';
+import type { Params } from '../../types/requestBody';
+import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
-import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
 // MongoDB-style query object
 type Query = Record<string, unknown>;
@@ -59,7 +60,7 @@ export class ConditionalStrategy {
     endpoint?: endpointStrings,
     conditions?: ConditionConfig[],
     defaultTarget?: string,
-    metadata?: Record<string, string>
+    metadata?: Record<string, string>,
   ): Promise<StrategyResult> {
     const resolved = this.resolveTarget(targets, params, conditions, defaultTarget, metadata);
     const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
@@ -77,7 +78,7 @@ export class ConditionalStrategy {
     endpoint?: endpointStrings,
     conditions?: ConditionConfig[],
     defaultTarget?: string,
-    metadata?: Record<string, string>
+    metadata?: Record<string, string>,
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     const resolved = this.resolveTarget(targets, params, conditions, defaultTarget, metadata);
     const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
@@ -92,7 +93,7 @@ export class ConditionalStrategy {
     params: Params,
     conditions?: ConditionConfig[],
     defaultTarget?: string,
-    metadata?: Record<string, string>
+    metadata?: Record<string, string>,
   ): TargetConfig {
     if (!conditions || conditions.length === 0) {
       throw new Error('No conditions provided for conditional routing');
@@ -195,7 +196,7 @@ export class ConditionalStrategy {
    * Find a target by name
    */
   private findTarget(targets: TargetConfig[], name: string): TargetConfig {
-    const target = targets.find(t => t.name === name);
+    const target = targets.find((t) => t.name === name);
     if (!target) {
       throw new Error(`Invalid target name in conditional routing: ${name}`);
     }
@@ -214,9 +215,12 @@ export class ConditionalStrategy {
     const obj = context[root];
     if (!obj) return undefined;
     // Support multi-level nested paths
-    return field.split('.').reduce<unknown>(
-      (acc, part) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined),
-      obj
-    );
+    return field
+      .split('.')
+      .reduce<unknown>(
+        (acc, part) =>
+          acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined,
+        obj,
+      );
   }
 }

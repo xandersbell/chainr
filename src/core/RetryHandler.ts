@@ -1,5 +1,5 @@
-import type { RetryResult, RetryResultForStream } from './types';
 import { MAX_RETRY_LIMIT_MS } from '../globals';
+import type { RetryResult, RetryResultForStream } from './types';
 
 const DEFAULT_RETRY_ATTEMPTS = 3;
 const DEFAULT_RETRY_STATUS_CODES = [429, 500, 502, 503, 504];
@@ -13,7 +13,7 @@ const BASE_DELAY_MS = 100;
 const RETRY_AFTER_HEADERS = ['retry-after-ms', 'x-ms-retry-after-ms', 'retry-after'];
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function getRetryDelay(attempt: number): number {
@@ -40,7 +40,7 @@ function parseRetryAfter(headers: Headers): number | undefined {
 export async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -60,7 +60,7 @@ export async function retryRequest(
   url: string,
   options: RequestInit,
   retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-  timeoutMs: number = 30000
+  timeoutMs: number = 30000,
 ): Promise<RetryResult> {
   const attempts = retryConfig?.attempts ?? DEFAULT_RETRY_ATTEMPTS;
   const statusCodes = retryConfig?.onStatusCodes ?? DEFAULT_RETRY_STATUS_CODES;
@@ -103,7 +103,10 @@ export async function retryRequest(
         error.cause instanceof Error &&
         (error.cause as Error).name === 'ConnectTimeoutError'
       ) {
-        lastResponse = { status: 503, data: { error: { message: error.message, type: 'connect_timeout' } } };
+        lastResponse = {
+          status: 503,
+          data: { error: { message: error.message, type: 'connect_timeout' } },
+        };
         lastError = `ConnectTimeoutError: ${error.message}`;
       } else {
         lastError = error instanceof Error ? error.message : String(error);
@@ -126,7 +129,7 @@ export async function retryRequestForStream(
   url: string,
   options: RequestInit,
   retryConfig?: { attempts?: number; onStatusCodes?: number[] },
-  timeoutMs: number = 60000
+  timeoutMs: number = 60000,
 ): Promise<RetryResultForStream> {
   const attempts = retryConfig?.attempts ?? DEFAULT_RETRY_ATTEMPTS;
   const statusCodes = retryConfig?.onStatusCodes ?? DEFAULT_RETRY_STATUS_CODES;
@@ -184,7 +187,7 @@ export async function retryRequestForStream(
 function getSmartDelay(
   attempt: number,
   response: Response,
-  remainingBudget: number
+  remainingBudget: number,
 ): number | null {
   // Only attempt to read retry-after on 429
   if (response.status === 429) {

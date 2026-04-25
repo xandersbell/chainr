@@ -1,6 +1,6 @@
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 
 interface GoogleStreamState {
   containsChainOfThoughtMessage: boolean;
@@ -8,7 +8,7 @@ interface GoogleStreamState {
 
 function transformFinishReason(
   reason: string | null,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): string | null {
   if (!reason) return 'stop';
   if (!strictOpenAiCompliance) return reason;
@@ -27,10 +27,9 @@ function googleStreamTransform(
   fallbackId: string,
   streamState: GoogleStreamState,
   strictOpenAiCompliance?: boolean,
-  provider?: string
+  provider?: string,
 ): string | undefined {
-  streamState.containsChainOfThoughtMessage =
-    streamState?.containsChainOfThoughtMessage ?? false;
+  streamState.containsChainOfThoughtMessage = streamState?.containsChainOfThoughtMessage ?? false;
 
   let trimmed = chunk.trim();
 
@@ -172,7 +171,7 @@ function googleStreamTransform(
 export function createGoogleStream(
   response: Response,
   provider: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
@@ -188,10 +187,10 @@ export function createGoogleStream(
         fallbackId,
         state as unknown as GoogleStreamState,
         strictOpenAiCompliance,
-        provider
+        provider,
       ),
     fallbackId,
-    streamState as unknown as Record<string, unknown>
+    streamState as unknown as Record<string, unknown>,
   );
 
   return new ReadableStream({
@@ -211,7 +210,7 @@ export function createGoogleStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

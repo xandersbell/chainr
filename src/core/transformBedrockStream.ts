@@ -1,6 +1,6 @@
-import type { ChatCompletionChunk } from './types/streaming';
 import { parseSSEDataMultiple } from './sseParser';
 import { getFallbackChunkId } from './streamUtils';
+import type { ChatCompletionChunk } from './types/streaming';
 
 interface BedrockStreamState {
   stopReason?: string;
@@ -31,7 +31,10 @@ function getPayloadFromAwsChunk(chunk: Uint8Array): string {
     : JSON.stringify(decodedJson);
 }
 
-function concatenateUint8Arrays(a: Uint8Array<ArrayBufferLike>, b: Uint8Array<ArrayBufferLike>): Uint8Array<ArrayBuffer> {
+function concatenateUint8Arrays(
+  a: Uint8Array<ArrayBufferLike>,
+  b: Uint8Array<ArrayBufferLike>,
+): Uint8Array<ArrayBuffer> {
   const result = new Uint8Array(a.length + b.length);
   result.set(a, 0);
   result.set(b, a.length);
@@ -40,7 +43,7 @@ function concatenateUint8Arrays(a: Uint8Array<ArrayBufferLike>, b: Uint8Array<Ar
 
 function transformFinishReason(
   reason: string | null,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): string | null {
   if (!reason) return 'stop';
   if (!strictOpenAiCompliance) return reason;
@@ -62,7 +65,7 @@ function bedrockStreamTransform(
   fallbackId: string,
   streamState: BedrockStreamState,
   strictOpenAiCompliance?: boolean,
-  model?: string
+  model?: string,
 ): string | string[] | undefined {
   let parsedChunk: any;
   try {
@@ -113,15 +116,13 @@ function bedrockStreamTransform(
             delta: {},
             finish_reason: transformFinishReason(
               streamState.stopReason ?? null,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
             ),
           },
         ],
         usage: {
           prompt_tokens:
-            parsedChunk.usage.inputTokens +
-            cacheReadInputTokens +
-            cacheWriteInputTokens,
+            parsedChunk.usage.inputTokens + cacheReadInputTokens + cacheWriteInputTokens,
           completion_tokens: parsedChunk.usage.outputTokens,
           total_tokens: parsedChunk.usage.totalTokens,
           prompt_tokens_details: {
@@ -171,8 +172,7 @@ function bedrockStreamTransform(
     contentBlockObject.delta.thinking = parsedChunk.delta.reasoningContent.text;
   if (parsedChunk.delta?.reasoningContent?.signature)
     contentBlockObject.delta.signature = parsedChunk.delta.reasoningContent.signature;
-  if (parsedChunk.delta?.text)
-    contentBlockObject.delta.text = parsedChunk.delta.text;
+  if (parsedChunk.delta?.text) contentBlockObject.delta.text = parsedChunk.delta.text;
   if (parsedChunk.delta?.reasoningContent?.redactedContent)
     contentBlockObject.delta.data = parsedChunk.delta.reasoningContent.redactedContent;
 
@@ -203,10 +203,18 @@ function bedrockStreamTransform(
 
 export async function* readAWSStream(
   reader: ReadableStreamDefaultReader,
-  transformFunction: ((responseChunk: string, fallbackId: string, streamState: BedrockStreamState, strictOpenAiCompliance?: boolean, model?: string) => string | string[] | undefined) | undefined,
+  transformFunction:
+    | ((
+        responseChunk: string,
+        fallbackId: string,
+        streamState: BedrockStreamState,
+        strictOpenAiCompliance?: boolean,
+        model?: string,
+      ) => string | string[] | undefined)
+    | undefined,
   fallbackChunkId: string,
   model?: string,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): AsyncGenerator<string | undefined> {
   let buffer = new Uint8Array();
   let expectedLength = 0;
@@ -228,7 +236,7 @@ export async function* readAWSStream(
               fallbackChunkId,
               streamState,
               strictOpenAiCompliance,
-              model
+              model,
             );
             if (Array.isArray(transformedChunk)) {
               for (const item of transformedChunk) {
@@ -264,7 +272,7 @@ export async function* readAWSStream(
           fallbackChunkId,
           streamState,
           strictOpenAiCompliance,
-          model
+          model,
         );
         if (Array.isArray(transformedChunk)) {
           for (const item of transformedChunk) {
@@ -284,7 +292,7 @@ export function createBedrockStream(
   response: Response,
   provider: string,
   model?: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const fallbackId = getFallbackChunkId(provider);
   const reader = response.body!.getReader();
@@ -294,7 +302,7 @@ export function createBedrockStream(
     bedrockStreamTransform,
     fallbackId,
     model,
-    strictOpenAiCompliance
+    strictOpenAiCompliance,
   );
 
   return new ReadableStream({
@@ -314,7 +322,7 @@ export function createBedrockStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

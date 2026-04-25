@@ -1,13 +1,13 @@
-import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
 import { getFallbackChunkId } from './streamUtils';
+import type { ChatCompletionChunk } from './types/streaming';
 
 function bytezStreamTransform(
   chunk: string,
   fallbackId: string,
   _streamState: Record<string, unknown>,
   _strictOpenAiCompliance?: boolean,
-  provider?: string
+  provider?: string,
 ): string | undefined {
   let trimmed = chunk.trim();
   if (!trimmed) return;
@@ -51,7 +51,7 @@ function bytezStreamTransform(
 export function createBytezStream(
   response: Response,
   provider: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const fallbackId = getFallbackChunkId(provider);
   const reader = response.body!.getReader();
@@ -62,7 +62,7 @@ export function createBytezStream(
     (chunk, fallbackId, state) =>
       bytezStreamTransform(chunk, fallbackId, state, strictOpenAiCompliance, provider),
     fallbackId,
-    {}
+    {},
   );
 
   return new ReadableStream({
@@ -82,7 +82,7 @@ export function createBytezStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

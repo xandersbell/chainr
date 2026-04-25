@@ -1,7 +1,7 @@
 // Aligned with Portkey's transformToProviderRequest + responseHandler
 // Uses ProviderConfig parameter mapping to transform request params into provider format
 import Providers from '../providers';
-import type { ProviderConfig, endpointStrings } from '../providers/types';
+import type { endpointStrings, ProviderConfig } from '../providers/types';
 import type { Options, Params } from '../types/requestBody';
 import type { TransformResult } from './types';
 
@@ -21,7 +21,7 @@ const getValue = (
   configParam: string,
   params: Params,
   paramConfig: any,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   let value = params[configParam as keyof typeof params];
 
@@ -31,7 +31,11 @@ const getValue = (
 
   if (typeof value === 'number' && paramConfig?.min !== undefined && value < paramConfig.min) {
     value = paramConfig.min;
-  } else if (typeof value === 'number' && paramConfig?.max !== undefined && value > paramConfig.max) {
+  } else if (
+    typeof value === 'number' &&
+    paramConfig?.max !== undefined &&
+    value > paramConfig.max
+  ) {
     value = paramConfig.max;
   }
 
@@ -42,7 +46,7 @@ const getValue = (
 export const transformUsingProviderConfig = (
   providerConfig: ProviderConfig,
   params: Params,
-  providerOptions: Options
+  providerOptions: Options,
 ) => {
   const transformedRequest: { [key: string]: any } = {};
 
@@ -74,10 +78,7 @@ export const transformUsingProviderConfig = (
 // Build providerOptions (aligned with Portkey's Options structure)
 // Users can pass provider-specific fields via the nested providerOptions object in target,
 // which is flattened to the top level here to align with the Options interface
-function buildProviderOptions(
-  provider: string,
-  target: Record<string, unknown>
-): Options {
+function buildProviderOptions(provider: string, target: Record<string, unknown>): Options {
   const { providerOptions, ...rest } = target;
   return {
     provider,
@@ -97,7 +98,7 @@ export async function buildProviderRequest(
   params: Params,
   provider: string,
   target: Record<string, unknown>,
-  endpoint: endpointStrings = 'chatComplete'
+  endpoint: endpointStrings = 'chatComplete',
 ): Promise<TransformResult> {
   const providerConfigs = Providers[provider];
   if (!providerConfigs) {
@@ -165,12 +166,13 @@ export function transformProviderResponse(
   endpoint: endpointStrings = 'chatComplete',
   status: number = 200,
   responseHeaders: Record<string, string> = {},
-  requestModel?: string
+  requestModel?: string,
 ): unknown {
   // retryRequest returns a { status, data } wrapper; unwrap to get the actual response body
-  const responseBody = (json && typeof json === 'object' && 'data' in json)
-    ? (json as Record<string, unknown>).data
-    : json;
+  const responseBody =
+    json && typeof json === 'object' && 'data' in json
+      ? (json as Record<string, unknown>).data
+      : json;
 
   const providerConfigs = Providers[provider];
   if (!providerConfigs) {
@@ -180,11 +182,11 @@ export function transformProviderResponse(
   // Get responseTransforms
   let responseTransforms: Record<string, any> | undefined;
   if (providerConfigs.getConfig) {
-// For dynamic providers (e.g. Vertex AI), the request model is needed to route to the correct sub-config
-// The response JSON may not contain a model field, so requestModel takes priority
+    // For dynamic providers (e.g. Vertex AI), the request model is needed to route to the correct sub-config
+    // The response JSON may not contain a model field, so requestModel takes priority
     const configParams = requestModel
-      ? { model: requestModel } as Params
-      : responseBody as Params;
+      ? ({ model: requestModel } as Params)
+      : (responseBody as Params);
     const dynamicConfig = providerConfigs.getConfig({
       params: configParams,
       providerOptions: { provider } as Options,

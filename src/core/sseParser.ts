@@ -7,7 +7,7 @@ export async function* parseSSEStream(
   splitPattern: SplitPatternType,
   transformFunction: StreamTransformFn | undefined,
   fallbackChunkId: string,
-  streamState: Record<string, unknown> = {}
+  streamState: Record<string, unknown> = {},
 ): AsyncGenerator<string | undefined> {
   let buffer = '';
   const decoder = new TextDecoder();
@@ -52,7 +52,7 @@ export async function* parseSSEStream(
 }
 
 export function createReadableStreamFromGenerator(
-  generator: AsyncGenerator<string | undefined>
+  generator: AsyncGenerator<string | undefined>,
 ): ReadableStream {
   return new ReadableStream({
     async start(controller) {
@@ -66,7 +66,7 @@ export function createReadableStreamFromGenerator(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 
@@ -99,8 +99,7 @@ export function parseSSEDataMultiple<T>(data: string): T[] {
       if (dataContent && dataContent !== '[DONE]') {
         try {
           results.push(JSON.parse(dataContent) as T);
-        } catch {
-        }
+        } catch {}
       }
     }
   }

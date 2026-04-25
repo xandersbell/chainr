@@ -2,11 +2,12 @@
  * Single strategy — always use the first target
  * Supports nesting: a target can be a leaf node or a sub-strategy group
  */
-import type { Params } from '../../types/requestBody';
+
 import type { endpointStrings } from '../../providers/types';
+import type { Params } from '../../types/requestBody';
+import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
-import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 
 export class SingleStrategy {
   async execute(
@@ -14,7 +15,7 @@ export class SingleStrategy {
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number,
-    endpoint?: endpointStrings
+    endpoint?: endpointStrings,
   ): Promise<StrategyResult> {
     if (targets.length === 0) {
       throw new Error('No targets provided');
@@ -29,7 +30,7 @@ export class SingleStrategy {
     params: Params,
     retryConfig?: { attempts?: number; onStatusCodes?: number[] },
     timeoutMs?: number,
-    endpoint?: endpointStrings
+    endpoint?: endpointStrings,
   ): Promise<ReadableStream<ChatCompletionChunk>> {
     if (targets.length === 0) {
       throw new Error('No targets provided');

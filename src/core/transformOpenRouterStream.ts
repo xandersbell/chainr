@@ -1,6 +1,6 @@
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 
 function openrouterStreamTransform(
   chunk: string,
@@ -8,7 +8,7 @@ function openrouterStreamTransform(
   _streamState: Record<string, unknown>,
   strictOpenAiCompliance?: boolean,
   provider?: string,
-  model?: string
+  model?: string,
 ): string | undefined {
   let trimmed = chunk.trim();
   trimmed = trimmed.replace(/^data: /, '');
@@ -19,19 +19,21 @@ function openrouterStreamTransform(
   }
 
   if (trimmed.includes('OPENROUTER PROCESSING')) {
-    return JSON.stringify({
-      id: `${Date.now()}`,
-      model: model || '',
-      object: 'chat.completion.chunk',
-      created: Date.now(),
-      choices: [
-        {
-          index: 0,
-          delta: { role: 'assistant', content: '' },
-          finish_reason: null,
-        },
-      ],
-    }) + '\n\n';
+    return (
+      JSON.stringify({
+        id: `${Date.now()}`,
+        model: model || '',
+        object: 'chat.completion.chunk',
+        created: Date.now(),
+        choices: [
+          {
+            index: 0,
+            delta: { role: 'assistant', content: '' },
+            finish_reason: null,
+          },
+        ],
+      }) + '\n\n'
+    );
   }
 
   let parsedChunk: any;
@@ -61,31 +63,33 @@ function openrouterStreamTransform(
     }
   }
 
-  return JSON.stringify({
-    id: parsedChunk.id || fallbackId,
-    object: parsedChunk.object || 'chat.completion.chunk',
-    created: parsedChunk.created || Math.floor(Date.now() / 1000),
-    model: parsedChunk.model || model || '',
-    provider: provider,
-    choices: [
-      {
-        index: parsedChunk.choices?.[0]?.index ?? 0,
-        delta: {
-          ...parsedChunk.choices?.[0]?.delta,
-          ...(contentBlocks.length && { content_blocks: contentBlocks }),
+  return (
+    JSON.stringify({
+      id: parsedChunk.id || fallbackId,
+      object: parsedChunk.object || 'chat.completion.chunk',
+      created: parsedChunk.created || Math.floor(Date.now() / 1000),
+      model: parsedChunk.model || model || '',
+      provider: provider,
+      choices: [
+        {
+          index: parsedChunk.choices?.[0]?.index ?? 0,
+          delta: {
+            ...parsedChunk.choices?.[0]?.delta,
+            ...(contentBlocks.length && { content_blocks: contentBlocks }),
+          },
+          finish_reason: parsedChunk.choices?.[0]?.finish_reason ?? null,
         },
-        finish_reason: parsedChunk.choices?.[0]?.finish_reason ?? null,
-      },
-    ],
-    ...(parsedChunk.usage && { usage: parsedChunk.usage }),
-  }) + '\n\n';
+      ],
+      ...(parsedChunk.usage && { usage: parsedChunk.usage }),
+    }) + '\n\n'
+  );
 }
 
 export function createOpenRouterStream(
   response: Response,
   provider: string,
   model?: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
@@ -95,16 +99,9 @@ export function createOpenRouterStream(
     reader,
     splitPattern,
     (chunk, fallbackId, state) =>
-      openrouterStreamTransform(
-        chunk,
-        fallbackId,
-        state,
-        strictOpenAiCompliance,
-        provider,
-        model
-      ),
+      openrouterStreamTransform(chunk, fallbackId, state, strictOpenAiCompliance, provider, model),
     fallbackId,
-    {}
+    {},
   );
 
   return new ReadableStream({
@@ -124,7 +121,7 @@ export function createOpenRouterStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

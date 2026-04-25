@@ -1,6 +1,6 @@
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
 import { OPENAI_COMPATIBLE_PROVIDERS } from './types/streaming';
 
 export { OPENAI_COMPATIBLE_PROVIDERS };
@@ -12,7 +12,7 @@ export function isOpenAICompatibleProvider(provider: string): boolean {
 function openAiStreamTransform(
   chunk: string,
   _fallbackId: string,
-  _streamState: Record<string, unknown>
+  _streamState: Record<string, unknown>,
 ): string | undefined {
   const trimmed = chunk.trim();
   if (trimmed === '[DONE]') {
@@ -31,20 +31,14 @@ function isAzureProvider(provider: string): boolean {
 
 export function createOpenAIStream(
   response: Response,
-  provider: string
+  provider: string,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider);
   const fallbackId = getFallbackChunkId(provider);
   const reader = response.body!.getReader();
   const needsChunkDelay = isAzureProvider(provider);
 
-  const generator = parseSSEStream(
-    reader,
-    splitPattern,
-    openAiStreamTransform,
-    fallbackId,
-    {}
-  );
+  const generator = parseSSEStream(reader, splitPattern, openAiStreamTransform, fallbackId, {});
 
   let isFirstChunk = true;
 
@@ -55,10 +49,10 @@ export function createOpenAIStream(
           if (chunkStr) {
             // Delay 25ms on first chunk (all providers), 1ms on subsequent Azure chunks
             if (isFirstChunk) {
-              await new Promise(resolve => setTimeout(resolve, 25));
+              await new Promise((resolve) => setTimeout(resolve, 25));
               isFirstChunk = false;
             } else if (needsChunkDelay) {
-              await new Promise(resolve => setTimeout(resolve, 1));
+              await new Promise((resolve) => setTimeout(resolve, 1));
             }
             const parsedChunks = parseSSEDataMultiple<ChatCompletionChunk>(chunkStr);
             for (const parsed of parsedChunks) {
@@ -70,7 +64,7 @@ export function createOpenAIStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 
@@ -88,6 +82,6 @@ export function createPassthroughStream(response: Response): ReadableStream<Uint
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }

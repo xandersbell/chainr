@@ -1,10 +1,10 @@
-import type { ChatCompletionChunk, AnthropicStreamState } from './types/streaming';
-import { parseSSEStream, parseSSEDataMultiple } from './sseParser';
-import { getSplitPattern, getFallbackChunkId } from './streamUtils';
+import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
+import { getFallbackChunkId, getSplitPattern } from './streamUtils';
+import type { AnthropicStreamState, ChatCompletionChunk } from './types/streaming';
 
 function transformFinishReason(
   reason: string | null,
-  strictOpenAiCompliance?: boolean
+  strictOpenAiCompliance?: boolean,
 ): string | null {
   if (!reason) return 'stop';
   if (!strictOpenAiCompliance) return reason;
@@ -22,14 +22,11 @@ function anthropicStreamTransform(
   fallbackId: string,
   streamState: AnthropicStreamState,
   strictOpenAiCompliance?: boolean,
-  provider?: string
+  provider?: string,
 ): string | undefined {
   let trimmed = chunk.trim();
 
-  if (
-    trimmed.startsWith('event: ping') ||
-    trimmed.startsWith('event: content_block_stop')
-  ) {
+  if (trimmed.startsWith('event: ping') || trimmed.startsWith('event: content_block_stop')) {
     return;
   }
 
@@ -76,8 +73,7 @@ function anthropicStreamTransform(
     streamState.usage = {
       prompt_tokens: parsedChunk.message.usage?.input_tokens ?? 0,
       cache_read_input_tokens: parsedChunk.message.usage?.cache_read_input_tokens,
-      cache_creation_input_tokens:
-        parsedChunk.message.usage?.cache_creation_input_tokens,
+      cache_creation_input_tokens: parsedChunk.message.usage?.cache_creation_input_tokens,
     };
     return (
       `data: ${JSON.stringify({
@@ -121,7 +117,7 @@ function anthropicStreamTransform(
             delta: {},
             finish_reason: transformFinishReason(
               parsedChunk.delta?.stop_reason,
-              strictOpenAiCompliance
+              strictOpenAiCompliance,
             ),
           },
         ],
@@ -150,11 +146,9 @@ function anthropicStreamTransform(
   }
 
   const isToolBlockStart: boolean =
-    parsedChunk.type === 'content_block_start' &&
-    parsedChunk.content_block?.type === 'tool_use';
+    parsedChunk.type === 'content_block_start' && parsedChunk.content_block?.type === 'tool_use';
   const isToolBlockDelta: boolean =
-    parsedChunk.type === 'content_block_delta' &&
-    parsedChunk.delta?.partial_json !== undefined;
+    parsedChunk.type === 'content_block_delta' && parsedChunk.delta?.partial_json !== undefined;
 
   if (isToolBlockStart && parsedChunk.content_block) {
     streamState.toolIndex = streamState.toolIndex + 1;
@@ -214,7 +208,7 @@ function anthropicStreamTransform(
 export function createAnthropicStream(
   response: Response,
   provider: string,
-  strictOpenAiCompliance: boolean = false
+  strictOpenAiCompliance: boolean = false,
 ): ReadableStream<ChatCompletionChunk> {
   const splitPattern = getSplitPattern(provider, '/v1/messages');
   const fallbackId = getFallbackChunkId(provider);
@@ -230,10 +224,10 @@ export function createAnthropicStream(
         fallbackId,
         state as unknown as AnthropicStreamState,
         strictOpenAiCompliance,
-        provider
+        provider,
       ),
     fallbackId,
-    streamState as unknown as Record<string, unknown>
+    streamState as unknown as Record<string, unknown>,
   );
 
   return new ReadableStream({
@@ -251,7 +245,7 @@ export function createAnthropicStream(
       } catch (error) {
         controller.error(error);
       }
-    }
+    },
   });
 }
 

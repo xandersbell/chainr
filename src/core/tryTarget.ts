@@ -4,16 +4,16 @@
  * Also responsible for config inheritance: overrideParams merging, retry/timeout child-priority
  */
 import type { Params } from '../types/requestBody';
-import type { StrategyResult, TargetConfig } from './types';
-import type { ChatCompletionChunk } from './types/streaming';
-import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { buildProviderRequest } from './providerRequest';
-import { createOpenAIStream, isOpenAICompatibleProvider } from './transformOpenAIStream';
+import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { createAnthropicStream, isAnthropicProvider } from './transformAnthropicStream';
-import { createGoogleStream, isGoogleProvider } from './transformGoogleStream';
-import { createCohereStream, isCohereProvider } from './transformCohereStream';
 import { createBedrockStream, isBedrockProvider } from './transformBedrockStream';
 import { createBytezStream, isBytezProvider } from './transformBytezStream';
+import { createCohereStream, isCohereProvider } from './transformCohereStream';
+import { createGoogleStream, isGoogleProvider } from './transformGoogleStream';
+import { createOpenAIStream, isOpenAICompatibleProvider } from './transformOpenAIStream';
+import type { StrategyResult, TargetConfig } from './types';
+import type { ChatCompletionChunk } from './types/streaming';
 
 /**
  * Inherited config — passed down from parent level
@@ -39,7 +39,7 @@ export function isNestedTarget(target: TargetConfig): boolean {
  */
 export function buildInheritedConfig(
   target: TargetConfig,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): InheritedConfig {
   return {
     overrideParams: {
@@ -63,19 +63,24 @@ export function buildInheritedConfig(
 export async function tryLeafTarget(
   target: TargetConfig,
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   const provider = (target.provider as string) || 'openai';
   const mergedParams = { ...params, ...(inherited.overrideParams || {}) };
 
   const endpoint = inherited.endpoint || 'chatComplete';
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
+  const { body, headers, url } = await buildProviderRequest(
+    mergedParams,
+    provider,
+    target,
+    endpoint,
+  );
 
   const retryResult = await retryRequest(
     url,
     { method: 'POST', headers, body: JSON.stringify(body) },
     inherited.retry,
-    inherited.timeout
+    inherited.timeout,
   );
 
   return {
@@ -92,7 +97,7 @@ export async function tryLeafTarget(
 export async function tryLeafTargetStream(
   target: TargetConfig,
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const provider = (target.provider as string) || 'openai';
   const mergedParams = {
@@ -102,13 +107,18 @@ export async function tryLeafTargetStream(
   };
 
   const endpoint = inherited.endpoint || 'chatComplete';
-  const { body, headers, url } = await buildProviderRequest(mergedParams, provider, target, endpoint);
+  const { body, headers, url } = await buildProviderRequest(
+    mergedParams,
+    provider,
+    target,
+    endpoint,
+  );
 
   const retryResult = await retryRequestForStream(
     url,
     { method: 'POST', headers, body: JSON.stringify(body) },
     inherited.retry,
-    inherited.timeout
+    inherited.timeout,
   );
 
   if (!retryResult.success || !retryResult.response) {
@@ -123,7 +133,7 @@ export async function tryLeafTargetStream(
  */
 export function createStreamForProvider(
   response: Response,
-  provider: string
+  provider: string,
 ): ReadableStream<ChatCompletionChunk> {
   if (isAnthropicProvider(provider)) return createAnthropicStream(response, provider);
   if (isGoogleProvider(provider)) return createGoogleStream(response, provider);
@@ -141,18 +151,13 @@ export function createStreamForProvider(
 export async function executeTarget(
   target: TargetConfig,
   params: Params,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): Promise<StrategyResult> {
   const inherited = buildInheritedConfig(target, parentConfig);
 
   if (isNestedTarget(target)) {
     // Nested strategy group — recursive dispatch
-    return executeNestedStrategy(
-      target.strategy!,
-      target.targets!,
-      params,
-      inherited
-    );
+    return executeNestedStrategy(target.strategy!, target.targets!, params, inherited);
   }
 
   // Leaf node — send request directly
@@ -165,17 +170,12 @@ export async function executeTarget(
 export async function executeTargetStream(
   target: TargetConfig,
   params: Params,
-  parentConfig: InheritedConfig
+  parentConfig: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const inherited = buildInheritedConfig(target, parentConfig);
 
   if (isNestedTarget(target)) {
-    return executeNestedStrategyStream(
-      target.strategy!,
-      target.targets!,
-      params,
-      inherited
-    );
+    return executeNestedStrategyStream(target.strategy!, target.targets!, params, inherited);
   }
 
   return tryLeafTargetStream(target, params, inherited);
@@ -188,7 +188,7 @@ function executeNestedStrategy(
   strategy: string,
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   switch (strategy) {
     case 'fallback':
@@ -209,7 +209,7 @@ function executeNestedStrategyStream(
   strategy: string,
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   switch (strategy) {
     case 'fallback':
@@ -228,7 +228,7 @@ function executeNestedStrategyStream(
 async function executeFallback(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   let lastError: string | undefined;
   for (const target of targets) {
@@ -246,7 +246,7 @@ async function executeFallback(
 async function executeFallbackStream(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   let lastError: string | undefined;
   for (const target of targets) {
@@ -260,9 +260,7 @@ async function executeFallbackStream(
 }
 
 function selectByWeight(targets: TargetConfig[]): TargetConfig {
-  const totalWeight = targets.reduce(
-    (sum, t) => sum + ((t.weight as number) ?? 1), 0
-  );
+  const totalWeight = targets.reduce((sum, t) => sum + ((t.weight as number) ?? 1), 0);
   const rand = Math.random() * totalWeight;
   let cumulative = 0;
   for (const target of targets) {
@@ -275,7 +273,7 @@ function selectByWeight(targets: TargetConfig[]): TargetConfig {
 async function executeLoadBalance(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<StrategyResult> {
   const selected = selectByWeight(targets);
   return executeTarget(selected, params, inherited);
@@ -284,7 +282,7 @@ async function executeLoadBalance(
 async function executeLoadBalanceStream(
   targets: TargetConfig[],
   params: Params,
-  inherited: InheritedConfig
+  inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
   const selected = selectByWeight(targets);
   return executeTargetStream(selected, params, inherited);
