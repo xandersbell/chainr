@@ -1,4 +1,4 @@
-// Priorai - Global constants and Provider definitions
+// Priorai - Global constants and provider definitions
 // Aligned with Portkey's src/globals.ts to ensure all provider file imports resolve
 
 import type { endpointStrings } from './providers/types';
