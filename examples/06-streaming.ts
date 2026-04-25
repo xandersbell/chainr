@@ -32,7 +32,6 @@ async function main() {
   })) as ReadableStream<ChatCompletionChunk>;
 
   const reader = stream.getReader();
-  const decoder = new TextDecoder();
 
   process.stdout.write('Response: ');
 
