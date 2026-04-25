@@ -1,7 +1,7 @@
 # Portkey 2.0.0 分支 vs main 差异分析
 
 **创建时间**: 2026-04-25 06:59 EEST
-**最后更新**: 2026-04-25 07:44 EEST
+**最后更新**: 2026-04-25 08:02 EEST
 **Portkey main**: v1.15.2+17 (351692fd) — Chainr 当前参考版本
 **Portkey 2.0.0**: 分支 (8febc1dc) — Pre-Release，比 main 多 30 commits
 **总变更**: 687 文件，+141,463 / -25,098 行
@@ -186,22 +186,21 @@ utils.ts 中新增 output_config 映射。
 
 ## 四、按需引入的功能（低优先级）
 
-### 4.1 新增 Provider（3 个有价值的）
+### 4.1 ✅ 新增 Provider（2 个已添加，1 个不存在）
 
-| Provider | 说明 |
-|----------|------|
-| `databricks` | OpenAI 兼容，轻量 |
-| `latitude` | 独立转换逻辑 |
-| `pinecone` | Rerank 端点 |
+| Provider | 说明 | 状态 |
+|----------|------|------|
+| `databricks` | OpenAI 兼容，轻量 | ✅ 已添加 |
+| `latitude` | 独立转换逻辑 | ✅ 已添加 |
+| `pinecone` | Rerank 端点 | ⏭️ Portkey 2.0 中不存在 |
 
-### 4.2 Rerank 端点（bedrock、cohere、jina、voyage）
+### 4.2 ⏭️ Rerank 端点（bedrock、cohere、jina、voyage）
 
-独立功能，需要 `rerankRequestBody.ts` 配合。
+Portkey 2.0 中仅有类型声明，无实际实现。跳过。
 
-### 4.3 类型扩展
+### 4.3 ⏭️ 类型扩展
 
-- `types.ts` — `realtime` endpoint、`RequestTransforms`、`refusal` 完成原因
-- `requestBody.ts` — `StickyConfig`、`media_resolution`、`vertexAuthType`
+Chainr 已有 `realtime`、`refusal` 等类型；`RequestTransforms`、`StickyConfig`、`media_resolution`、`vertexAuthType` 在 Portkey 2.0 中也不存在。无需同步。
 
 ---
 
@@ -220,6 +219,6 @@ utils.ts 中新增 output_config 映射。
 8. ⏭️ Bedrock Anthropic 直连 + output_config (3.10, 3.11) — Portkey 未实现，跳过
 
 **第三批（按需 — 可以后做）**:
-9. ⬜ 新 Provider (databricks, latitude, pinecone)
-10. ⬜ Rerank 端点
-11. ⬜ 类型扩展
+9. ✅ 新 Provider (databricks, latitude) — pinecone 不存在于 Portkey 2.0
+10. ⏭️ Rerank 端点 — Portkey 未实现，跳过
+11. ⏭️ 类型扩展 — 已有或不存在，跳过
