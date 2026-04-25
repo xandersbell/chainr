@@ -1,9 +1,10 @@
 # Portkey v1.12.0 → HEAD 同步计划
 
 **创建时间**: 2026-04-25 06:33 EEST
+**最后更新**: 2026-04-25 06:46 EEST
 **Portkey 基线**: v1.12.0（Chainr 当前对齐版本）
 **Portkey 目标**: HEAD（351692fd，v1.15.2 之后）
-**状态**: ⬜ 待执行
+**状态**: 🔄 P0 完成，P1 进行中
 
 ---
 
@@ -19,7 +20,7 @@
 - `src/providers/google-vertex-ai/chatComplete.ts` — `transformGenerationConfig()`
 - `src/providers/bedrock/utils.ts` — `transformAnthropicAdditionalModelRequestFields()`
 
-**状态**: ⬜
+**状态**: ✅ 已在 Chainr 代码中（cc325d0 提交最后 2 处 Cohere/AI21 修复）
 
 ### 1.2 Anthropic `tool_choice: 'none'` 未映射
 
@@ -30,7 +31,7 @@
 涉及文件：
 - `src/providers/anthropic/chatComplete.ts`
 
-**状态**: ⬜
+**状态**: ✅ 已在 Chainr 代码中
 
 ### 1.3 Bedrock 流式 `tool_use` / `thinking` chunk 不完整
 
@@ -41,7 +42,7 @@
 涉及文件：
 - `src/providers/bedrock/messages.ts`
 
-**状态**: ⬜
+**状态**: ✅ 已在 Chainr 代码中
 
 ### 1.4 Google/Vertex `functionResponse` 字段名变更
 
@@ -52,7 +53,7 @@
 涉及文件：
 - `src/providers/google-vertex-ai/chatComplete.ts`
 
-**状态**: ⬜
+**状态**: ✅ 已在 Chainr 代码中
 
 ### 1.5 Bedrock `anthropic_beta` 逗号分隔支持
 
@@ -63,7 +64,7 @@
 涉及文件：
 - `src/providers/bedrock/utils.ts`
 
-**状态**: ⬜
+**状态**: ✅ 已在 Chainr 代码中
 
 ---
 
