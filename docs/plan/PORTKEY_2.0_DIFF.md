@@ -1,7 +1,7 @@
 # Portkey 2.0.0 分支 vs main 差异分析
 
 **创建时间**: 2026-04-25 06:59 EEST
-**最后更新**: 2026-04-25 07:19 EEST
+**最后更新**: 2026-04-25 07:38 EEST
 **Portkey main**: v1.15.2+17 (351692fd) — Chainr 当前参考版本
 **Portkey 2.0.0**: 分支 (8febc1dc) — Pre-Release，比 main 多 30 commits
 **总变更**: 687 文件，+141,463 / -25,098 行
@@ -123,19 +123,19 @@ chatComplete.ts 中 tool call arguments 缺少空值保护。
 
 ## 三、需要同步的新功能（中高优先级）
 
-### 3.1 Anthropic — `strict` 参数透传（约束解码）
+### 3.1 ✅ Anthropic — `strict` 参数透传（约束解码）
 
 工具定义中新增 `strict?: boolean`，透传到 Anthropic API。
 
-### 3.2 Anthropic — `output_config`（json_schema + reasoning_effort）
+### 3.2 ✅ Anthropic — `output_config`（json_schema + reasoning_effort）
 
 新增 `buildAnthropicOutputConfig()` 函数，将 `response_format` 和 `reasoning_effort` 映射到 Anthropic 的 `output_config`。
 
-### 3.3 Anthropic — `max_tokens` 默认值 64000
+### 3.3 ✅ Anthropic — `max_tokens` 默认值 64000
 
-### 3.4 Anthropic — `refusal` / `model_context_window_exceeded` 停止原因
+### 3.4 ✅ Anthropic — `refusal` / `model_context_window_exceeded` 停止原因
 
-### 3.5 Anthropic — `chunkPatternsToIgnore` 流式过滤扩展
+### 3.5 ✅ Anthropic — `chunkPatternsToIgnore` 流式过滤扩展
 
 ### 3.6 Google/Vertex — Gemini 2.5 vs 3.0+ thinking 配置分化
 
@@ -196,14 +196,14 @@ utils.ts 中新增 output_config 映射。
 ## 五、执行计划
 
 **第一批（Bug 修复 — 必须做）**:
-1. ⬜ Anthropic token 计算修复 (2.1, 2.2, 2.3)
-2. ⬜ Google/Vertex 可选链 + finishMessage + tool message 修复 (2.4, 2.5, 2.6)
+1. ✅ Anthropic token 计算修复 (2.1, 2.2, 2.3)
+2. ✅ Google/Vertex 可选链 + finishMessage + tool message 修复 (2.4, 2.5, 2.6)
 3. ✅ Google/Vertex schema 处理修复 (2.7, 2.8, 2.11, 2.12)
 4. ✅ Google/Vertex token 计算 + 音频格式修复 (2.9, 2.10)
 5. ✅ Bedrock bug 修复 (2.13, 2.14, 2.15, 2.16)
 
 **第二批（新功能 — 应该做）**:
-6. ⬜ Anthropic 新功能 (3.1, 3.2, 3.3, 3.4, 3.5)
+6. ✅ Anthropic 新功能 (3.1, 3.2, 3.3, 3.4, 3.5)
 7. ⬜ Google/Vertex Gemini 2.5/3.0+ 支持 (3.6, 3.7, 3.8, 3.9)
 8. ⬜ Bedrock Anthropic 直连 + output_config (3.10, 3.11)
 
