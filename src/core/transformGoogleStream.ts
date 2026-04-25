@@ -2,11 +2,11 @@ import { parseSSEDataMultiple, parseSSEStream } from './sseParser';
 import { getFallbackChunkId, getSplitPattern } from './streamUtils';
 import type { ChatCompletionChunk } from './types/streaming';
 
-export interface GoogleStreamState {
+interface GoogleStreamState {
   containsChainOfThoughtMessage: boolean;
 }
 
-export function transformFinishReason(
+function transformFinishReason(
   reason: string | null,
   strictOpenAiCompliance?: boolean,
 ): string | null {
