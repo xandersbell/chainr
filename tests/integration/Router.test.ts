@@ -32,6 +32,12 @@ vi.mock('../../src/core/providerRequest', () => ({
   transformProviderResponse: (...args: unknown[]) => mockTransformProviderResponse(...args),
 }));
 
+// mock fetchWithTimeout — 用于 executeSimpleEndpoint 测试（messages.countTokens 等）
+const mockFetchWithTimeout = vi.fn();
+vi.mock('../../src/core/RetryHandler', () => ({
+  fetchWithTimeout: (...args: unknown[]) => mockFetchWithTimeout(...args),
+}));
+
 import { Chainr } from '../../src/core/Router';
 
 const mockChatCompletionResponse = {
@@ -616,6 +622,92 @@ describe('Chainr (Router) 集成测试', () => {
         45000,
         'createModelResponse'
       );
+    });
+  });
+
+  describe('messages.countTokens() — Anthropic Token 计数', () => {
+    const countTokensParams: Params = {
+      model: 'claude-sonnet-4-20250514',
+      messages: [{ role: 'user', content: 'Hello Claude!' }],
+    };
+
+    const mockCountTokensResponse = { input_tokens: 12 };
+
+    // executeSimpleEndpoint 直接调用 buildProviderRequest，需要每个测试重新设置 mock
+    const setupMocks = async () => {
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        body: { model: 'claude-sonnet-4-20250514', messages: countTokensParams.messages },
+        headers: { 'x-api-key': 'key-1', 'content-type': 'application/json' },
+        url: 'https://api.anthropic.com/v1/messages/count_tokens',
+      });
+    };
+
+    it('调用 messagesCountTokens 端点并返回 token 计数', async () => {
+      await setupMocks();
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      };
+
+      mockFetchWithTimeout.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockCountTokensResponse),
+        headers: new Headers(),
+      });
+      mockTransformProviderResponse.mockReturnValue(mockCountTokensResponse);
+
+      const chainr = new Chainr(config);
+      const result = await chainr.messages.countTokens(countTokensParams);
+
+      expect(result).toEqual(mockCountTokensResponse);
+    });
+
+    it('使用 messagesTargets 而非默认 targets', async () => {
+      await setupMocks();
+      const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'openai', apiKey: 'openai-key' }],
+        messagesTargets,
+      };
+
+      mockFetchWithTimeout.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockCountTokensResponse),
+        headers: new Headers(),
+      });
+      mockTransformProviderResponse.mockReturnValue(mockCountTokensResponse);
+
+      const chainr = new Chainr(config);
+      await chainr.messages.countTokens(countTokensParams);
+
+      // buildProviderRequest 应收到 messagesTargets 中的 target
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        countTokensParams,
+        'anthropic',
+        messagesTargets[0],
+        'messagesCountTokens'
+      );
+    });
+
+    it('请求失败时抛出错误', async () => {
+      await setupMocks();
+      const config: ChainrConfig = {
+        strategy: 'single',
+        targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
+      };
+
+      mockFetchWithTimeout.mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ error: { message: 'Unauthorized' } }),
+        headers: new Headers(),
+      });
+
+      const chainr = new Chainr(config);
+      await expect(chainr.messages.countTokens(countTokensParams)).rejects.toThrow('HTTP 401');
     });
   });
 });
