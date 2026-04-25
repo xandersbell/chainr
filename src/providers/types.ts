@@ -12,6 +12,7 @@ import { DEEPSEEK_STOP_REASON } from './deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from './mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from './together-ai/types';
 import { COHERE_STOP_REASON } from './cohere/types';
+import { LATITUDE_STOP_REASON } from './latitude/types';
 
 /**
  * 参数配置接口
@@ -311,7 +312,8 @@ export type PROVIDER_FINISH_REASON =
   | DEEPSEEK_STOP_REASON
   | MISTRAL_AI_FINISH_REASON
   | TOGETHER_AI_FINISH_REASON
-  | COHERE_STOP_REASON;
+  | COHERE_STOP_REASON
+  | LATITUDE_STOP_REASON;
 
 /**
  * 微调请求参数接口（从 Portkey 适配）

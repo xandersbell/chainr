@@ -92,6 +92,8 @@ export interface Options {
   oracleServingMode?: string;
   oracleTenancy?: string;
   oracleUser?: string;
+  // Databricks
+  databricksWorkspace?: string;
 }
 
 export interface Targets {

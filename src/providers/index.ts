@@ -16,6 +16,7 @@ import { cerebrasProviderAPIConfig } from './cerebras';
 import CohereConfig from './cohere';
 import CometAPIConfig from './cometapi';
 import CortexConfig from './cortex';
+import DatabricksConfig from './databricks';
 import { DashScopeConfig } from './dashscope';
 import DeepbricksConfig from './deepbricks';
 import DeepInfraConfig from './deepinfra';
@@ -33,6 +34,7 @@ import JinaConfig from './jina';
 import KlusterAIConfig from './kluster-ai';
 import KrutrimConfig from './krutrim';
 import { LambdaProviderConfig } from './lambda';
+import LatitudeConfig from './latitude';
 import LemonfoxAIConfig from './lemonfox-ai';
 import LeptonConfig from './lepton';
 import LingyiConfig from './lingyi';
@@ -121,7 +123,9 @@ const Providers: { [key: string]: ProviderConfigs } = {
   upstage: UpstageConfig,
   aibadgr: AIBadgrConfig,
   cortex: CortexConfig,
+  databricks: DatabricksConfig,
   krutrim: KrutrimConfig,
+  latitude: LatitudeConfig,
   ncompass: NCompassConfig,
   ollama: OllamaConfig,
   palm: PalmAIConfig,

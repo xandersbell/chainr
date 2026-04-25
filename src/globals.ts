@@ -82,6 +82,8 @@ export const ORACLE: string = 'oracle';
 export const IO_INTELLIGENCE: string = 'iointelligence';
 export const AIBADGR: string = 'aibadgr';
 export const OVHCLOUD: string = 'ovhcloud';
+export const DATABRICKS: string = 'databricks';
+export const LATITUDE: string = 'latitude';
 
 // 旧名称别名（向后兼容）
 export const PERPLEXITY = PERPLEXITY_AI;

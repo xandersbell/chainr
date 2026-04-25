@@ -16,6 +16,7 @@ import { DEEPSEEK_STOP_REASON } from '../deepseek/types';
 import { MISTRAL_AI_FINISH_REASON } from '../mistral-ai/types';
 import { TOGETHER_AI_FINISH_REASON } from '../together-ai/types';
 import { COHERE_STOP_REASON } from '../cohere/types';
+import { LATITUDE_STOP_REASON } from '../latitude/types';
 
 export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   // Anthropic
@@ -87,6 +88,11 @@ export const finishReasonMap = new Map<PROVIDER_FINISH_REASON, FINISH_REASON>([
   [COHERE_STOP_REASON.tool_call, FINISH_REASON.tool_calls],
   [COHERE_STOP_REASON.error, FINISH_REASON.stop],
   [COHERE_STOP_REASON.timeout, FINISH_REASON.stop],
+  // Latitude
+  [LATITUDE_STOP_REASON.stop, FINISH_REASON.stop],
+  [LATITUDE_STOP_REASON.length, FINISH_REASON.length],
+  [LATITUDE_STOP_REASON.tool_calls, FINISH_REASON.tool_calls],
+  [LATITUDE_STOP_REASON.content_filter, FINISH_REASON.content_filter],
 ]);
 
 export const AnthropicFinishReasonMap = new Map<
