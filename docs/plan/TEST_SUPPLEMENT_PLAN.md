@@ -1,6 +1,6 @@
 # 测试补充计划
 
-> **更新时间**: 2026-04-25 22:59 EEST
+> **更新时间**: 2026-04-25 23:02 EEST
 > **作者**: Sisyphus 分析
 > **目的**: 为 priorai 核心模块补充单元测试，覆盖请求-响应链路上的关键未测路径
 
@@ -178,7 +178,7 @@ Providers[provider] === undefined
 
 ---
 
-### 3.4 `transformBedrockStream` — 🔴 P0 ❌ PENDING
+### 3.4 `transformBedrockStream` — 🔴 P0 ✅ DONE
 
 **文件**: 新建 `tests/unit/streaming/transformBedrockStream.test.ts`
 **被测函数**: `src/core/transformBedrockStream.ts`
@@ -242,7 +242,7 @@ function createAWSFrame(jsonPayload: object): Uint8Array {
 
 ---
 
-### 3.5 `transformGoogleStream` — 🟠 P1 ❌ PENDING
+### 3.5 `transformGoogleStream` — 🟠 P1 ✅ DONE
 
 **文件**: 新建 `tests/unit/streaming/transformGoogleStream.test.ts`
 **被测函数**: `src/core/transformGoogleStream.ts`
@@ -281,7 +281,7 @@ function createAWSFrame(jsonPayload: object): Uint8Array {
 
 ---
 
-### 3.6 `tryLeafTargetStream` + `createStreamForProvider` — 🟠 P1 ❌ PENDING
+### 3.6 `tryLeafTargetStream` + `createStreamForProvider` — 🟠 P1 ✅ DONE
 
 **文件**: 新建 `tests/unit/tryTarget.test.ts`
 **被测函数**: `src/core/tryTarget.ts`
@@ -334,7 +334,7 @@ function createAWSFrame(jsonPayload: object): Uint8Array {
 
 ---
 
-### 3.7 `executeSimpleEndpoint` fallback — 🟠 P1 ❌ PENDING
+### 3.7 `executeSimpleEndpoint` fallback — 🟠 P1 ✅ DONE
 
 **文件**: `tests/integration/Router.test.ts`（新增 describe 块）
 **被测函数**: `src/core/Router.ts:458` `executeSimpleEndpoint()`
@@ -360,7 +360,7 @@ function createAWSFrame(jsonPayload: object): Uint8Array {
 
 ---
 
-### 3.8 `fetchWithTimeout` 超时 — 🟠 P1 ❌ PENDING
+### 3.8 `fetchWithTimeout` 超时 — 🟠 P1 ✅ DONE
 
 **文件**: `tests/unit/RetryHandler.test.ts`（新增 describe 块）
 **被测函数**: `src/core/RetryHandler.ts:40` `fetchWithTimeout()`
@@ -435,6 +435,7 @@ Phase 2 — Important（路由分发 + 边界场景）
 Phase 3 — Nice（流式策略 + 薄封装 provider）
   [9] ConditionalStrategy.executeStream  (tests/unit/strategies/ConditionalStrategy.test.ts 扩增) ✅ DONE（+2 streaming cases，$and/$or 逻辑）
   [10] transformCohereStream 等 3 个     (新建 streaming 测试文件)                                ✅ DONE（Cohere+5, OpenRouter+4, Bytez+10；Groq 因流处理根本性问题已删除）
+```
 
 ### 完成统计
 
