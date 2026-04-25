@@ -530,7 +530,7 @@ while (true) {
 **Phase 2 完成度**: 4/4 (100%)，新增 43 cases
 **Phase 3 完成度**: 2/2 (100%)，~34 cases（Cohere+5, OpenRouter+4, Bytez+10；Groq 因流处理根本性问题已删除）
 
-**当前全套测试**: 374 tests passing，25 test files
+**当前全套测试**: 373 tests passing，25 test files
 
 ---
 

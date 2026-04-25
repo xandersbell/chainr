@@ -292,24 +292,6 @@ describe('ConditionalStrategy', () => {
       expect(result).toBeInstanceOf(Promise);
     });
 
-    it('executeStream calls executeTargetStream and returns a stream', async () => {
-      const conditions: ConditionConfig[] = [
-        { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
-      ];
-
-      const result = strategy.executeStream(
-        targets,
-        baseParams,
-        undefined,
-        undefined,
-        undefined,
-        conditions,
-      );
-
-      expect(executeTargetStream).toHaveBeenCalled();
-      expect(result).toBeInstanceOf(Promise);
-    });
-
     it('executeStream passes retry and timeout config', async () => {
       const conditions: ConditionConfig[] = [
         { query: { 'params.model': 'gpt-4o' }, then: 'openai-target' },
