@@ -4,10 +4,21 @@
  *
  * 运行方式：npx tsx tests/local/vertex-adc-live.ts
  */
+import { execSync } from 'child_process';
 import { Priorai } from '../../src';
 import type { PrioraiConfig } from '../../src/core/types';
 
 async function main() {
+  // 从 gcloud CLI 获取当前默认项目
+  const projectId = execSync('gcloud config get-value project', {
+    encoding: 'utf-8',
+  }).trim();
+
+  if (!projectId || projectId === '(unset)') {
+    console.error('No default GCP project set. Run: gcloud config set project <PROJECT_ID>');
+    process.exit(1);
+  }
+
   // 不传 api_key，完全依赖 ADC 自动发现
   // vertexRegion 设为 global，使用全局端点
   const config: PrioraiConfig = {
@@ -15,7 +26,7 @@ async function main() {
     targets: [{
       provider: 'vertex-ai',
       providerOptions: {
-        vertexProjectId: 'project-049f7a4c-e603-4745-aaf',
+        vertexProjectId: projectId,
         vertexRegion: 'global',
       },
     }],
@@ -24,7 +35,7 @@ async function main() {
   const priorai = new Priorai(config);
 
   console.log('Sending request to Vertex AI via ADC...');
-  console.log('Project: project-049f7a4c-e603-4745-aaf');
+  console.log('Project:', projectId);
   console.log('Region: global');
   console.log('Model: gemini-flash-latest');
   console.log('---');
