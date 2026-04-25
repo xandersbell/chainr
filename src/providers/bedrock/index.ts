@@ -45,6 +45,11 @@ import {
   BedrockConverseMessagesStreamChunkTransform,
   BedrockMessagesResponseTransform,
 } from './messages';
+import {
+  BedrockAnthropicMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensConfig,
+  BedrockConverseMessageCountTokensResponseTransform,
+} from './countTokens';
 import { getBedrockModelWithoutRegion } from './utils';
 
 const BedrockConfig: ProviderConfigs = {
@@ -66,6 +71,7 @@ const BedrockConfig: ProviderConfigs = {
             complete: BedrockAnthropicCompleteConfig,
             chatComplete: BedrockConverseAnthropicChatCompleteConfig,
             messages: BedrockAnthropicConverseMessagesConfig,
+            messagesCountTokens: BedrockAnthropicMessageCountTokensConfig,
             api: BedrockAPIConfig,
             responseTransforms: {
               'stream-complete': BedrockAnthropicCompleteStreamChunkTransform,
@@ -156,6 +162,9 @@ const BedrockConfig: ProviderConfigs = {
         ...(!config.messages && {
           messages: BedrockConverseMessagesConfig,
         }),
+        ...(!config.messagesCountTokens && {
+          messagesCountTokens: BedrockConverseMessageCountTokensConfig,
+        }),
       };
 
       config.responseTransforms = {
@@ -171,6 +180,10 @@ const BedrockConfig: ProviderConfigs = {
         }),
         ...(!config.responseTransforms?.['stream-messages'] && {
           'stream-messages': BedrockConverseMessagesStreamChunkTransform,
+        }),
+        ...(!config.responseTransforms?.messagesCountTokens && {
+          messagesCountTokens:
+            BedrockConverseMessageCountTokensResponseTransform,
         }),
       };
     }
