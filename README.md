@@ -2,14 +2,15 @@
 
 > Unified LLM gateway SDK with priority-based fallback and weighted load balancing for TypeScript/Node.js
 
-**Status**: 🟢 Phase 3A Complete — 195 tests passing, 0 TS errors, 68 providers via registry
+**Status**: 🟢 All Portkey 2.0 sync complete — 250 tests passing, 0 TS errors, 71 providers via registry
 
 ## Features
 
 - **Priority-based Fallback**: Automatic failover across multiple LLM providers
 - **Weighted Load Balancing**: Distribute traffic across providers based on weights
-- **Provider Registry**: 68 providers via Portkey-aligned ProviderConfig architecture
+- **Provider Registry**: 71 providers via Portkey-aligned ProviderConfig architecture
 - **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis, translation, 3D generation
+- **Streaming**: SSE-based streaming with provider-specific transform pipelines
 - **Config Validation**: Validates targets, provider, timeout, retry at construction
 - **Request Timeout**: Configurable timeout for all fetch paths via `config.timeout`
 - **Minimal Dependencies**: Only AWS SDK for Bedrock signing, everything else is pure fetch
@@ -38,7 +39,7 @@ const chainr = new Chainr({
     {
       provider: 'anthropic',
       apiKey: process.env.ANTHROPIC_API_KEY,
-      overrideParams: { model: 'claude-3-5-sonnet-20241022' }
+      overrideParams: { model: 'claude-sonnet-4-5-20250514' }
     }
   ]
 });
@@ -49,7 +50,7 @@ const response = await chainr.chat.completions.create({
 });
 ```
 
-## Supported Providers (68)
+## Supported Providers (71)
 
 All providers use the Portkey-aligned ProviderConfig registry (`src/providers/`). Each provider directory contains its own `api.ts` (URL/headers), `chatComplete.ts` (param mapping + response transform), and optional endpoint configs (embed, image, audio, etc.).
 
@@ -58,12 +59,13 @@ All providers use the Portkey-aligned ProviderConfig registry (`src/providers/`)
 | Provider | Streaming | Notes |
 |----------|-----------|-------|
 | OpenAI | ✅ | Direct passthrough |
-| Anthropic | ✅ | Messages API, dedicated stream transform |
-| Google Vertex AI | ✅ | REST API, dedicated stream transform |
+| Anthropic | ✅ | Messages API, output_config, strict tools, thinking support |
+| Google AI | ✅ | Gemini REST API, thinking (2.5/3.0+), thought signature |
+| Google Vertex AI | ✅ | REST API, thinking (2.5/3.0+), thought signature |
 | Azure OpenAI | ✅ | Azure URL format |
 | Azure AI Inference | ✅ | Foundry URL |
 | GitHub Models | ✅ | `/inference/chat` |
-| AWS Bedrock | ✅ | SigV4 signing via @smithy |
+| AWS Bedrock | ✅ | SigV4 signing via @smithy, Converse API |
 | Cohere | ✅ | Dedicated stream transform |
 | Groq | ✅ | OpenAI-compatible |
 | DeepSeek | ✅ | OpenAI-compatible, thinking support |
@@ -73,10 +75,12 @@ All providers use the Portkey-aligned ProviderConfig registry (`src/providers/`)
 | Perplexity AI | ✅ | OpenAI-compatible |
 | Fireworks AI | ✅ | OpenAI-compatible |
 | Hugging Face | ✅ | OpenAI-compatible |
+| Databricks | ✅ | OpenAI-compatible, workspace-based URL |
+| Latitude | ✅ | OpenAI-compatible, developer→system role mapping |
 
-And 52 more OpenAI-compatible providers including: DashScope, Zhipu, LingYi, Moonshot, x-ai, Lambda, SageMaker, Oracle, OVHcloud, Anyscale, Workers AI, DeepInfra, Predibase, SambaNova, Cerebras, Nebius, Hyperbolic, Modal, Replicate, SiliconFlow, LemonFox AI, DeepBricks, Featherless AI, Lepton, Novita AI, nScale, 302.AI, AI21, Bytez, CometAPI, Inference Net, IOIntelligence, Kluster AI, Matter AI, NextBit, Stability AI, Triton, Upstage, AI Badgr, Cortex, Krutrim, NCompass, Ollama, Palm, Reka AI, Z-AI, MonsterAPI, Nomic, Jina, Voyage, Meshy, Tripo3D.
+And 52 more OpenAI-compatible providers including: DashScope, Zhipu, LingYi, Moonshot, x-ai, Lambda, SageMaker, Oracle, OVHcloud, Anyscale, Workers AI, DeepInfra, Predibase, SambaNova, Cerebras, Nebius, Hyperbolic, Modal, Replicate, SiliconFlow, LemonFox AI, DeepBricks, Featherless AI, Lepton, Novita AI, NCompass, 302.AI, AI21, Bytez, CometAPI, Inference Net, IOIntelligence, Kluster AI, Matter AI, NextBit, Stability AI, Triton, Upstage, AI Badgr, Cortex, Krutrim, Ollama, Palm, Reka AI, Z-AI, MonsterAPI, Nomic, Jina, Voyage, Meshy, Tripo3D, Segmind.
 
-### Embeddings Providers
+### Embeddings Providers (29)
 
 | Provider | API |
 |----------|-----|
@@ -84,6 +88,8 @@ And 52 more OpenAI-compatible providers including: DashScope, Zhipu, LingYi, Moo
 | Cohere | `api.cohere.ai/v2/embed` |
 | Google AI | `generativelanguage.googleapis.com` |
 | Google Vertex AI | `aiplatform.googleapis.com` |
+| Azure OpenAI | Azure Embeddings |
+| Azure AI Inference | Foundry Embeddings |
 | AWS Bedrock | Bedrock Runtime |
 | Mistral AI | `api.mistral.ai/v1/embeddings` |
 | Together AI | `api.together.ai/v1/embeddings` |
@@ -95,30 +101,36 @@ And 52 more OpenAI-compatible providers including: DashScope, Zhipu, LingYi, Moo
 | Nomic | `api.nomic.ai` |
 | Jina | `api.jina.ai` |
 | Voyage | `api.voyageai.com` |
+| Databricks | Workspace embeddings |
 
-### Image Generation Providers
+And more: DashScope, Zhipu, Nebius, Ollama, Palm, Cortex, CometAPI, IOIntelligence, Kluster AI, Upstage, x-ai.
+
+### Image Generation Providers (14)
 
 | Provider | API |
 |----------|-----|
 | OpenAI DALL-E | `api.openai.com/v1/images/generations` |
+| Azure OpenAI | Azure Image Generation |
+| Azure AI Inference | Foundry Image Generation |
+| AWS Bedrock | Bedrock Runtime |
+| Google Vertex AI | `aiplatform.googleapis.com` |
 | Segmind | `api.segmind.com` |
 | Recraft AI | `api.recraft.ai` |
 | Stability AI | `api.stability.ai` |
-| Google Vertex AI | `aiplatform.googleapis.com` |
 | Workers AI | Cloudflare Workers AI |
 | SiliconFlow | `api.siliconflow.cn` |
 | LemonFox AI | `api.lemonfox.ai` |
 | DeepBricks | `api.deepbricks.io` |
 | Hyperbolic | `api.hyperbolic.ai` |
-| nScale | `api.nscale.io` |
+| Fireworks AI | `api.fireworks.ai` |
 
 ### Audio / Speech / Translation / 3D
 
 | Capability | Providers |
 |------------|-----------|
-| Audio Transcription | OpenAI Whisper, LemonFox AI, Lepton, Azure |
-| Speech Synthesis | OpenAI TTS, Azure |
-| Translation | OpenAI, LemonFox AI, Azure |
+| Audio Transcription | OpenAI Whisper, Groq, LemonFox AI, Lepton, Azure OpenAI |
+| Speech Synthesis | OpenAI TTS, Azure OpenAI |
+| Translation | OpenAI, LemonFox AI, Azure OpenAI |
 | 3D Generation | Meshy, Tripo 3D |
 
 ## Strategies
@@ -172,7 +184,7 @@ const chainr = new Chainr({
     awsSecretAccessKey: '...',
     awsSessionToken: '...', // optional
     awsRegion: 'us-east-1',
-    overrideParams: { model: 'us.anthropic.claude-v2' }
+    overrideParams: { model: 'us.anthropic.claude-sonnet-4-5-20250514-v1:0' }
   }]
 });
 ```
@@ -188,6 +200,35 @@ const chainr = new Chainr({
     azureResourceName: 'your-resource',
     azureDeploymentId: 'gpt-4o',
     azureApiVersion: '2024-06-01'
+  }]
+});
+```
+
+### Google Vertex AI
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'single',
+  targets: [{
+    provider: 'vertex-ai',
+    vertexProjectId: 'your-project',
+    vertexRegion: 'us-central1',
+    apiKey: 'your-access-token',
+    overrideParams: { model: 'gemini-2.5-pro' }
+  }]
+});
+```
+
+### Databricks
+
+```typescript
+const chainr = new Chainr({
+  strategy: 'single',
+  targets: [{
+    provider: 'databricks',
+    apiKey: 'your-databricks-token',
+    databricksWorkspace: 'your-workspace',
+    overrideParams: { model: 'databricks-meta-llama-3-1-70b-instruct' }
   }]
 });
 ```
@@ -213,15 +254,17 @@ src/
 ├── globals.ts                  # Provider constants
 ├── types/
 │   └── requestBody.ts         # Type definitions (Params, Options)
-├── providers/                  # 68 provider directories (Portkey-aligned)
+├── providers/                  # 71 provider directories (Portkey-aligned)
 │   ├── index.ts               # Static provider registry
 │   ├── types.ts               # ProviderConfig / ProviderAPIConfig types
 │   ├── utils.ts               # Provider utilities
+│   ├── open-ai-base/          # Shared OpenAI-compatible base
+│   ├── anthropic-base/        # Shared Anthropic base
 │   ├── openai/                # api.ts + chatComplete.ts + embed.ts + ...
 │   ├── anthropic/
 │   ├── bedrock/               # Includes AWS SigV4 signing
-│   ├── vertex-ai/
-│   └── ... (68 total)
+│   ├── google-vertex-ai/
+│   └── ... (71 total)
 └── core/
     ├── Router.ts              # Main Chainr class
     ├── types.ts               # Core types
@@ -286,7 +329,7 @@ Default: 3 attempts, exponential backoff (100ms × 2^attempt), max 60s.
 ## Testing
 
 ```bash
-npm test           # Run all tests (195 tests)
+npm test           # Run all tests (250 tests)
 npm run test:watch # Watch mode
 ```
 
