@@ -16,19 +16,15 @@
       "complexity": {
         "useOptionalChain": "warn",
         "noForEach": "off",
-        "useLiteralKeys": "off"
+        "useLiteralKeys": "off",
+        "noStaticOnlyClass": "off"
       },
       "correctness": {
         "noUnusedVariables": "warn",
         "noUnusedImports": "error"
       },
       "style": {
-        "useNamingConvention": {
-          "level": "warn",
-          "options": {
-            "strictCase": false
-          }
-        },
+        "useNamingConvention": "off",
         "noNonNullAssertion": "off",
         "useNodejsImportProtocol": "warn",
         "useTemplate": "off"
@@ -54,7 +50,11 @@
             "noNonNullAssertion": "off"
           },
           "suspicious": {
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "noThenProperty": "off"
+          },
+          "complexity": {
+            "noBannedTypes": "off"
           }
         }
       }
@@ -71,22 +71,12 @@
             "noUnusedVariables": "off"
           },
           "style": {
-            "useNamingConvention": "off",
             "useNodejsImportProtocol": "off",
             "noNonNullAssertion": "off"
           },
           "suspicious": {
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/core/transform*Stream.ts"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useNamingConvention": "off"
+            "noExplicitAny": "off",
+            "noThenProperty": "off"
           }
         }
       }
