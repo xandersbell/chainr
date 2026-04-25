@@ -716,7 +716,7 @@ export const GoogleChatCompleteResponseTransform: (
         }) ?? [],
       usage: {
         prompt_tokens: promptTokenCount,
-        completion_tokens: candidatesTokenCount,
+        completion_tokens: (candidatesTokenCount ?? 0) + (thoughtsTokenCount ?? 0),
         total_tokens: totalTokenCount,
         completion_tokens_details: {
           reasoning_tokens: thoughtsTokenCount,
@@ -769,7 +769,7 @@ export const GoogleChatCompleteStreamChunkTransform: (
   if (parsedChunk.usageMetadata) {
     usageMetadata = {
       prompt_tokens: parsedChunk.usageMetadata.promptTokenCount,
-      completion_tokens: parsedChunk.usageMetadata.candidatesTokenCount,
+      completion_tokens: (parsedChunk.usageMetadata.candidatesTokenCount ?? 0) + (parsedChunk.usageMetadata.thoughtsTokenCount ?? 0),
       total_tokens: parsedChunk.usageMetadata.totalTokenCount,
       completion_tokens_details: {
         reasoning_tokens: parsedChunk.usageMetadata.thoughtsTokenCount ?? 0,
