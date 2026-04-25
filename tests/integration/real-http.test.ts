@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Chainr } from '../../src';
-import type { ChainrConfig } from '../../src/core/types';
+import { Priorai } from '../../src';
+import type { PrioraiConfig } from '../../src/core/types';
 
 const SKIP_REASON = 'Real HTTP tests require API keys. Set env vars or use msw mock tests.';
 
@@ -24,13 +24,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: apiKey }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
         max_tokens: 10,
@@ -47,13 +47,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'invalid-key-for-testing' }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: 'Hello' }],
         max_tokens: 5,
@@ -72,13 +72,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', api_key: apiKey }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'claude-3-5-haiku-20241022',
         messages: [
           { role: 'system', content: 'You are a pirate. Speak in pirate dialect only.' },
@@ -99,13 +99,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', api_key: apiKey }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'claude-3-5-haiku-20241022',
         messages: [
           { role: 'system', content: 'Respond with exactly 3 words.' },
@@ -128,7 +128,7 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{
           provider: 'vertex-ai',
@@ -140,8 +140,8 @@ describe('Real HTTP Integration Tests', () => {
         }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gemini-1.5-flash',
         messages: [{ role: 'user', content: 'Say "hello" in one word' }],
       });
@@ -157,7 +157,7 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{
           provider: 'vertex-ai',
@@ -169,8 +169,8 @@ describe('Real HTTP Integration Tests', () => {
         }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gemini-1.5-flash',
         messages: [
           { role: 'system', content: 'You are a mathematician. Give precise answers.' },
@@ -189,7 +189,7 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{
           provider: 'vertex-ai',
@@ -201,8 +201,8 @@ describe('Real HTTP Integration Tests', () => {
         }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gemini-1.5-flash',
         messages: [{ role: 'user', content: 'Give me a random number between 1 and 10' }],
         temperature: 0.9,
@@ -221,13 +221,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openrouter', api_key: apiKey }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'openrouter/auto',
         messages: [{ role: 'user', content: 'Say "hello" in exactly one word' }],
         max_tokens: 10,
@@ -243,13 +243,13 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openrouter', api_key: apiKey }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'openrouter/auto',
         messages: [{ role: 'user', content: 'What model are you using?' }],
         max_tokens: 50,
@@ -269,7 +269,7 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [
           { provider: 'openai', api_key: 'invalid-key-for-testing-12345' },
@@ -277,8 +277,8 @@ describe('Real HTTP Integration Tests', () => {
         ],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'claude-3-5-haiku-20241022',
         messages: [{ role: 'user', content: 'Say "fallback works" in 2 words' }],
         max_tokens: 20,
@@ -298,7 +298,7 @@ describe('Real HTTP Integration Tests', () => {
         return;
       }
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
           { provider: 'openai', api_key: openaiKey, weight: 0.5 },
@@ -306,11 +306,11 @@ describe('Real HTTP Integration Tests', () => {
         ],
       };
 
-      const chainr = new Chainr(config);
+      const priorai = new Priorai(config);
       const results: string[] = [];
 
       for (let i = 0; i < 4; i++) {
-        const response = await chainr.chat.completions.create({
+        const response = await priorai.chat.completions.create({
           model: i % 2 === 0 ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022',
           messages: [{ role: 'user', content: `Respond with just the number ${i}` }],
           max_tokens: 5,
@@ -344,8 +344,8 @@ describe('Real HTTP Integration Tests', () => {
         }],
       };
 
-      const chainr = new Chainr(config);
-      const response = await chainr.chat.completions.create({
+      const priorai = new Priorai(config);
+      const response = await priorai.chat.completions.create({
         model: 'gemini-1.5-flash',
         messages: [{ role: 'user', content: 'Say "alias works" in 2 words' }],
       });

@@ -25,7 +25,7 @@ vi.mock('../../src/core/providerRequest', () => ({
   transformProviderResponse: vi.fn().mockReturnValue({}),
 }));
 
-import { Chainr } from '../../src/core/Router';
+import { Priorai } from '../../src/core/Router';
 
 describe('Timeout 传递', () => {
   beforeEach(() => {
@@ -40,13 +40,13 @@ describe('Timeout 传递', () => {
     };
     mockFallbackExecute.mockResolvedValue(strategyResult);
 
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'fallback',
       targets: [{ provider: 'openai', apiKey: 'test' }],
       timeout: 15000,
     });
 
-    await chainr.chat.completions.create({ model: 'gpt-4o', messages: [] });
+    await priorai.chat.completions.create({ model: 'gpt-4o', messages: [] });
 
     expect(mockFallbackExecute).toHaveBeenCalledWith(
       expect.any(Array),
@@ -65,12 +65,12 @@ describe('Timeout 传递', () => {
     };
     mockSingleExecute.mockResolvedValue(strategyResult);
 
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'single',
       targets: [{ provider: 'openai', apiKey: 'test' }],
     });
 
-    await chainr.chat.completions.create({ model: 'gpt-4o', messages: [] });
+    await priorai.chat.completions.create({ model: 'gpt-4o', messages: [] });
 
     expect(mockSingleExecute).toHaveBeenCalledWith(
       expect.any(Array),
@@ -90,14 +90,14 @@ describe('Timeout 传递', () => {
     mockFallbackExecute.mockResolvedValue(strategyResult);
 
     const retryConfig = { attempts: 3, onStatusCodes: [429] };
-    const chainr = new Chainr({
+    const priorai = new Priorai({
       strategy: 'fallback',
       targets: [{ provider: 'openai', apiKey: 'test' }],
       retry: retryConfig,
       timeout: 60000,
     });
 
-    await chainr.chat.completions.create({ model: 'gpt-4o', messages: [] });
+    await priorai.chat.completions.create({ model: 'gpt-4o', messages: [] });
 
     expect(mockFallbackExecute).toHaveBeenCalledWith(
       expect.any(Array),

@@ -18,7 +18,7 @@ import { LoadBalanceStrategy } from '../../../src/core/strategies/LoadBalanceStr
 import { SingleStrategy } from '../../../src/core/strategies/SingleStrategy';
 import { retryRequest } from '../../../src/core/RetryHandler';
 import { buildProviderRequest } from '../../../src/core/providerRequest';
-import { Chainr } from '../../../src/core/Router';
+import { Priorai } from '../../../src/core/Router';
 
 describe('嵌套策略', () => {
   beforeEach(() => {
@@ -281,7 +281,7 @@ describe('嵌套策略', () => {
 
   describe('Config 验证', () => {
     it('嵌套 target 有 strategy 但没有 targets 时抛出错误', () => {
-      expect(() => new Chainr({
+      expect(() => new Priorai({
         strategy: 'fallback',
         targets: [
           { strategy: 'loadbalance' },
@@ -290,7 +290,7 @@ describe('嵌套策略', () => {
     });
 
     it('嵌套 target 有 targets 但没有 strategy 时抛出错误', () => {
-      expect(() => new Chainr({
+      expect(() => new Priorai({
         strategy: 'fallback',
         targets: [
           { targets: [{ provider: 'openai' }] },
@@ -299,7 +299,7 @@ describe('嵌套策略', () => {
     });
 
     it('嵌套 target 使用未知 strategy 时抛出错误', () => {
-      expect(() => new Chainr({
+      expect(() => new Priorai({
         strategy: 'fallback',
         targets: [
           { strategy: 'roundrobin', targets: [{ provider: 'openai' }] },
@@ -308,7 +308,7 @@ describe('嵌套策略', () => {
     });
 
     it('合法的嵌套配置不抛出错误', () => {
-      expect(() => new Chainr({
+      expect(() => new Priorai({
         strategy: 'fallback',
         targets: [
           {

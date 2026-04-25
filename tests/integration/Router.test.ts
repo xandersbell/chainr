@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ChainrConfig, StrategyResult } from '../../src/core/types';
+import type { PrioraiConfig, StrategyResult } from '../../src/core/types';
 import type { Params } from '../../src/types/requestBody';
 
 const mockFallbackExecute = vi.fn();
@@ -38,7 +38,7 @@ vi.mock('../../src/core/RetryHandler', () => ({
   fetchWithTimeout: (...args: unknown[]) => mockFetchWithTimeout(...args),
 }));
 
-import { Chainr } from '../../src/core/Router';
+import { Priorai } from '../../src/core/Router';
 
 const mockChatCompletionResponse = {
   id: 'chatcmpl-test-123',
@@ -70,26 +70,26 @@ const baseParams: Params = {
   messages: [{ role: 'user', content: 'Hello!' }],
 };
 
-describe('Chainr (Router) 集成测试', () => {
+describe('Priorai (Router) 集成测试', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('Constructor - 策略实例化', () => {
     it('strategy 为 "fallback" 时，实例化 FallbackStrategy', () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
 
-      const chainr = new Chainr(config);
-      const strategy = (chainr as unknown as { strategy: { execute: typeof mockFallbackExecute } }).strategy;
+      const priorai = new Priorai(config);
+      const strategy = (priorai as unknown as { strategy: { execute: typeof mockFallbackExecute } }).strategy;
 
       expect(strategy.execute).toBe(mockFallbackExecute);
     });
 
     it('strategy 为 "loadbalance" 时，实例化 LoadBalanceStrategy', () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
           { provider: 'openai', api_key: 'key-1', weight: 0.7 },
@@ -97,20 +97,20 @@ describe('Chainr (Router) 集成测试', () => {
         ],
       };
 
-      const chainr = new Chainr(config);
-      const strategy = (chainr as unknown as { strategy: { execute: typeof mockLoadBalanceExecute } }).strategy;
+      const priorai = new Priorai(config);
+      const strategy = (priorai as unknown as { strategy: { execute: typeof mockLoadBalanceExecute } }).strategy;
 
       expect(strategy.execute).toBe(mockLoadBalanceExecute);
     });
 
     it('strategy 为 "single" 时，实例化 SingleStrategy', () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
 
-      const chainr = new Chainr(config);
-      const strategy = (chainr as unknown as { strategy: { execute: typeof mockSingleExecute } }).strategy;
+      const priorai = new Priorai(config);
+      const strategy = (priorai as unknown as { strategy: { execute: typeof mockSingleExecute } }).strategy;
 
       expect(strategy.execute).toBe(mockSingleExecute);
     });
@@ -119,15 +119,15 @@ describe('Chainr (Router) 集成测试', () => {
       const config = {
         strategy: 'roundrobin',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
-      } as unknown as ChainrConfig;
+      } as unknown as PrioraiConfig;
 
-      expect(() => new Chainr(config)).toThrow('Unknown strategy mode: roundrobin');
+      expect(() => new Priorai(config)).toThrow('Unknown strategy mode: roundrobin');
     });
   });
 
   describe('chat.completions.create()', () => {
     it('策略返回成功响应时，通过 transformProviderResponse 转换后返回', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
@@ -141,15 +141,15 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.chat.completions.create(baseParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledOnce();
       expect(result).toEqual(mockChatCompletionResponse);
     });
 
     it('策略返回错误响应时，仍通过 transformProviderResponse 转换后返回', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
@@ -166,15 +166,15 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockErrorResponse);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.chat.completions.create(baseParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledOnce();
       expect(result).toEqual(mockErrorResponse);
     });
 
     it('使用 result.provider 传递给 transformProviderResponse', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', api_key: 'key-1' }],
       };
@@ -188,8 +188,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(baseParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         expect.anything(),
@@ -199,7 +199,7 @@ describe('Chainr (Router) 集成测试', () => {
     });
 
     it('result.provider 缺失时，默认使用 "openai" 传递给 transformProviderResponse', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
@@ -212,8 +212,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(baseParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         expect.anything(),
@@ -231,7 +231,7 @@ describe('Chainr (Router) 集成测试', () => {
       ];
       const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets,
         retry: retryConfig,
@@ -246,8 +246,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.chat.completions.create(baseParams);
 
       expect(mockFallbackExecute).toHaveBeenCalledWith(targets, baseParams, retryConfig, undefined, 'chatComplete');
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
@@ -264,7 +264,7 @@ describe('Chainr (Router) 集成测试', () => {
         { provider: 'openai', api_key: 'key-2', weight: 0.4 },
       ];
 
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets,
       };
@@ -278,15 +278,15 @@ describe('Chainr (Router) 集成测试', () => {
       mockLoadBalanceExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(baseParams);
 
       expect(mockLoadBalanceExecute).toHaveBeenCalledWith(targets, baseParams, undefined, undefined, 'chatComplete');
     });
 
     it('config.retry 正确传递给 strategy.execute() 作为 retryConfig', async () => {
       const retryConfig = { attempts: 5, onStatusCodes: [500, 502, 503] };
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
         retry: retryConfig,
@@ -301,8 +301,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockSingleExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(baseParams);
 
       expect(mockSingleExecute).toHaveBeenCalledWith(
         expect.any(Array),
@@ -314,7 +314,7 @@ describe('Chainr (Router) 集成测试', () => {
     });
 
     it('config.retry 未设置时，strategy.execute() 接收 undefined', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', api_key: 'key-1' }],
       };
@@ -328,8 +328,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockSingleExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.chat.completions.create(baseParams);
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(baseParams);
 
       expect(mockSingleExecute).toHaveBeenCalledWith(
         expect.any(Array),
@@ -359,7 +359,7 @@ describe('Chainr (Router) 集成测试', () => {
     };
 
     it('非流式调用通过策略系统路由，使用 messages endpoint', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
       };
@@ -373,8 +373,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.messages.create(messagesParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.messages.create(messagesParams);
 
       // 验证策略调用时传入 'messages' endpoint
       expect(mockFallbackExecute).toHaveBeenCalledWith(
@@ -395,7 +395,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('使用 messagesTargets 而非默认 targets', async () => {
       const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
         messagesTargets,
@@ -410,8 +410,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.messages.create(messagesParams);
+      const priorai = new Priorai(config);
+      await priorai.messages.create(messagesParams);
 
       // 应使用 messagesTargets 而非 targets
       expect(mockFallbackExecute).toHaveBeenCalledWith(
@@ -424,7 +424,7 @@ describe('Chainr (Router) 集成测试', () => {
     });
 
     it('provider 缺失时默认使用 anthropic', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
       };
@@ -438,8 +438,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockSingleExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.messages.create(messagesParams);
+      const priorai = new Priorai(config);
+      await priorai.messages.create(messagesParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockMessagesResponse,
@@ -450,7 +450,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('retry 和 timeout 正确传递', async () => {
       const retryConfig = { attempts: 3, onStatusCodes: [429, 500] };
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
         retry: retryConfig,
@@ -466,8 +466,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockMessagesResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.messages.create(messagesParams);
+      const priorai = new Priorai(config);
+      await priorai.messages.create(messagesParams);
 
       expect(mockFallbackExecute).toHaveBeenCalledWith(
         config.targets,
@@ -502,7 +502,7 @@ describe('Chainr (Router) 集成测试', () => {
     };
 
     it('非流式调用通过策略系统路由，使用 createModelResponse endpoint', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'fallback',
         targets: [{ provider: 'openai', apiKey: 'key-1' }],
       };
@@ -516,8 +516,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockFallbackExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.responses.create(responsesParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.responses.create(responsesParams);
 
       // 验证策略调用时传入 'createModelResponse' endpoint
       expect(mockFallbackExecute).toHaveBeenCalledWith(
@@ -538,7 +538,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('使用 responsesTargets 而非默认 targets', async () => {
       const responsesTargets = [{ provider: 'openai', apiKey: 'responses-key' }];
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', apiKey: 'anthropic-key' }],
         responsesTargets,
@@ -553,8 +553,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockSingleExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
-      const chainr = new Chainr(config);
-      await chainr.responses.create(responsesParams);
+      const priorai = new Priorai(config);
+      await priorai.responses.create(responsesParams);
 
       // 应使用 responsesTargets 而非 targets
       expect(mockSingleExecute).toHaveBeenCalledWith(
@@ -567,7 +567,7 @@ describe('Chainr (Router) 集成测试', () => {
     });
 
     it('provider 缺失时默认使用 openai', async () => {
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', apiKey: 'key-1' }],
       };
@@ -581,8 +581,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockSingleExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
-      const chainr = new Chainr(config);
-      await chainr.responses.create(responsesParams);
+      const priorai = new Priorai(config);
+      await priorai.responses.create(responsesParams);
 
       expect(mockTransformProviderResponse).toHaveBeenCalledWith(
         mockResponsesResult,
@@ -593,7 +593,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('retry 和 timeout 正确传递', async () => {
       const retryConfig = { attempts: 2, onStatusCodes: [429, 502] };
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'loadbalance',
         targets: [
           { provider: 'openai', apiKey: 'key-1', weight: 0.7 },
@@ -612,8 +612,8 @@ describe('Chainr (Router) 集成测试', () => {
       mockLoadBalanceExecute.mockResolvedValue(strategyResult);
       mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
 
-      const chainr = new Chainr(config);
-      await chainr.responses.create(responsesParams);
+      const priorai = new Priorai(config);
+      await priorai.responses.create(responsesParams);
 
       expect(mockLoadBalanceExecute).toHaveBeenCalledWith(
         config.targets,
@@ -645,7 +645,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('调用 messagesCountTokens 端点并返回 token 计数', async () => {
       await setupMocks();
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
       };
@@ -657,8 +657,8 @@ describe('Chainr (Router) 集成测试', () => {
       });
       mockTransformProviderResponse.mockReturnValue(mockCountTokensResponse);
 
-      const chainr = new Chainr(config);
-      const result = await chainr.messages.countTokens(countTokensParams);
+      const priorai = new Priorai(config);
+      const result = await priorai.messages.countTokens(countTokensParams);
 
       expect(result).toEqual(mockCountTokensResponse);
     });
@@ -666,7 +666,7 @@ describe('Chainr (Router) 集成测试', () => {
     it('使用 messagesTargets 而非默认 targets', async () => {
       await setupMocks();
       const messagesTargets = [{ provider: 'anthropic', apiKey: 'anthropic-key' }];
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'openai', apiKey: 'openai-key' }],
         messagesTargets,
@@ -679,8 +679,8 @@ describe('Chainr (Router) 集成测试', () => {
       });
       mockTransformProviderResponse.mockReturnValue(mockCountTokensResponse);
 
-      const chainr = new Chainr(config);
-      await chainr.messages.countTokens(countTokensParams);
+      const priorai = new Priorai(config);
+      await priorai.messages.countTokens(countTokensParams);
 
       // buildProviderRequest 应收到 messagesTargets 中的 target
       const { buildProviderRequest } = await import('../../src/core/providerRequest');
@@ -694,7 +694,7 @@ describe('Chainr (Router) 集成测试', () => {
 
     it('请求失败时抛出错误', async () => {
       await setupMocks();
-      const config: ChainrConfig = {
+      const config: PrioraiConfig = {
         strategy: 'single',
         targets: [{ provider: 'anthropic', apiKey: 'key-1' }],
       };
@@ -706,8 +706,8 @@ describe('Chainr (Router) 集成测试', () => {
         headers: new Headers(),
       });
 
-      const chainr = new Chainr(config);
-      await expect(chainr.messages.countTokens(countTokensParams)).rejects.toThrow('HTTP 401');
+      const priorai = new Priorai(config);
+      await expect(priorai.messages.countTokens(countTokensParams)).rejects.toThrow('HTTP 401');
     });
   });
 });
