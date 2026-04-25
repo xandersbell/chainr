@@ -1,4 +1,5 @@
 import type {
+  ANTHROPIC_STOP_REASON,
   CitationCharLocation,
   CitationContentBlockLocation,
   CitationPageLocation,
@@ -6,7 +7,6 @@ import type {
   MessagesResponse,
   RedactedThinkingBlock,
   ServerToolUseBlock,
-  ANTHROPIC_STOP_REASON,
   TextBlock,
   ThinkingBlock,
   ToolUseBlock,

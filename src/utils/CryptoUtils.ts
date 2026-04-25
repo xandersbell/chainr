@@ -44,24 +44,18 @@ export class CryptoUtils {
     }
 
     // Reformat with proper newlines (64 chars per line is PEM standard)
-    const formattedContent =
-      keyContent.match(/.{1,64}/g)?.join('\n') || keyContent;
+    const formattedContent = keyContent.match(/.{1,64}/g)?.join('\n') || keyContent;
 
     // Reconstruct with proper spacing
     const properBegin = beginMarker
       .replace('-----BEGIN', '-----BEGIN ')
       .replace('KEY-----', ' KEY-----');
-    const properEnd = endMarker
-      .replace('-----END', '-----END ')
-      .replace('KEY-----', ' KEY-----');
+    const properEnd = endMarker.replace('-----END', '-----END ').replace('KEY-----', ' KEY-----');
 
     return `${properBegin}\n${formattedContent}\n${properEnd}`;
   }
 
-  private static async importPrivateKey(
-    pemKey: string,
-    _passphrase?: string
-  ): Promise<CryptoKey> {
+  private static async importPrivateKey(pemKey: string, _passphrase?: string): Promise<CryptoKey> {
     // Normalize the key first
     const normalizedKey = CryptoUtils.normalizePemKey(pemKey);
 
@@ -85,20 +79,18 @@ export class CryptoUtils {
           hash: 'SHA-256',
         },
         false,
-        ['sign']
+        ['sign'],
       );
-    } catch (error) {
+    } catch (_error) {
       throw new Error(
-        `Failed to import private key. Ensure it's in PKCS8 format. Use: openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out key_pkcs8.pem`
+        `Failed to import private key. Ensure it's in PKCS8 format. Use: openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out key_pkcs8.pem`,
       );
     }
   }
 
   private static base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binaryString =
-      typeof atob !== 'undefined'
-        ? atob(base64)
-        : Buffer.from(base64, 'base64').toString('binary');
+      typeof atob !== 'undefined' ? atob(base64) : Buffer.from(base64, 'base64').toString('binary');
 
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -122,11 +114,7 @@ export class CryptoUtils {
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
 
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      privateKey,
-      dataBuffer
-    );
+    const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', privateKey, dataBuffer);
 
     return CryptoUtils.arrayBufferToBase64(signature);
   }
@@ -138,13 +126,10 @@ export class CryptoUtils {
     return CryptoUtils.arrayBufferToBase64(hashBuffer);
   }
 
-  static async loadPrivateKey(
-    pemKey: string,
-    passphrase?: string
-  ): Promise<CryptoKey> {
+  static async loadPrivateKey(pemKey: string, passphrase?: string): Promise<CryptoKey> {
     if (passphrase) {
       console.warn(
-        'Key passphrase provided but not supported in Web Crypto API. Please use an unencrypted key.'
+        'Key passphrase provided but not supported in Web Crypto API. Please use an unencrypted key.',
       );
     }
     return CryptoUtils.importPrivateKey(pemKey, passphrase);

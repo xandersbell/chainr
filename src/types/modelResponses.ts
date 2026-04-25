@@ -6,17 +6,13 @@ export interface ParsedResponseOutputText<ParsedT> extends ResponseOutputText {
   parsed: ParsedT | null;
 }
 
-export type ParsedContent<ParsedT> =
-  | ParsedResponseOutputText<ParsedT>
-  | ResponseOutputRefusal;
+export type ParsedContent<ParsedT> = ParsedResponseOutputText<ParsedT> | ResponseOutputRefusal;
 
-export interface ParsedResponseOutputMessage<ParsedT>
-  extends ResponseOutputMessage {
+export interface ParsedResponseOutputMessage<ParsedT> extends ResponseOutputMessage {
   content: ParsedContent<ParsedT>[];
 }
 
-export interface ParsedResponseFunctionToolCall
-  extends ResponseFunctionToolCall {
+export interface ParsedResponseFunctionToolCall extends ResponseFunctionToolCall {
   parsed_arguments: any;
 }
 
@@ -519,9 +515,7 @@ export interface ResponseCodeInterpreterToolCall {
   /**
    * The results of the code interpreter tool call.
    */
-  results: Array<
-    ResponseCodeInterpreterToolCall.Logs | ResponseCodeInterpreterToolCall.Files
-  >;
+  results: Array<ResponseCodeInterpreterToolCall.Logs | ResponseCodeInterpreterToolCall.Files>;
 
   /**
    * The status of the code interpreter tool call.
@@ -1364,10 +1358,7 @@ export interface ResponseInputAudio {
 /**
  * A text input to the model.
  */
-export type ResponseInputContent =
-  | ResponseInputText
-  | ResponseInputImage
-  | ResponseInputFile;
+export type ResponseInputContent = ResponseInputText | ResponseInputImage | ResponseInputFile;
 
 /**
  * A file input to the model.
@@ -1825,9 +1816,7 @@ export interface ResponseOutputText {
    * The annotations of the text output.
    */
   annotations: Array<
-    | ResponseOutputText.FileCitation
-    | ResponseOutputText.URLCitation
-    | ResponseOutputText.FilePath
+    ResponseOutputText.FileCitation | ResponseOutputText.URLCitation | ResponseOutputText.FilePath
   >;
 
   /**
@@ -1977,11 +1966,7 @@ export interface ResponseRefusalDoneEvent {
  * The status of the response generation. One of `completed`, `failed`,
  * `in_progress`, or `incomplete`.
  */
-export type ResponseStatus =
-  | 'completed'
-  | 'failed'
-  | 'in_progress'
-  | 'incomplete';
+export type ResponseStatus = 'completed' | 'failed' | 'in_progress' | 'incomplete';
 
 /**
  * Emitted when there is a partial audio response.
@@ -2422,9 +2407,7 @@ interface WebSearchToolUserLocation {
   timezone?: string;
 }
 
-export type ResponseCreateParams =
-  | ResponseCreateParamsNonStreaming
-  | ResponseCreateParamsStreaming;
+export type ResponseCreateParams = ResponseCreateParamsNonStreaming | ResponseCreateParamsStreaming;
 
 export interface ResponseCreateParamsBase {
   /**
@@ -2593,8 +2576,7 @@ export interface ResponseCreateParamsBase {
   user?: string;
 }
 
-export interface ResponseCreateParamsNonStreaming
-  extends ResponseCreateParamsBase {
+export interface ResponseCreateParamsNonStreaming extends ResponseCreateParamsBase {
   /**
    * If set to true, the model response data will be streamed to the client as it is
    * generated using
@@ -2606,8 +2588,7 @@ export interface ResponseCreateParamsNonStreaming
   stream?: false | null;
 }
 
-export interface ResponseCreateParamsStreaming
-  extends ResponseCreateParamsBase {
+export interface ResponseCreateParamsStreaming extends ResponseCreateParamsBase {
   /**
    * If set to true, the model response data will be streamed to the client as it is
    * generated using

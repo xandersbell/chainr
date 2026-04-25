@@ -242,10 +242,12 @@ export interface Params {
   tools?: Tool[];
   tool_choice?: ToolChoice;
   reasoning_effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | string;
-  response_format?: {
-    type: 'json_object' | 'text' | 'json_schema';
-    json_schema?: unknown;
-  } | string;
+  response_format?:
+    | {
+        type: 'json_object' | 'text' | 'json_schema';
+        json_schema?: unknown;
+      }
+    | string;
   seed?: number;
   store?: boolean;
   metadata?: object;
@@ -316,13 +318,15 @@ export interface ShortConfig {
   vertexProjectId?: string;
 }
 
-export type RequestBody = {
-  config: Config;
-  params: Params;
-} | {
-  config: ShortConfig;
-  params: Params;
-};
+export type RequestBody =
+  | {
+      config: Config;
+      params: Params;
+    }
+  | {
+      config: ShortConfig;
+      params: Params;
+    };
 
 // ============================================================================
 // Embeddings Types
@@ -394,7 +398,7 @@ export interface ImageGenerateResponse {
 // ============================================================================
 
 export interface TranscriptionParams {
-  file: File | Blob | string;  // Audio file or base64
+  file: File | Blob | string; // Audio file or base64
   model?: string;
   language?: string;
   prompt?: string;
@@ -462,7 +466,14 @@ export interface Model3DGenerateResponse {
 
 // Type constants and aliases needed by providers
 export const SYSTEM_MESSAGE_ROLES = ['system', 'developer'] as const;
-export const MESSAGE_ROLES = ['system', 'user', 'assistant', 'function', 'tool', 'developer'] as const;
+export const MESSAGE_ROLES = [
+  'system',
+  'user',
+  'assistant',
+  'function',
+  'tool',
+  'developer',
+] as const;
 export type OpenAIMessageRole = (typeof MESSAGE_ROLES)[number];
 
 // ContentBlockChunk inherits all fields from ContentType but makes type optional,
