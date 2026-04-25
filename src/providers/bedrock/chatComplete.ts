@@ -171,8 +171,11 @@ const getMessageContent = (message: Message) => {
       text: inputContent,
     });
   } else if (inputContent && Array.isArray(inputContent)) {
+    let hasTextBlock = false;
+    let hasDocumentBlock = false;
     inputContent.forEach((item) => {
       if (item.type === 'text') {
+        hasTextBlock = true;
         out.push({
           text: item.text || '',
         });
@@ -202,6 +205,7 @@ const getMessageContent = (message: Message) => {
             },
           });
         } else {
+          hasDocumentBlock = true;
           out.push({
             document: {
               format: fileFormat,
@@ -244,6 +248,7 @@ const getMessageContent = (message: Message) => {
             },
           });
         } else {
+          hasDocumentBlock = true;
           out.push({
             document: {
               format: fileFormat,
@@ -270,14 +275,22 @@ const getMessageContent = (message: Message) => {
         });
       }
     });
+    // Bedrock 要求有 document block 时必须有 text block
+    if (hasDocumentBlock && !hasTextBlock) {
+      out.unshift({ text: ' ' });
+    }
   }
 
   // If message is an array of objects, handle text content, tool calls, tool results, this would be much cleaner if portkeys chat create object were a union type
   message.tool_calls?.forEach((toolCall: ToolCall) => {
+    // arguments 空值保护：空字符串时默认为空对象
+    const args = toolCall.function.arguments?.length > 0
+      ? JSON.parse(toolCall.function.arguments)
+      : {};
     out.push({
       toolUse: {
         name: toolCall.function.name,
-        input: JSON.parse(toolCall.function.arguments),
+        input: args,
         toolUseId: toolCall.id,
       },
     });

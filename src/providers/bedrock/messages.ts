@@ -109,40 +109,55 @@ const appendDocumentBlock = (
   transformedContent: any[],
   documentBlock: DocumentBlockParam
 ) => {
+  // 文档名称：优先使用 title，否则生成随机 UUID
+  const docName = (documentBlock as any).title || crypto.randomUUID();
+  // citations 透传
+  const citations = (documentBlock as any).citations;
+
   if (documentBlock.source.type === 'base64') {
     transformedContent.push({
       document: {
         format: documentBlock.source.media_type.split('/')[1],
+        name: docName,
         source: {
           bytes: documentBlock.source.data,
         },
+        ...(citations && { citations }),
       },
     });
-    if (documentBlock.cache_control) {
-      transformedContent.push({
-        cachePoint: {
-          type: 'default',
-        },
-      });
-    }
   } else if (documentBlock.source.type === 'url') {
     transformedContent.push({
       document: {
         format: documentBlock.source.media_type?.split('/')[1] || 'pdf',
+        name: docName,
         source: {
           s3Location: {
             uri: documentBlock.source.url,
           },
         },
+        ...(citations && { citations }),
       },
     });
-    if (documentBlock.cache_control) {
-      transformedContent.push({
-        cachePoint: {
-          type: 'default',
+  } else if ((documentBlock.source as any).type === 'text') {
+    // 新增 text 类型文档支持
+    transformedContent.push({
+      document: {
+        format: 'txt',
+        name: docName,
+        source: {
+          text: (documentBlock.source as any).text,
         },
-      });
-    }
+        ...(citations && { citations }),
+      },
+    });
+  }
+  // cache_control 统一处理，适用于所有 source 类型
+  if (documentBlock.cache_control) {
+    transformedContent.push({
+      cachePoint: {
+        type: 'default',
+      },
+    });
   }
 };
 
@@ -253,12 +268,16 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
           });
         } else if (Array.isArray(message.content)) {
           const transformedContent: any[] = [];
+          let hasTextBlock = false;
+          let hasDocumentBlock = false;
           for (const content of message.content) {
             if (content.type === 'text') {
+              hasTextBlock = true;
               appendTextBlock(transformedContent, content);
             } else if (content.type === 'image') {
               appendImageBlock(transformedContent, content);
             } else if (content.type === 'document') {
+              hasDocumentBlock = true;
               appendDocumentBlock(transformedContent, content);
             } else if (content.type === 'thinking') {
               appendThinkingBlock(transformedContent, content);
@@ -269,13 +288,10 @@ export const BedrockConverseMessagesConfig: ProviderConfig = {
             } else if (content.type === 'tool_result') {
               appendToolResultBlock(transformedContent, content);
             }
-            // not supported
-            // else if (content.type === 'server_tool_use') {}
-            // else if (content.type === 'web_search_tool_result') {}
-            // else if (content.type === 'code_execution_tool_result') {}
-            // else if (content.type === 'mcp_tool_use') {}
-            // else if (content.type === 'mcp_tool_result') {}
-            // else if (content.type === 'container_upload') {}
+          }
+          // Bedrock 要求有 document block 时必须有 text block
+          if (hasDocumentBlock && !hasTextBlock) {
+            transformedContent.unshift({ text: ' ' });
           }
           transformedMessages.push({
             role: message.role,
@@ -528,7 +544,7 @@ function createContentBlockStartEvent(
       name: parsedChunk.start.toolUse.name,
       input: {},
     };
-  } else if (parsedChunk.delta?.reasoningContent?.text) {
+  } else if (parsedChunk.delta?.reasoningContent?.text !== undefined) {
     contentBlockStartEvent.content_block = {
       type: 'thinking',
       thinking: '',
