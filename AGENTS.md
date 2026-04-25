@@ -1,31 +1,37 @@
-# CLAUDE.md — Priorai
+# AGENTS.md — Priorai
 
-A unified interface SDK for calling different LLM APIs through a single, consistent abstraction.
+Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
+
+## Language Rules
+
+All code in this project must be written in English, including:
+
+- Code comments (inline and block)
+- Variable, function, class, and type names
+- Test descriptions (`describe`, `it`) and assertion messages
+- Error messages thrown in code
+- Console log output
+- JSDoc / TSDoc annotations
+- Commit messages
 
 ## Reference: Portkey
 
-- Portkey source is available locally at `./portkey`
-- Strip out all dashboard, management, and admin features entirely
-- Keep only the core LLM routing and proxying capabilities
-- Support priority-based fallback across different providers for the same model
-- Support weighted load balancing across providers
-- Prefer copying mature code from Portkey and adapting it locally over rewriting from scratch
+- Portkey source is at `./portkey` for reference
+- Strip all dashboard, admin, and management features — keep only the core LLM routing and proxying layer
+- Priority-based fallback and weighted load balancing are the two key capabilities to preserve
+- When Portkey already has a working implementation, copy and adapt rather than rewrite
 
 ## Dependency Strategy
 
-- Use mature, necessary external dependencies freely — no obsession with zero-dependency
-- AWS SDK (`@smithy/signature-v4`, `@aws-crypto/sha256-js`) — use directly, do not reimplement signing
-- Hono framework — must be removed. Hono is a web server framework; Priorai is an embeddable SDK. Use `providerOptions` + `process.env` instead of Hono Context
-- Rule of thumb: is this dependency reasonable in an embedded SDK context? If yes, use it. If not, strip it out.
+- Use mature external dependencies when they make sense — no zero-dependency dogma
+- AWS SDK (`@smithy/signature-v4`, `@aws-crypto/sha256-js`) — use as-is
+- Hono — must be removed. Priorai is an embeddable SDK, not a web server. Replace Hono Context with `providerOptions` + `process.env`
+- Decision rule: does this dependency make sense in an embedded SDK? Yes → use it. No → strip it.
 
 ## Working Guidelines
 
-- Update relevant documentation as you work — mark progress, record differences
-- Always include the current timestamp at the top when updating docs
-- Drive work forward proactively — do not stop and wait unnecessarily
-- This is substantial work, but not research-level hard
-- You have the capability to solve every problem you encounter — do not shy away from tedious tasks
-- Be careful and patient
-- When stuck, check Portkey's mature implementation first before pushing ahead blindly
-- Write thorough tests to ensure robustness
-- Update relevant documentation after completing each subtask to keep it current
+- Keep documentation in sync as you work — update progress and record decisions after each subtask
+- Include a timestamp at the top of any doc you create or update
+- Drive work forward proactively; do not pause unnecessarily
+- When stuck, consult Portkey's implementation before attempting a novel solution
+- Write thorough tests for every feature
