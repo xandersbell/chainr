@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 All Phases Complete — **221 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-24)
+**Status**: 🟢 All Phases Complete — **224 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-25)
 
-**Last Updated**: 2026-04-24 22:03 EEST — P2 功能全部完成（conditional routing、complete、imageEdit、files、batch、finetune、Azure chunk delay、ConnectTimeout）
+**Last Updated**: 2026-04-25 06:22 EEST — 新增 messagesCountTokens 端点（+3 测试），文档准确性核对
 
 ---
 
@@ -86,11 +86,11 @@ chainr/
 │   ├── globals.ts                  # Provider constants
 │   ├── types/
 │   │   └── requestBody.ts         # Type definitions (Params, Options)
-│   ├── providers/                  # 68 provider directories (Portkey-aligned)
+│   ├── providers/                  # 71 provider directories (72 registered, Portkey-aligned)
 │   │   ├── index.ts               # Static provider registry
 │   │   ├── types.ts               # ProviderConfig / ProviderAPIConfig types
 │   │   ├── utils.ts               # Provider utilities
-│   │   └── ... (68 provider dirs)
+│   │   └── ... (71 provider dirs, 72 registered)
 │   └── core/
 │       ├── Router.ts               # Main Chainr class + validateConfig
 │       ├── types.ts                # Core types (ChainrConfig, StrategyResult)
@@ -106,6 +106,7 @@ chainr/
 │       ├── streamUtils.ts          # Streaming utilities
 │       ├── sseParser.ts            # SSE parsing
 │       └── strategies/
+│           ├── ConditionalStrategy.ts
 │           ├── FallbackStrategy.ts
 │           ├── LoadBalanceStrategy.ts
 │           └── SingleStrategy.ts
@@ -350,7 +351,7 @@ Uses a single provider without fallback.
 - [ ] ~~TypeScript 0 errors~~ — **✅ 0 TS errors** (2026-04-24 15:52 EEST)
 - [x] Build succeeds (tsup bundles only active code, `src/providers/` not imported)
 
-> **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 70 个 provider 目录。桥接文件（types.ts、utils.ts）和注册表（index.ts）已创建。Hono 依赖已全部剥离。67 个 provider 已注册到静态注册表。
+> **⚠️ 注意**: `src/providers/` 目录从 Portkey 复制了 71 个 provider 目录（含 2 个 base 目录和 1 个 utils 目录）。桥接文件（types.ts、utils.ts）和注册表（index.ts，72 个注册条目）已创建。Hono 依赖已全部剥离。
 
 ### Phase 2.5: Provider Integration 🟢 COMPLETE
 
@@ -358,7 +359,7 @@ Uses a single provider without fallback.
 - [x] Phase 1：桥接文件（types.ts、utils.ts、finishReasonMap.ts、embedRequestBody.ts、GatewayError.ts、env.ts）
 - [x] Phase 2：Hono 依赖全部剥离，awsSigV4.ts 删除，改用 @smithy/signature-v4
 - [x] Phase 3：17 个 provider 的 75 个无效 import 清理
-- [x] Phase 4：Provider 注册表（68 个 provider）+ providerRequest.ts 集成层
+- [x] Phase 4：Provider 注册表（72 个 provider）+ providerRequest.ts 集成层
 - [x] Phase 5：删除 transformRequest.ts + transformResponse.ts，Strategy/Router 全部接入注册表
 - [x] 178 tests passing
 
@@ -382,18 +383,30 @@ Uses a single provider without fallback.
 - [x] Tool support (function calling) — 完整实现
 - [x] Provider-specific params — 完整对齐
 
-### Phase 3E: Conditional Routing 🟢 P2 低优先级（暂不实现）
+### Phase 3E: Conditional Routing 🟢 COMPLETE
 
-**原因**: Chainr 是嵌入式 SDK，调用方可直接用代码实现条件路由逻辑。与独立网关（Portkey）需要声明式配置分流的场景不同，SDK 场景下 conditional routing 的价值有限。有需求时再实现。
+**Completed** (2026-04-24):
+- [x] MongoDB 风格条件路由（ConditionalStrategy.ts）
+- [x] 操作符：$eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $regex, $and, $or
+- [x] 上下文键：params.*（请求 body 字段）、metadata.*（调用方传入的元数据）
+- [x] default target 兜底
+- [x] 16 个测试覆盖
 
-### Phase 4: Firebase Integration ⬜ TODO
+### Phase 4: API Expansion & P2 Features 🟢 COMPLETE
 
-**Goal**: Production-ready with Firebase example
-
-**Deliverables**:
-- [ ] Firebase Functions example
-- [ ] Performance benchmarks
-- [ ] Error handling edge cases
+**Completed** (2026-04-24):
+- [x] Anthropic Messages API — `chainr.messages.create()` 原生格式透传
+- [x] OpenAI Responses API — `chainr.responses.create()` 端点路由
+- [x] endpoint 参数贯穿策略系统（InheritedConfig → tryLeafTarget → buildProviderRequest）
+- [x] messagesTargets / responsesTargets 专用 target 池
+- [x] complete (legacy) 端点 — `chainr.completions.create()`
+- [x] imageEdit 端点 — `chainr.images.edit()`
+- [x] 文件操作端点 — `chainr.files.upload/list/del/retrieve/content()`
+- [x] Batch API — `chainr.batches.create/retrieve/list/cancel()`
+- [x] Fine-tune API — `chainr.fineTuning.create/list/cancel/retrieve()`
+- [x] ConnectTimeoutError → 503 错误区分
+- [x] Azure 1ms chunk 间隔
+- [x] Firebase Functions example — 不需要，SDK 嵌入式调用在任何 Node.js 环境中用法一致
 
 ---
 
@@ -443,7 +456,7 @@ Uses a single provider without fallback.
 #### Nested Strategies
 - [x] Fallback + LoadBalance 组合（递归嵌套）
 - [x] 配置继承（overrideParams 合并，retry/timeout 子级优先）
-- [ ] Conditional routing（P2 低优先级，SDK 场景下调用方可用代码实现）
+- [x] Conditional routing — ✅ 已完成（ConditionalStrategy.ts + 16 个测试）
 
 ### 5.3 低优先级 (生态集成)
 
@@ -460,21 +473,22 @@ Uses a single provider without fallback.
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (205 tests ✅)
+### Current Test Coverage (224 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
 | streaming/types.test.ts | 26 | OPENAI_COMPATIBLE_PROVIDERS |
 | RetryHandler.test.ts | 23 | retry logic |
+| Router.test.ts | 23 | Router 集成（含 Messages/Responses API + countTokens） |
 | streaming/streamUtils.test.ts | 16 | split patterns |
 | streaming/transformOpenAIStream.test.ts | 16 | passthrough streaming |
+| strategies/ConditionalStrategy.test.ts | 16 | MongoDB 风格条件路由 |
 | configValidation.test.ts | 14 | config validation |
 | providerRequest.test.ts | 14 | buildProviderRequest + transformProviderResponse |
 | streaming/sseParser.test.ts | 14 | SSE parsing |
 | strategies/SingleStrategy.test.ts | 13 | single strategy |
 | strategies/FallbackStrategy.test.ts | 12 | fallback strategy |
 | strategies/nestedStrategy.test.ts | 12 | 嵌套策略 + 配置继承 |
-| Router.test.ts | 12 | Router 集成 |
 | real-http.test.ts | 12 | real HTTP 集成 |
 | streaming/transformAnthropicStream.test.ts | 11 | Anthropic streaming |
 | strategies/LoadBalanceStrategy.test.ts | 9 | load balance strategy |

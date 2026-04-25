@@ -1,9 +1,9 @@
 # Chainr vs Portkey 差异报告
 
-**生成时间**: 2026-04-24 22:03 EEST（P2 功能全部完成后更新）
+**生成时间**: 2026-04-25 06:22 EEST（新增 messagesCountTokens 端点后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Chainr 版本**: All Phases Complete, 221 tests, main branch
+**Chainr 版本**: All Phases Complete, 224 tests, main branch
 
 ---
 
@@ -25,22 +25,18 @@
 
 | 指标 | Portkey | Chainr | 差异 |
 |------|---------|--------|------|
-| 总 provider 数 | 75 | 68 | -7 |
-| 注册表完整性 | 75/75 | 68/68 | ✅ 各自完整 |
+| 总 provider 数 | 75 | 72 | -3 |
+| 注册表完整性 | 75/75 | 72/72 | ✅ 各自完整 |
 
-### Portkey 有但 Chainr 缺失的 Provider（7 个）
+### Portkey 有但 Chainr 缺失的 Provider（3 个）
 
 | Provider | 类型 | 优先级 |
 |----------|------|--------|
 | `qdrant` | 向量数据库 | 🔴 低（非 LLM） |
 | `milvus` | 向量数据库 | 🔴 低（非 LLM） |
-| `nscale` | 推理平台 | 🟡 中 |
 | `portkey` | 自引用 | 🔴 不需要 |
-| `snowflake` | 数据平台 | 🟡 中 |
-| `cortex` | 本地推理 | 🟡 中 |
-| 其他新增 | — | 需逐一核实 |
 
-> 向量数据库（qdrant/milvus）和 portkey 自引用不在 Chainr 范围内。
+> 向量数据库（qdrant/milvus）和 portkey 自引用不在 Chainr 范围内。nscale、snowflake 等 Portkey 新增 provider 需逐一核实是否已包含在 72 个注册 provider 中。
 
 ---
 
@@ -68,6 +64,16 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 - fallback 的某个 target 可以是一个 loadbalance 组
 - 配置（retry, cache, overrideParams, hooks, timeout）沿树继承，子级覆盖父级
 
+### 3.3 熔断器 (Circuit Breaker) 详情
+
+Portkey 开源版中 Circuit Breaker **仅为空壳扩展点，无实际实现**。具体分析（`handlerUtils.ts`）：
+
+1. **过滤逻辑**（第 646–658 行）：如果当前配置节点有 `id`，则过滤掉 `isOpen: true` 的 targets（跳过已熔断的 provider）
+2. **回调钩子**（第 792–799 行）：调用 `c.get('handleCircuitBreakerResponse')?.()` 更新熔断状态，但该回调**从未在开源代码中通过 `c.set()` 注册**
+3. **缺失部分**：`cbConfig`、`isOpen` 无类型定义（仅 `any` 类型动态属性），不在 Zod schema 中；失败计数、熔断阈值、半开恢复等核心状态机逻辑**完全不存在**
+
+> 结论：这是留给 Portkey 云服务/企业版在运行时注入的扩展点。开源版无法独立使用 Circuit Breaker。Chainr 如需此功能需从零实现状态机（Closed → Open → Half-Open），当前优先级低。
+
 ---
 
 ## 4. 重试逻辑差异
@@ -80,7 +86,26 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | `retry-after` header 支持 | ✅ 读取 retry-after-ms / x-ms-retry-after-ms / retry-after | ✅ 同 Portkey 优先级 + 60s 预算 | ✅ 已对齐 |
 | 最大重试等待 60s 上限 | ✅ MAX_RETRY_LIMIT_MS | ✅ 60s cap | ✅ 已对齐 |
 | fetchWithTimeout | ✅ AbortController | ✅ AbortController | ✅ 已对齐 |
-| ConnectTimeoutError → 503 | ✅ | ✅ | ✅ 已对齐 |
+| ConnectTimeoutError → 503 | ✅ 不重试，最外层 catch | ✅ 重试，循环内 catch | ⚠️ 行为差异 |
+
+### 4.1 为什么不使用 async-retry
+
+Portkey 使用 `async-retry`（v1.3.3）作为重试循环骨架，Chainr 选择自实现 for 循环。评估后决定保持自实现，理由：
+
+| 维度 | async-retry (Portkey) | 自实现 (Chainr) | 评估 |
+|------|----------------------|-----------------|------|
+| 代码量 | ~220 行 | ~204 行 | 持平 |
+| retry-after 处理 | 篡改 `_timeouts` 内部数组（hack 私有状态） | `getSmartDelay()` 返回 null + break | ✅ Chainr 更干净 |
+| 非重试状态码 | `bail(err)` 语义 | 直接 `return` | 持平 |
+| 流式重试 | 无独立支持 | `retryRequestForStream` 独立函数 | ✅ Chainr 更好 |
+| 依赖链 | async-retry → retry（2 个间接依赖） | 零依赖 | ✅ SDK 场景更优 |
+| 可读性 | 需理解 async-retry 的 bail/onRetry/factor 语义 | 一个 for 循环，逻辑一目了然 | ✅ Chainr 更透明 |
+
+> 结论：async-retry 在 Portkey（Web 服务器）场景下合理，但对嵌入式 SDK 而言，自实现代码量相当、逻辑更透明、无 hack 私有状态的风险、且少两个依赖。
+
+### 4.2 ConnectTimeoutError 行为差异
+
+Portkey 的 ConnectTimeoutError 在 async-retry 最外层 catch 处理，**不会被重试**，直接返回 503。Chainr 在 for 循环内部 catch 处理，**会继续重试**（等待退避时间后重试下一次）。这是一个有意的设计选择 — 网络超时通常是暂时性的，重试有较高概率成功。
 
 ---
 
@@ -97,6 +122,24 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | Hook 结果注入流 | ✅ | ❌ | ❌ 无 Hook 所以不需要 |
 | 流式重试 | ✅ retryRequestForStream | ✅ retryRequestForStream | ✅ 已对齐 |
 
+### 5.1 AWS EventStream 二进制帧解析
+
+大多数 LLM provider 的流式响应使用 SSE（Server-Sent Events）纯文本格式（`data: {...}\n\n`），文本解析器即可处理。AWS Bedrock 使用自有的 **EventStream 二进制协议**，每帧结构为：
+
+```
+[4B 总长度][4B header长度][4B CRC校验][headers: 二进制键值对][payload: JSON][4B 帧CRC]
+```
+
+解析器需要：按帧边界切割字节流 → 解析 header（`:message-type`、`:event-type`）→ 提取 payload 并 decode 为 JSON → 处理错误帧（`:message-type: exception`）。
+
+Portkey 的 `readAWSStream()` 和 Chainr 的 `transformBedrockStream` 实现相同功能：将 Bedrock 二进制 EventStream 帧解析为标准 JSON chunk，再转为 OpenAI 兼容的 SSE 格式输出。
+
+### 5.2 Azure 1ms chunk 间隔
+
+Azure OpenAI 的流式响应存在已知的粘包问题：多个 SSE chunk 会被缓冲后一次性发送，而非逐个推送。如果客户端解析器不够健壮，粘包会导致解析失败或丢数据。
+
+解决方案：对 Azure 系 provider（`azure-openai`、`azure-ai`），在每个 chunk 写入后插入 1ms 微延迟（`await new Promise(r => setTimeout(r, 1))`）。这个延迟不是在"等待"什么，而是将控制权交还事件循环，让每个 chunk 作为独立的 write 操作发出，避免 Node.js 写缓冲将多个 chunk 合并为一次 TCP 发送。Portkey 通过 `isSleepTimeRequired` 标志控制此行为，Chainr 在 `createOpenAIStream` 中对 Azure provider 做同样处理。
+
 ---
 
 ## 6. 请求/响应转换差异
@@ -109,7 +152,20 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | 点号嵌套路径 (setNestedProperty) | ✅ | ✅ | ✅ 已对齐 |
 | responseTransforms | ✅ | ✅ | ✅ 已对齐 |
 | FormData 转换 | ✅ transformToFormData() | ✅ executeSimpleEndpoint 支持 | ✅ 已对齐 |
+| Tool/Function Calling | ✅ 各 provider 独立转换 | ✅ 与 Portkey 一致 | ✅ 已对齐 |
+| Provider-specific params | ✅ 各 provider 独立参数映射 | ✅ 与 Portkey 一致 | ✅ 已对齐 |
 | proxy 模式（原样透传） | ✅ | ❌ | 🟡 低优先级 |
+
+### 6.1 proxy 模式说明
+
+Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey 不认识的 API 端点时（如实验性 API），proxy 模式将请求原封不动地转发给 provider，不做任何参数转换或响应格式化。作为独立网关，所有请求都必须经过 Portkey，因此需要这个逃生口避免"网关不支持 = 完全不能用"。
+
+**Chainr 不实现 proxy 模式的理由**：
+
+1. **架构差异决定需求差异**：Portkey 是独立网关，所有流量必须经过它，没有 proxy 就等于"不支持 = 完全不能用"。Chainr 是嵌入式 SDK，调用方随时可以绕过 Chainr 直接用 `fetch` 或 provider 原生 SDK
+2. **透传下 Chainr 的核心价值丧失**：proxy 模式不知道请求/响应格式，做不了参数转换和响应标准化 — 这恰恰是 Chainr 的核心能力。能做的只有 HTTP 状态码级别的 retry 和 fallback，调用方自己包一层 fetch 也能做到
+3. **跨 provider fallback 不兼容**：不同 provider 的同一功能 URL 和认证方式各不相同，透传的 body 在 fallback 到另一个 provider 时大概率不兼容，fallback 形同虚设
+4. **按需添加成本低**：如果后续有真实用户需求，proxy 模式的实现并不复杂，届时再加即可。现在做属于为假设需求增加复杂度
 
 ---
 
@@ -132,8 +188,22 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 | createBatch / retrieveBatch / listBatches / cancelBatch | ✅ | ✅ | ✅ |
 | createFinetune / listFinetunes / cancelFinetune | ✅ | ✅ | ✅ |
 | messages (Anthropic native) | ✅ | ✅ | ✅ |
-| messagesCountTokens | ✅ | ❌ | 🟡 |
+| messagesCountTokens | ✅ | ✅ | ✅ 已对齐 |
 | createModelResponse (OpenAI Responses API) | ✅ | ✅ | ✅ |
+
+### 7.1 未实现端点说明
+
+**rerank（重排序）**：用于 RAG 场景，检索出候选文档后用 rerank 模型按相关性重新排序。主要 provider 为 Cohere 和 Jina。Portkey 仅定义了 `rerank` 端点类型接口，但没有任何 provider 实际实现请求转换逻辑，是个空壳。Chainr 同样跳过。如果未来 rerank 在更多 provider 普及，加起来不复杂。
+
+**moderate（内容审核）**：调用 OpenAI Moderation API（`/v1/moderations`），输入文本返回暴力/色情/仇恨言论等分类标签和置信度。Chainr 不实现的理由：
+- 仅 OpenAI 一家提供，没有跨 provider fallback 的意义
+- 调用方直接 `fetch` OpenAI moderation 端点即可，不需要 SDK 包一层
+- 属于安全审核/Guardrails 范畴，Chainr 明确不做 Guardrails
+
+**realtime (WebSocket)**：OpenAI Realtime API，用于语音对话场景。不是 HTTP 请求-响应模式，而是建立持久 WebSocket 连接双向实时传输音频流。Chainr 不实现的理由：
+- 架构不匹配 — Chainr 的策略系统（retry、fallback、loadbalance）基于 HTTP 请求-响应模型，WebSocket 长连接不适用
+- 目前仅 OpenAI 一家有 Realtime API，无多 provider 路由需求
+- 实现复杂度高，收益低
 
 ---
 
@@ -153,50 +223,16 @@ Portkey 的 `tryTargetsRecursively()` 支持完全递归：
 
 ---
 
-## 9. 需要对齐的高优先级差异
-
-### ~~🔴 P0 — 必须实现~~ ✅ 已完成
-
-| # | 差异项 | 说明 | 状态 |
-|---|--------|------|------|
-| 1 | **嵌套策略** | fallback 内嵌 loadbalance，配置递归继承 | ✅ Phase 3B |
-| 2 | **retry-after header** | 读取 provider 返回的 retry-after 头，60s 预算机制 | ✅ Phase 3B |
-
-### ~~🟡 P1 — 应该实现~~ ✅ 已完成
-
-| # | 差异项 | 说明 | 状态 |
-|---|--------|------|--------|
-| 3 | ~~**Anthropic Messages API 原生端点**~~ | ~~直接暴露 `/messages` 而非仅 chat completions 转换~~ | ✅ Phase 4 |
-| 4 | ~~**OpenAI Responses API**~~ | ~~`createModelResponse` — OpenAI 新 API 格式~~ | ✅ Phase 4 |
-| 5 | ~~**Tool/Function Calling 完整对齐**~~ | ~~各 provider 的 tool 参数转换~~ | ✅ Phase 3C |
-| 6 | ~~**Provider-specific params 完整对齐**~~ | ~~所有 provider 参数已与 Portkey 一致~~ | ✅ Phase 3D |
-
-### ~~🟢 P2 — 可选实现~~ ✅ 已完成
-
-| # | 差异项 | 说明 | 状态 |
-|---|--------|------|--------|
-| 7 | ~~conditional 路由~~ | ~~MongoDB 风格条件路由~~ | ✅ |
-| 8 | ~~complete (legacy) 端点~~ | ~~旧式 completion API~~ | ✅ |
-| 9 | rerank 端点 | Portkey 也仅有类型占位，未实现 | ❌ 跳过 |
-| 10 | ~~文件操作端点~~ | ~~upload/list/delete/retrieve~~ | ✅ |
-| 11 | ~~Batch API~~ | ~~批量推理~~ | ✅ |
-| 12 | ~~Fine-tune API~~ | ~~微调管理~~ | ✅ |
-| 13 | ~~imageEdit 端点~~ | ~~图片编辑~~ | ✅ |
-| 14 | ~~Azure 1ms chunk 间隔~~ | ~~流式兼容性细节~~ | ✅ |
-| 15 | ~~ConnectTimeoutError 区分~~ | ~~超时 → 503 vs 通用错误~~ | ✅ |
-
----
-
-## 10. 总结
+## 9. 总结
 
 ```mermaid
 graph LR
     subgraph "已对齐 ✅"
-        A[68 Providers]
+        A[72 Providers]
         B[4 路由策略]
         C[重试 + 退避]
         D[6 种流式转换]
-        E[15 种端点类型]
+        E[16 种端点类型]
         F[请求/响应转换]
         G[Config 验证]
         H[Request Timeout]
@@ -243,4 +279,4 @@ graph LR
     style R fill:#f8d7da,color:#000
 ```
 
-**核心结论**：Chainr 在 provider 覆盖（68 个）、路由策略（fallback/loadbalance/single/conditional + 嵌套递归）、流式处理（含 Azure chunk delay）、请求转换、Tool Calling、Provider 特定参数、retry-after、ConnectTimeout 区分、Anthropic Messages API、OpenAI Responses API、文件操作、Batch API、Fine-tune API 等所有核心 LLM 调用能力方面已与 Portkey 完全对齐。rerank 端点 Portkey 也仅有类型占位未实现，跳过。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
+**核心结论**：Chainr 在 provider 覆盖（72 个）、路由策略（fallback/loadbalance/single/conditional + 嵌套递归）、流式处理（含 Azure chunk delay）、请求转换、Tool Calling、Provider 特定参数、retry-after、ConnectTimeout 区分、Anthropic Messages API、OpenAI Responses API、文件操作、Batch API、Fine-tune API 等所有核心 LLM 调用能力方面已与 Portkey 完全对齐。rerank 端点 Portkey 也仅有类型占位未实现，跳过。Hooks/Guardrails、缓存、日志等管理类功能不在 Chainr 范围内。
