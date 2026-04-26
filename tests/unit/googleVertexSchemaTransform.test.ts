@@ -1,4 +1,8 @@
-import { derefer, transformGeminiToolParameters } from './utils';
+import {
+  derefer,
+  recursivelyDeleteUnsupportedParameters,
+  transformGeminiToolParameters,
+} from '../../src/providers/google-vertex-ai/utils';
 
 /*
 from enum import StrEnum
@@ -600,5 +604,130 @@ describe('transformGeminiToolParameters', () => {
       'identity',
       'emergency_contacts',
     ]);
+  });
+});
+
+describe('recursivelyDeleteUnsupportedParameters', () => {
+  it('removes strict, additionalProperties, and $schema from root', () => {
+    const input = {
+      type: 'object',
+      strict: true,
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      properties: { name: { type: 'string' } },
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.strict).toBeUndefined();
+    expect(result.additionalProperties).toBeUndefined();
+    expect(result.$schema).toBeUndefined();
+    expect(result.type).toBe('object');
+    expect(result.properties.name.type).toBe('string');
+  });
+
+  it('does not mutate the original object', () => {
+    const input = { type: 'object', strict: true, properties: {} };
+    recursivelyDeleteUnsupportedParameters(input);
+    expect(input.strict).toBe(true);
+  });
+
+  it('strips unsupported fields from nested properties', () => {
+    const input = {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          additionalProperties: false,
+          $id: 'user-schema',
+          properties: {
+            name: { type: 'string', $comment: 'user name' },
+          },
+        },
+      },
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.properties.user.additionalProperties).toBeUndefined();
+    expect(result.properties.user.$id).toBeUndefined();
+    expect(result.properties.user.properties.name.$comment).toBeUndefined();
+    expect(result.properties.user.properties.name.type).toBe('string');
+  });
+
+  it('strips unsupported fields from array items', () => {
+    const input = {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        $comment: 'item schema',
+        properties: {
+          id: { type: 'integer', exclusiveMinimum: 0 },
+        },
+      },
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.items.additionalProperties).toBeUndefined();
+    expect(result.items.$comment).toBeUndefined();
+    expect(result.items.properties.id.exclusiveMinimum).toBeUndefined();
+    expect(result.items.properties.id.type).toBe('integer');
+  });
+
+  it('converts array type to anyOf format', () => {
+    const input = {
+      type: ['string', 'number'],
+      description: 'multi-type field',
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.type).toBeUndefined();
+    expect(result.anyOf).toEqual([{ type: 'string' }, { type: 'number' }]);
+    expect(result.description).toBe('multi-type field');
+  });
+
+  it('preserves all Vertex AI supported fields', () => {
+    const input = {
+      type: 'object',
+      title: 'Test',
+      description: 'desc',
+      nullable: true,
+      default: null,
+      example: { foo: 'bar' },
+      format: 'date-time',
+      enum: ['a', 'b'],
+      required: ['name'],
+      properties: { name: { type: 'string' } },
+      minProperties: 1,
+      maxProperties: 10,
+      propertyOrdering: ['name'],
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.title).toBe('Test');
+    expect(result.description).toBe('desc');
+    expect(result.nullable).toBe(true);
+    expect(result.default).toBeNull();
+    expect(result.example).toEqual({ foo: 'bar' });
+    expect(result.format).toBe('date-time');
+    expect(result.enum).toEqual(['a', 'b']);
+    expect(result.required).toEqual(['name']);
+    expect(result.minProperties).toBe(1);
+    expect(result.maxProperties).toBe(10);
+    expect(result.propertyOrdering).toEqual(['name']);
+  });
+
+  it('handles null and non-object inputs gracefully', () => {
+    expect(recursivelyDeleteUnsupportedParameters(null)).toBeNull();
+    expect(recursivelyDeleteUnsupportedParameters(42)).toBe(42);
+    expect(recursivelyDeleteUnsupportedParameters('string')).toBe('string');
+  });
+
+  it('strips unsupported fields inside anyOf members', () => {
+    const input = {
+      anyOf: [
+        { type: 'string', $comment: 'str variant' },
+        { type: 'null', $comment: 'null variant' },
+      ],
+    };
+    const result = recursivelyDeleteUnsupportedParameters(input);
+    expect(result.anyOf[0].$comment).toBeUndefined();
+    expect(result.anyOf[0].type).toBe('string');
+    expect(result.anyOf[1].$comment).toBeUndefined();
+    expect(result.anyOf[1].type).toBe('null');
   });
 });

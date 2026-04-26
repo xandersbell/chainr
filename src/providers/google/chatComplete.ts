@@ -68,10 +68,9 @@ const transformGenerationConfig = (params: PortkeyGeminiParams) => {
   }
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     generationConfig['responseMimeType'] = 'application/json';
-    const schema =
+    // Use responseJsonSchema for native JSON Schema passthrough (same as Vertex AI)
+    generationConfig['responseJsonSchema'] =
       (responseFormat as any)?.json_schema?.schema ?? (responseFormat as any)?.json_schema;
-    recursivelyDeleteUnsupportedParameters(schema);
-    generationConfig['responseSchema'] = transformGeminiToolParameters(schema);
   }
   if (params?.thinking) {
     const thinkingConfig: Record<string, any> = {};
