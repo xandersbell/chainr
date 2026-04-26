@@ -1,7 +1,7 @@
 # Schema 标准化开发计划
 
-> 更新时间：2026-04-26 16:56 EEST
-> 状态：Phase 0-3 已完成，Phase 4 待执行
+> 更新时间：2026-04-26 17:16 EEST
+> 状态：全部完成 ✅
 
 ---
 
@@ -172,20 +172,27 @@ output_config: {
 
 ---
 
-### Phase 4：集成测试与文档（P2 — 收尾）⏳ 待执行
+### Phase 4：集成测试与文档（P2 — 收尾）✅ 已完成
 
 **目标：** 端到端验证 fallback 场景，更新文档
 
 #### 任务清单
 
-| # | 任务 | 优先级 | 预估 |
-|---|------|--------|------|
-| 4.1 | 编写 fallback 场景集成测试：同一 schema 在 OpenAI → Google → Anthropic 链路中的请求/响应一致性 | P2 | 2h |
-| 4.2 | 编写 weighted load balancing 场景测试：同一 schema 随机分发到不同 provider | P2 | 1h |
-| 4.3 | 更新 README 或 examples 中的 structured output 使用示例 | P2 | 0.5h |
+| # | 任务 | 状态 | 产出 |
+|---|------|------|------|
+| 4.1 | 编写 fallback 场景集成测试 | ✅ 完成 | `tests/integration/structuredOutputFallback.test.ts`（11 个测试） |
+| 4.2 | 编写 weighted load balancing 场景测试 | ✅ 完成 | 同上文件追加（2 个测试） |
+| 4.3 | 更新 examples 中的 structured output 使用示例 | ✅ 完成 | `examples/08-structured-output.ts` |
 
-**风险：**
-- 低。前置 Phase 已覆盖核心逻辑
+#### 发现的设计细节
+
+**非 strict 模式下 `finish_reason` 不一致：**
+- `transformProviderResponse` 硬编码 `strictOpenAiCompliance = false`
+- 导致各 provider 返回原始 finish_reason：OpenAI `stop`、Anthropic `end_turn`、Google `STOP`
+- 这是设计如此 — strict 模式由 Router 层控制，不在 transform 层
+- 集成测试已记录此行为
+
+**实际耗时：** ~0.5h
 
 ---
 
@@ -209,7 +216,7 @@ graph TD
     P1["Phase 1: Anthropic 映射修正 ✅"]
     P2["Phase 2: Google AI Studio 路径统一 ✅"]
     P3["Phase 3: 响应标准化 ✅"]
-    P4["Phase 4: 集成测试与文档 ⏳"]
+    P4["Phase 4: 集成测试与文档 ✅"]
 
     P0 --> P1
     P0 --> P2
@@ -221,7 +228,7 @@ graph TD
     style P1 fill:#d4edda,stroke:#28a745,color:#333
     style P2 fill:#d4edda,stroke:#28a745,color:#333
     style P3 fill:#d4edda,stroke:#28a745,color:#333
-    style P4 fill:#fff3cd,stroke:#ffc107,color:#333
+    style P4 fill:#d4edda,stroke:#28a745,color:#333
 ```
 
 ---
@@ -234,8 +241,8 @@ graph TD
 | Phase 1: Anthropic 映射修正 | 2h | ~0.5h | ✅ 完成 |
 | Phase 2: Google AI Studio 路径统一 | 2.5h | ~0.5h | ✅ 完成 |
 | Phase 3: 响应标准化 | 4h | ~1h | ✅ 完成 |
-| Phase 4: 集成测试与文档 | 3.5h | — | ⏳ 待执行 |
-| **合计** | **17h** | **~3.5h + 待定** | — |
+| Phase 4: 集成测试与文档 | 3.5h | ~0.5h | ✅ 完成 |
+| **合计** | **17h** | **~4h** | ✅ 全部完成 |
 
 ---
 
@@ -249,5 +256,8 @@ graph TD
 | 2026-04-26 16:45 | `fix: unify Google AI Studio to use responseJsonSchema passthrough` | Phase 2 — 统一透传路径 |
 | 2026-04-26 16:48 | `fix: normalize finish_reason in Vertex Anthropic streaming transform` | Phase 3 — 修复流式 bug |
 | 2026-04-26 16:54 | `test: add cross-provider structured output response consistency tests` | Phase 3.4 — 18 个跨 provider 测试 |
+| 2026-04-26 17:12 | `test: add structured output fallback integration tests` | Phase 4.1 — 11 个集成测试 |
+| 2026-04-26 17:14 | `test: add weighted load balancing structured output consistency tests` | Phase 4.2 — 2 个 load balancing 测试 |
+| 2026-04-26 17:15 | `docs: add structured output with fallback example` | Phase 4.3 — `examples/08-structured-output.ts` |
 
-**测试覆盖变化：** 392 → 436（+44 个测试），全部通过
+**测试覆盖变化：** 392 → 449（+57 个测试），全部通过
