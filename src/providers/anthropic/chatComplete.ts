@@ -129,22 +129,22 @@ type AnthropicMessageContentItem =
   | AnthropicPlainTextContentItem;
 
 // Build Anthropic output_config: map response_format (json_schema) and reasoning_effort
-const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null => {
+export const buildAnthropicOutputConfig = (params: Params): Record<string, any> | null => {
   const outputConfig: Record<string, any> = {};
   const responseFormat = params.response_format;
 
-  // Map json_schema to output_config.schema
+  // Map json_schema → output_config.format (Anthropic native structured output)
   if (typeof responseFormat === 'object' && responseFormat?.type === 'json_schema') {
     const jsonSchema = (responseFormat as any)?.json_schema;
     if (jsonSchema?.schema) {
-      outputConfig.schema = jsonSchema.schema;
-      if (jsonSchema.name) {
-        outputConfig.schema.name = jsonSchema.name;
-      }
+      outputConfig.format = {
+        type: 'json_schema',
+        schema: jsonSchema.schema,
+      };
     }
   }
 
-  // Map reasoning_effort to output_config.effort
+  // Map reasoning_effort → output_config.effort
   if (params.reasoning_effort) {
     outputConfig.effort = params.reasoning_effort;
   }
