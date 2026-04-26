@@ -1085,7 +1085,7 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: parsedChunk.delta?.stop_reason ?? null,
+          finish_reason: transformFinishReason(parsedChunk.delta?.stop_reason, strictOpenAiCompliance) ?? null,
         },
       ],
     })}` + '\n\n'
