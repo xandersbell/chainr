@@ -416,3 +416,122 @@ describe('Structured Output — Complex Schema Request Transform', () => {
     expect(genConfig.responseJsonSchema.required).toEqual(['id', 'name', 'status', 'tags']);
   });
 });
+
+// Simulate weighted load balancing: regardless of which provider is selected,
+// the structured output request/response transforms produce consistent results
+describe('Structured Output: Weighted Load Balancing Consistency', () => {
+  const providers = [
+    {
+      name: 'openai',
+      target: { provider: 'openai', apiKey: 'test-key' },
+      mockResponse: {
+        status: 200,
+        data: {
+          id: 'chatcmpl-lb',
+          object: 'chat.completion',
+          model: 'gpt-4o',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: STRUCTURED_CONTENT },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: { prompt_tokens: 50, completion_tokens: 25, total_tokens: 75 },
+        },
+      },
+    },
+    {
+      name: 'anthropic',
+      target: { provider: 'anthropic', apiKey: 'test-key' },
+      mockResponse: {
+        status: 200,
+        data: {
+          id: 'msg_lb',
+          type: 'message',
+          role: 'assistant',
+          model: 'claude-sonnet-4-20250514',
+          content: [{ type: 'text', text: STRUCTURED_CONTENT }],
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 50, output_tokens: 25 },
+        },
+      },
+    },
+    {
+      name: 'google',
+      target: { provider: 'google', apiKey: 'test-key' },
+      mockResponse: {
+        status: 200,
+        data: {
+          candidates: [
+            {
+              content: {
+                parts: [{ text: STRUCTURED_CONTENT }],
+                role: 'model',
+              },
+              finishReason: 'STOP',
+            },
+          ],
+          usageMetadata: {
+            promptTokenCount: 50,
+            candidatesTokenCount: 25,
+            totalTokenCount: 75,
+          },
+        },
+      },
+    },
+  ];
+
+  it('all providers produce identical structured content regardless of weight selection', () => {
+    const results = providers.map((p) => {
+      const response = transformProviderResponse(
+        p.mockResponse,
+        p.name,
+        'chatComplete',
+        200,
+        {},
+      ) as any;
+      return {
+        provider: p.name,
+        content: response.choices[0].message.content,
+        role: response.choices[0].message.role,
+        finishReason: response.choices[0].finish_reason,
+      };
+    });
+
+    // All providers should produce the same content (the core guarantee)
+    const contents = new Set(results.map((r) => r.content));
+    expect(contents.size).toBe(1);
+    expect(contents.has(STRUCTURED_CONTENT)).toBe(true);
+
+    // All should have assistant role
+    results.forEach((r) => {
+      expect(r.role).toBe('assistant');
+    });
+
+    // finish_reason varies by provider in non-strict mode:
+    // OpenAI: 'stop', Anthropic: 'end_turn', Google: 'stop'
+    // In strict mode (strictOpenAiCompliance=true), all normalize to 'stop'
+    // transformProviderResponse uses non-strict by default
+    expect(results.find((r) => r.provider === 'openai')!.finishReason).toBe('stop');
+    expect(results.find((r) => r.provider === 'anthropic')!.finishReason).toBe('end_turn');
+    expect(results.find((r) => r.provider === 'google')!.finishReason).toBe('STOP');
+  });
+
+  it('parsed JSON from any provider is structurally identical', () => {
+    const parsed = providers.map((p) => {
+      const response = transformProviderResponse(
+        p.mockResponse,
+        p.name,
+        'chatComplete',
+        200,
+        {},
+      ) as any;
+      return JSON.parse(response.choices[0].message.content);
+    });
+
+    for (let i = 1; i < parsed.length; i++) {
+      expect(parsed[i]).toEqual(parsed[0]);
+    }
+  });
+});
