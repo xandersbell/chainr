@@ -4,13 +4,14 @@ Unified LLM gateway SDK with priority-based fallback and weighted load balancing
 
 > Built on the shoulders of [Portkey AI Gateway](https://github.com/Portkey-ai/gateway) — Priorai extracts and refines Portkey's battle-tested provider routing core into a lightweight, embeddable SDK.
 
-**Status**: 🟢 All Portkey 2.0 sync complete — 370+ tests passing, 0 TS errors, 71 providers via registry
+**Status**: 🟢 All Portkey 2.0 sync complete — 449 tests passing, 0 TS errors, 71 providers via registry
 
 ## Features
 
 - **Priority-based Fallback**: Automatic failover across multiple LLM providers
 - **Weighted Load Balancing**: Distribute traffic across providers based on weights
 - **Provider Registry**: 71 providers via Portkey-aligned ProviderConfig architecture
+- **Cross-Provider Structured Output**: One JSON Schema works across all providers — automatic format normalization for OpenAI, Anthropic, Google, and Bedrock
 - **Multi-API Support**: Chat completions, embeddings, image generation, audio transcription, speech synthesis, translation, 3D generation
 - **Streaming**: SSE-based streaming with provider-specific transform pipelines
 - **Config Validation**: Validates targets, provider, timeout, retry at construction
@@ -204,6 +205,54 @@ const priorai = new Priorai({
 
 All fields from `TargetConfig` are passed through to the provider's `getBaseURL()` and `headers()` functions, so provider-specific options like `awsRegion`, `vertexProjectId`, `databricksWorkspace`, `azureResourceName`, etc. all work at the target level.
 
+## Structured Output
+
+Priorai normalizes `response_format.json_schema` across all providers automatically. Write one JSON Schema in OpenAI format — it works whether the request lands on OpenAI, Anthropic, Google, or Bedrock, including during fallback and load balancing.
+
+This goes beyond what Portkey offers. Portkey passes `response_format` through as-is, which breaks when falling back to a provider with a different structured output API. Priorai translates the schema into each provider's native format at the transform layer:
+
+| Provider | What Priorai generates | Notes |
+|----------|----------------------|-------|
+| OpenAI / OpenRouter | `response_format.json_schema` (passthrough) | |
+| Anthropic | `output_config.format: { type: 'json_schema', schema }` | Native structured output, no tool_use hack |
+| Google AI / Vertex AI | `generationConfig.responseJsonSchema` | Native JSON Schema passthrough |
+| Bedrock | `additionalModelRequestFields.response_format` (passthrough) | |
+
+```typescript
+const priorai = new Priorai({
+  strategy: 'fallback',
+  targets: [
+    { provider: 'openai', apiKey: process.env.OPENAI_API_KEY },
+    { provider: 'google', apiKey: process.env.GOOGLE_API_KEY },
+    { provider: 'anthropic', apiKey: process.env.ANTHROPIC_API_KEY },
+  ],
+});
+
+// One schema, any provider
+const response = await priorai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Generate a person profile for Alice.' }],
+  response_format: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'Person',
+      schema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'integer' },
+          hobbies: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['name', 'age'],
+      },
+    },
+  },
+});
+
+const person = JSON.parse(response.choices[0].message.content!);
+// { name: "Alice", age: 30, hobbies: ["reading", "hiking"] }
+```
+
 ## Provider Configuration Examples
 
 ### AWS Bedrock
@@ -374,7 +423,7 @@ ln -sf ../../pre-commit.sh .git/hooks/pre-commit
 ### Testing
 
 ```bash
-npm test           # Run all tests (370+ tests)
+npm test           # Run all tests (449 tests)
 npm run test:watch # Watch mode
 ```
 
