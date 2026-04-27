@@ -1,6 +1,7 @@
 // Docs for REST API
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
+import { getMessageContentBlocks } from '../../core/messageContent';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import {
   type ContentType,
@@ -114,8 +115,8 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               });
             }
-          } else if (message.content && typeof message.content === 'object') {
-            message.content.forEach((c: ContentType) => {
+          } else if (getMessageContentBlocks(message)) {
+            getMessageContentBlocks(message)?.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
                   text: c.text ?? '',

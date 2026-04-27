@@ -220,6 +220,41 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
+  it('should map Google content_blocks input_file video URL to Gemini fileData', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content_blocks: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+              { type: 'text', text: 'Summarize this video.' },
+            ],
+          },
+        ],
+      },
+      'google',
+      { provider: 'google', apiKey: 'gemini-test-key' },
+    );
+
+    expect(result.body.contents[0].parts).toEqual([
+      {
+        fileData: {
+          fileUri: 'https://example.com/test.mp4',
+          mimeType: 'video/mp4',
+        },
+      },
+      { text: 'Summarize this video.' },
+    ]);
+  });
+
   it('should infer Google fileData MIME type from URL pathname when query string is present', async () => {
     const result = await buildProviderRequest(
       {
@@ -340,6 +375,72 @@ describe('buildProviderRequest', () => {
         image_url: {
           url: 'https://example.com/image.png',
           mime_type: 'image/png',
+        },
+      },
+    ]);
+  });
+
+  it('should normalize OpenAI input_file file ID without MIME to file content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  file_id: 'file_123',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'file',
+        file: {
+          file_id: 'file_123',
+        },
+      },
+    ]);
+  });
+
+  it('should map Anthropic content_blocks input_file image URL to image content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'claude-sonnet-4-5-20250514',
+        messages: [
+          {
+            role: 'user',
+            content_blocks: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/image.png',
+                  mime_type: 'image/png',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'anthropic',
+      { provider: 'anthropic', apiKey: 'anthropic-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'image',
+        source: {
+          type: 'url',
+          url: 'https://example.com/image.png',
         },
       },
     ]);

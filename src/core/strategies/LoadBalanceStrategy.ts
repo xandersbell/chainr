@@ -5,7 +5,10 @@
 
 import type { endpointStrings } from '../../providers/types';
 import type { Params } from '../../types/requestBody';
-import { targetSupportsMultimodalRequest } from '../multimodalCapabilities';
+import {
+  formatMultimodalCapabilityReport,
+  targetSupportsMultimodalRequest,
+} from '../multimodalCapabilities';
 import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
@@ -55,7 +58,13 @@ export class LoadBalanceStrategy {
     );
 
     if (eligibleTargets.length === 0) {
-      throw new Error('No load balance targets support the requested multimodal input');
+      throw new Error(
+        `No load balance targets support the requested multimodal input: ${formatMultimodalCapabilityReport(
+          targets,
+          params,
+          endpoint || 'chatComplete',
+        )}`,
+      );
     }
 
     return eligibleTargets;

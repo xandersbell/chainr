@@ -1,5 +1,6 @@
 import type { endpointStrings } from '../providers/types';
 import type { ContentType, Message, Params } from '../types/requestBody';
+import { getMessageContentBlocks } from './messageContent';
 import type { TargetConfig } from './types';
 
 type MediaKind = 'image' | 'audio' | 'video' | 'document' | 'unknown';
@@ -29,7 +30,12 @@ const getMimeFromDataUrl = (value?: string): string | undefined => {
 };
 
 const hasExplicitMimeType = (item: ContentType): boolean =>
-  Boolean(item.mime_type ?? item.file?.mime_type ?? getMimeFromDataUrl(getFileUrl(item)));
+  Boolean(
+    item.mime_type ??
+      item.file?.mime_type ??
+      getMimeFromDataUrl(getFileUrl(item)) ??
+      getMimeFromDataUrl(getFileData(item)),
+  );
 
 const getSourceKind = (url?: string, data?: string, fileId?: string): SourceKind => {
   if (fileId) return 'file-id';
@@ -40,6 +46,9 @@ const getSourceKind = (url?: string, data?: string, fileId?: string): SourceKind
   if (url) return 'unknown';
   return 'unknown';
 };
+
+const getRequirementNeedsExplicitMimeType = (item: ContentType, sourceKind: SourceKind): boolean =>
+  sourceKind !== 'file-id' && !hasExplicitMimeType(item);
 
 const getMediaKind = (mimeType?: string): MediaKind => {
   if (!mimeType) return 'unknown';
@@ -63,8 +72,8 @@ export function inferMultimodalRequirements(params: Params): MultimodalRequireme
   const requirements: MultimodalRequirement[] = [];
 
   for (const message of params.messages ?? []) {
-    const content = message.content_blocks ?? message.content;
-    if (!Array.isArray(content)) continue;
+    const content = getMessageContentBlocks(message);
+    if (!content) continue;
 
     for (const item of content) {
       if (item.type === 'image_url') {
@@ -86,14 +95,15 @@ export function inferMultimodalRequirements(params: Params): MultimodalRequireme
       } else if (item.type === 'file' || item.type === 'input_file') {
         const url = getFileUrl(item);
         const data = getFileData(item);
+        const sourceKind = getSourceKind(url, data, item.file?.file_id);
         const mimeType =
           item.file?.mime_type ?? getMimeFromDataUrl(url) ?? getMimeFromDataUrl(data);
         requirements.push({
           type: item.type,
           mediaKind: getMediaKind(mimeType),
-          sourceKind: getSourceKind(url, data, item.file?.file_id),
+          sourceKind,
           mimeType,
-          needsExplicitMimeType: !hasExplicitMimeType(item),
+          needsExplicitMimeType: getRequirementNeedsExplicitMimeType(item, sourceKind),
         });
       } else if (item.type === 'input_video' || item.type === 'video_url') {
         const url = getVideoUrl(item);
@@ -206,7 +216,7 @@ function normalizeOpenAIChatContent(item: ContentType): ContentType {
     };
   }
 
-  if (mediaKind === 'document' && (data || item.file?.file_id)) {
+  if ((mediaKind === 'document' || item.file?.file_id) && (data || item.file?.file_id)) {
     return {
       type: 'file',
       file: {
@@ -325,10 +335,49 @@ export function targetSupportsMultimodalRequest(
   params: Params,
   endpoint: endpointStrings = 'chatComplete',
 ): boolean {
+  const effectiveParams = { ...params, ...(target.overrideParams || {}) } as Params;
+
   if (target.strategy && Array.isArray(target.targets)) {
-    return target.targets.some((child) => targetSupportsMultimodalRequest(child, params, endpoint));
+    return target.targets.some((child) =>
+      targetSupportsMultimodalRequest(child, effectiveParams, endpoint),
+    );
   }
 
   const provider = (target.provider as string) || 'openai';
-  return !getUnsupportedMultimodalRequirement(provider, params, endpoint);
+  return !getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint);
+}
+
+export function getTargetMultimodalUnsupportedReason(
+  target: TargetConfig,
+  params: Params,
+  endpoint: endpointStrings = 'chatComplete',
+): string | undefined {
+  const effectiveParams = { ...params, ...(target.overrideParams || {}) } as Params;
+
+  if (target.strategy && Array.isArray(target.targets)) {
+    const childReasons = target.targets
+      .map((child) => getTargetMultimodalUnsupportedReason(child, effectiveParams, endpoint))
+      .filter(Boolean);
+    return childReasons.length === target.targets.length ? childReasons.join('; ') : undefined;
+  }
+
+  const provider = (target.provider as string) || 'openai';
+  return getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint);
+}
+
+export function formatMultimodalCapabilityReport(
+  targets: TargetConfig[],
+  params: Params,
+  endpoint: endpointStrings = 'chatComplete',
+): string {
+  return targets
+    .map((target, index) => {
+      const name = target.name ? `${target.name} ` : '';
+      const provider = target.provider ?? target.strategy ?? 'openai';
+      const reason =
+        getTargetMultimodalUnsupportedReason(target, params, endpoint) ??
+        'supports the requested multimodal input';
+      return `target ${index} (${name}${provider}): ${reason}`;
+    })
+    .join('; ');
 }

@@ -1,3 +1,4 @@
+import { getMessageContentBlocks } from '../../core/messageContent';
 import { GOOGLE } from '../../globals';
 import {
   type ContentType,
@@ -259,8 +260,8 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               },
             });
-          } else if (message.content && typeof message.content === 'object') {
-            message.content.forEach((c: ContentType) => {
+          } else if (getMessageContentBlocks(message)) {
+            getMessageContentBlocks(message)?.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
                   text: c.text,

@@ -116,6 +116,50 @@ describe('LoadBalanceStrategy', () => {
       );
     });
 
+    it('filters targets using target override params before weighted selection', async () => {
+      const targets = [
+        {
+          provider: 'openai',
+          weight: 100,
+          overrideParams: {
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'input_file',
+                    file: {
+                      url: 'https://example.com/test.mp4',
+                      mime_type: 'video/mp4',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        { provider: 'vertex-ai', weight: 1 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        body: {},
+        headers: {},
+        url: 'https://aiplatform.googleapis.com/v1/projects/test/locations/us-central1/publishers/google/models/gemini-2.5-pro:generateContent',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, {
+        model: 'gemini-2.5-pro',
+        messages: [{ role: 'user', content: 'Hello' }],
+      });
+
+      expect(result.provider).toBe('vertex-ai');
+    });
+
     it('two equal-weight targets (50/50) - selects second when random=0.6', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },

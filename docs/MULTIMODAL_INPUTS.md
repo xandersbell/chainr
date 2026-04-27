@@ -1,4 +1,4 @@
-Updated: 2026-04-27 12:35:00 EEST
+Updated: 2026-04-27 12:42:56 EEST
 
 # Multimodal Inputs
 
@@ -46,7 +46,7 @@ Base64 data is also supported:
 
 The older `file.file_url`, `file.file_data`, and `file.file_name` fields remain supported for compatibility. New code should prefer `url`, `data`, and `filename`.
 
-`mime_type` is required for `input_file` routing. Priorai may infer a MIME type for legacy `image_url` data from `data:` URLs or URL pathnames, but general file routing should not rely on filenames or signed URLs. File names are only metadata.
+`mime_type` is required for `input_file` routing when the input contains URL or base64 bytes. Provider `file_id` references do not require MIME type because the file metadata is owned by that provider. Priorai may infer a MIME type for legacy `image_url` data from `data:` URLs or URL pathnames, but general file routing should not rely on filenames or signed URLs. File names are only metadata.
 
 ## Compatibility Blocks
 

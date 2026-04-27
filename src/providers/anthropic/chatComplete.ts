@@ -1,3 +1,4 @@
+import { getMessageContentBlocks } from '../../core/messageContent';
 import { fileExtensionMimeTypeMap } from '../../globals';
 import {
   type ContentType,
@@ -258,7 +259,26 @@ const transformAndAppendFileContentItem = (
   const fileUrl = item.file?.url ?? item.file?.file_url;
   const fileData = item.file?.data ?? item.file?.file_data;
 
-  if (fileUrl) {
+  if (mimeType.startsWith('image/')) {
+    if (fileUrl) {
+      transformedMessage.content.push({
+        type: 'image',
+        source: {
+          type: 'url',
+          url: fileUrl,
+        },
+      });
+    } else if (fileData) {
+      transformedMessage.content.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: mimeType,
+          data: fileData,
+        },
+      });
+    }
+  } else if (fileUrl) {
     transformedMessage.content.push({
       type: 'document',
       source: {
@@ -301,12 +321,12 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
             } else if (msg.role === 'tool') {
               // even though anthropic supports images in tool results, openai doesn't support it yet
               messages.push(transformToolMessage(msg));
-            } else if (msg.content && typeof msg.content === 'object' && msg.content.length) {
+            } else if (getMessageContentBlocks(msg)?.length) {
               const transformedMessage: AnthropicMessage = {
                 role: msg.role,
                 content: [],
               };
-              msg.content.forEach((item) => {
+              getMessageContentBlocks(msg)?.forEach((item) => {
                 if (item.type === 'text') {
                   transformedMessage.content.push({
                     type: item.type,
