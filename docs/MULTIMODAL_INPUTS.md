@@ -1,8 +1,10 @@
-Updated: 2026-04-27 12:42:56 EEST
+Updated: 2026-04-27 13:13:49 EEST
 
 # Multimodal Inputs
 
 Priorai keeps the OpenAI-compatible chat interface as the common entry point, but supports a small Priorai extension for provider-native multimodal files.
+
+`google` and `vertex-ai` now have full Gemini-style multimodal chat input coverage in Priorai for image, audio, video, and document file parts.
 
 ## Recommended Input Shape
 
@@ -68,6 +70,24 @@ Gemini via `google` or `vertex-ai`:
 - `input_file.file.data` maps to Gemini `inlineData.data`.
 - `image/*`, `audio/*`, `video/*`, and document MIME types are accepted when the source is HTTPS, GCS, or base64.
 - `video_metadata` maps to Gemini `videoMetadata` when provided.
+- `image_url` inputs map to Gemini image `fileData` or `inlineData`.
+- OpenAI-style `input_audio` inputs map to Gemini audio `inlineData`.
+- `input_video` and `video_url` inputs map to Gemini video `fileData` or `inlineData`.
+
+In current code, `vertex-ai` multimodal chat input support includes:
+
+| Input kind | Accepted forms | Vertex / Gemini mapping |
+|------------|----------------|-------------------------|
+| Image | `image_url`, `input_file` with `image/*` | `fileData` or `inlineData` |
+| Audio | `input_audio`, `input_file` with `audio/*` | `inlineData` |
+| Video | `input_video`, `video_url`, `input_file` with `video/*` | `fileData` or `inlineData` |
+| Document | `input_file` with PDF/text/document MIME types | `fileData` or `inlineData` |
+
+This is implemented in the Vertex chat transform layer and multimodal capability gate:
+
+- `src/providers/google-vertex-ai/chatComplete.ts`
+- `src/providers/google-vertex-ai/utils.ts`
+- `src/core/multimodalCapabilities.ts`
 
 OpenAI:
 
