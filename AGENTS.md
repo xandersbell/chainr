@@ -1,7 +1,5 @@
 # Priorai Project Rules
 
-Last updated: 2026-04-27 11:20 EEST
-
 Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
 
 ## Language Rules
@@ -29,8 +27,8 @@ All code in this project must be written in English, including:
 - The Google Vertex AI TypeScript SDK is available at `~/codebase/repos/google-genai-sdk`
 - The Anthropic TypeScript SDK is available at `~/codebase/repos/anthropic-sdk`
 - The OpenRouter TypeScript SDK is available at `~/codebase/repos/openrouter-sdk`
-- Treat these SDKs as the source of truth for provider-specific request and response formats; read the code directly when details need to be verified
-- If additional documentation is needed, use the `context7` MCP
+- Treat these SDKs as the primary code reference for provider-specific request and response formats; verify implementation details directly in code when needed
+- If the SDK code is not sufficient, use the `context7` MCP to retrieve the relevant official documentation
 
 ## Dependency Strategy
 
