@@ -4,6 +4,7 @@
  * Also responsible for config inheritance: overrideParams merging, retry/timeout child-priority
  */
 import type { Params } from '../types/requestBody';
+import { getUnsupportedMultimodalRequirement } from './multimodalCapabilities';
 import { buildProviderRequest } from './providerRequest';
 import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { createAnthropicStream, isAnthropicProvider } from './transformAnthropicStream';
@@ -69,6 +70,11 @@ export async function tryLeafTarget(
   const mergedParams = { ...params, ...(inherited.overrideParams || {}) };
 
   const endpoint = inherited.endpoint || 'chatComplete';
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, mergedParams, endpoint);
+  if (unsupportedReason) {
+    throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
+  }
+
   const { body, headers, url } = await buildProviderRequest(
     mergedParams,
     provider,
@@ -107,6 +113,11 @@ export async function tryLeafTargetStream(
   };
 
   const endpoint = inherited.endpoint || 'chatComplete';
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, mergedParams, endpoint);
+  if (unsupportedReason) {
+    throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
+  }
+
   const { body, headers, url } = await buildProviderRequest(
     mergedParams,
     provider,

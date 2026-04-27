@@ -255,21 +255,24 @@ const transformAndAppendFileContentItem = (
 ) => {
   const mimeType =
     (item.file?.mime_type as keyof typeof fileExtensionMimeTypeMap) || fileExtensionMimeTypeMap.pdf;
-  if (item.file?.file_url) {
+  const fileUrl = item.file?.url ?? item.file?.file_url;
+  const fileData = item.file?.data ?? item.file?.file_data;
+
+  if (fileUrl) {
     transformedMessage.content.push({
       type: 'document',
       source: {
         type: 'url',
-        url: item.file.file_url,
+        url: fileUrl,
       },
     });
-  } else if (item.file?.file_data) {
+  } else if (fileData) {
     const contentType = mimeType === fileExtensionMimeTypeMap.txt ? 'text' : 'base64';
     transformedMessage.content.push({
       type: 'document',
       source: {
         type: contentType,
-        data: item.file.file_data,
+        data: fileData,
         media_type: mimeType,
       },
     });
@@ -314,7 +317,7 @@ export const AnthropicChatCompleteConfig: ProviderConfig = {
                   });
                 } else if (item.type === 'image_url') {
                   transformAndAppendImageContentItem(item, transformedMessage);
-                } else if (item.type === 'file') {
+                } else if (item.type === 'file' || item.type === 'input_file') {
                   transformAndAppendFileContentItem(item, transformedMessage);
                 }
               });

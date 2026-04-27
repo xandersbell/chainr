@@ -72,6 +72,50 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('openai');
     });
 
+    it('selects only targets that support the requested multimodal input', async () => {
+      const targets = [
+        { provider: 'openai', weight: 100 },
+        { provider: 'vertex-ai', weight: 1 },
+      ];
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        body: {},
+        headers: {},
+        url: 'https://aiplatform.googleapis.com/v1/projects/test/locations/us-central1/publishers/google/models/gemini-2.5-pro:generateContent',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result.provider).toBe('vertex-ai');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'vertex-ai',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
     it('two equal-weight targets (50/50) - selects second when random=0.6', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },

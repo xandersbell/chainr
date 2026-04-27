@@ -5,6 +5,7 @@
 
 import type { endpointStrings } from '../../providers/types';
 import type { Params } from '../../types/requestBody';
+import { targetSupportsMultimodalRequest } from '../multimodalCapabilities';
 import { executeTarget, executeTargetStream, type InheritedConfig } from '../tryTarget';
 import type { StrategyResult, TargetConfig } from '../types';
 import type { ChatCompletionChunk } from '../types/streaming';
@@ -22,7 +23,8 @@ export class LoadBalanceStrategy {
     }
 
     const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
-    const selected = this.selectByWeight(targets);
+    const eligibleTargets = this.filterEligibleTargets(targets, params, endpoint);
+    const selected = this.selectByWeight(eligibleTargets);
     return executeTarget(selected, params, inherited);
   }
 
@@ -38,8 +40,25 @@ export class LoadBalanceStrategy {
     }
 
     const inherited: InheritedConfig = { retry: retryConfig, timeout: timeoutMs, endpoint };
-    const selected = this.selectByWeight(targets);
+    const eligibleTargets = this.filterEligibleTargets(targets, params, endpoint);
+    const selected = this.selectByWeight(eligibleTargets);
     return executeTargetStream(selected, params, inherited);
+  }
+
+  private filterEligibleTargets(
+    targets: TargetConfig[],
+    params: Params,
+    endpoint?: endpointStrings,
+  ): TargetConfig[] {
+    const eligibleTargets = targets.filter((target) =>
+      targetSupportsMultimodalRequest(target, params, endpoint || 'chatComplete'),
+    );
+
+    if (eligibleTargets.length === 0) {
+      throw new Error('No load balance targets support the requested multimodal input');
+    }
+
+    return eligibleTargets;
   }
 
   private selectByWeight(targets: TargetConfig[]): TargetConfig {
