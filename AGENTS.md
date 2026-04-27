@@ -1,5 +1,7 @@
 # Priorai Project Rules
 
+Last updated: 2026-04-27 11:20 EEST
+
 Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
 
 ## Language Rules
@@ -16,10 +18,19 @@ All code in this project must be written in English, including:
 
 ## Reference: Portkey
 
-- Portkey source is at `./portkey` for reference
+- Portkey source is at `~/codebase/repos/portkey-ai-gateway` for reference
 - Strip all dashboard, admin, and management features — keep only the core LLM routing and proxying layer
 - Priority-based fallback and weighted load balancing are the two key capabilities to preserve
 - When Portkey already has a working implementation, copy and adapt rather than rewrite
+
+## Reference: Provider SDK Repos
+
+- The OpenAI TypeScript SDK is available at `~/codebase/repos/openai-sdk`
+- The Google Vertex AI TypeScript SDK is available at `~/codebase/repos/google-genai-sdk`
+- The Anthropic TypeScript SDK is available at `~/codebase/repos/anthropic-sdk`
+- The OpenRouter TypeScript SDK is available at `~/codebase/repos/openrouter-sdk`
+- Treat these SDKs as the source of truth for provider-specific request and response formats; read the code directly when details need to be verified
+- If additional documentation is needed, use the `context7` MCP
 
 ## Dependency Strategy
 
