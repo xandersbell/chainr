@@ -1,6 +1,6 @@
 {
   "name": "priorai",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Unified LLM gateway SDK with priority-based fallback and load balancing for TypeScript/Node.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -265,9 +265,103 @@ export const getModelAndProvider = (modelString: string) => {
 };
 
 export const getMimeType = (url: string): string | undefined => {
-  const urlParts = url.split('.');
-  const extension = urlParts[urlParts.length - 1] as keyof typeof fileExtensionMimeTypeMap;
+  let pathname = url;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    // Non-HTTP URIs such as gs:// still work with the pathname fallback below.
+  }
+
+  const urlParts = pathname.split('.');
+  const extension = urlParts[urlParts.length - 1]?.toLowerCase() as
+    | keyof typeof fileExtensionMimeTypeMap
+    | undefined;
+  if (!extension) return undefined;
   return fileExtensionMimeTypeMap[extension];
+};
+
+const splitDataUrl = (value: string): { data: string; mimeType?: string } | undefined => {
+  if (!value.startsWith('data:')) return undefined;
+  const [mimeTypeWithPrefix, base64Data] = value.split(';base64,');
+  if (!base64Data) return undefined;
+  return {
+    data: base64Data,
+    mimeType: mimeTypeWithPrefix.replace('data:', ''),
+  };
+};
+
+const getFileUrl = (content: ContentType): string | undefined =>
+  content.file?.url ?? content.file?.file_url;
+
+const getFileData = (content: ContentType): string | undefined =>
+  content.file?.data ?? content.file?.file_data;
+
+const getVideoUrl = (content: ContentType): string | undefined => {
+  if (typeof content.video_url === 'string') return content.video_url;
+  return content.video_url?.url;
+};
+
+const getVideoMetadata = (content: ContentType) => {
+  if (!content.video_metadata) return undefined;
+  return {
+    ...(content.video_metadata.start_offset && {
+      startOffset: content.video_metadata.start_offset,
+    }),
+    ...(content.video_metadata.end_offset && {
+      endOffset: content.video_metadata.end_offset,
+    }),
+    ...(content.video_metadata.fps !== undefined && {
+      fps: content.video_metadata.fps,
+    }),
+  };
+};
+
+export const transformGeminiFilePart = (content: ContentType): GoogleMessagePart | undefined => {
+  const url =
+    content.type === 'input_video' || content.type === 'video_url'
+      ? getVideoUrl(content)
+      : getFileUrl(content);
+  const data = getFileData(content);
+  const mimeType =
+    content.mime_type ??
+    content.file?.mime_type ??
+    splitDataUrl(url ?? '')?.mimeType ??
+    splitDataUrl(data ?? '')?.mimeType ??
+    (url ? getMimeType(url) : undefined);
+  const videoMetadata = getVideoMetadata(content);
+
+  const dataUrl = splitDataUrl(url ?? '') ?? splitDataUrl(data ?? '');
+  if (dataUrl) {
+    return {
+      inlineData: {
+        mimeType: mimeType ?? dataUrl.mimeType,
+        data: dataUrl.data,
+      },
+      ...(videoMetadata && { videoMetadata }),
+    };
+  }
+
+  if (data) {
+    return {
+      inlineData: {
+        mimeType,
+        data,
+      },
+      ...(videoMetadata && { videoMetadata }),
+    };
+  }
+
+  if (url) {
+    return {
+      fileData: {
+        mimeType,
+        fileUri: url,
+      },
+      ...(videoMetadata && { videoMetadata }),
+    };
+  }
+
+  return undefined;
 };
 
 export const GoogleErrorResponseTransform: (
@@ -449,7 +543,9 @@ const filterSchemaFields = (obj: any, isSchemaObject: boolean): void => {
     filterSchemaFields(obj.items, true);
   }
   if (Array.isArray(obj.anyOf)) {
-    obj.anyOf.forEach((item: any) => { filterSchemaFields(item, true); });
+    obj.anyOf.forEach((item: any) => {
+      filterSchemaFields(item, true);
+    });
   }
 };
 

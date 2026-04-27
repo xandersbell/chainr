@@ -1,6 +1,7 @@
 // Docs for REST API
 // https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/send-multimodal-prompts#gemini-send-multimodal-samples-drest
 
+import { getMessageContentBlocks } from '../../core/messageContent';
 import { GOOGLE_VERTEX_AI } from '../../globals';
 import {
   type ContentType,
@@ -44,6 +45,7 @@ import {
   getMimeType,
   googleTools,
   recursivelyDeleteUnsupportedParameters,
+  transformGeminiFilePart,
   transformGeminiToolParameters,
   transformGoogleTools,
   transformInputAudioPart,
@@ -113,14 +115,22 @@ export const VertexGoogleChatCompleteConfig: ProviderConfig = {
                 });
               });
             }
-          } else if (message.content && typeof message.content === 'object') {
-            message.content.forEach((c: ContentType) => {
+          } else if (getMessageContentBlocks(message)) {
+            getMessageContentBlocks(message)?.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
                   text: c.text ?? '',
                 });
               } else if (c.type === 'input_audio') {
                 parts.push(transformInputAudioPart(c));
+              } else if (
+                c.type === 'file' ||
+                c.type === 'input_file' ||
+                c.type === 'input_video' ||
+                c.type === 'video_url'
+              ) {
+                const part = transformGeminiFilePart(c);
+                if (part) parts.push(part);
               } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
 
@@ -1085,7 +1095,8 @@ export const VertexAnthropicChatCompleteStreamChunkTransform: (
           },
           index: 0,
           logprobs: null,
-          finish_reason: transformFinishReason(parsedChunk.delta?.stop_reason, strictOpenAiCompliance) ?? null,
+          finish_reason:
+            transformFinishReason(parsedChunk.delta?.stop_reason, strictOpenAiCompliance) ?? null,
         },
       ],
     })}` + '\n\n'

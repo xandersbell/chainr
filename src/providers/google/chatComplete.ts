@@ -1,3 +1,4 @@
+import { getMessageContentBlocks } from '../../core/messageContent';
 import { GOOGLE } from '../../globals';
 import {
   type ContentType,
@@ -13,6 +14,7 @@ import {
   getMimeType,
   googleTools,
   recursivelyDeleteUnsupportedParameters,
+  transformGeminiFilePart,
   transformGeminiToolParameters,
   transformGoogleTools,
   transformInputAudioPart,
@@ -140,12 +142,22 @@ export interface GoogleInlineDataMessagePart {
     mimeType?: string;
     data: string;
   };
+  videoMetadata?: {
+    startOffset?: string;
+    endOffset?: string;
+    fps?: number;
+  };
 }
 
 export interface GoogleFileDataMessagePart {
   fileData: {
     mimeType?: string;
     fileUri: string;
+  };
+  videoMetadata?: {
+    startOffset?: string;
+    endOffset?: string;
+    fps?: number;
   };
 }
 export interface GoogleMessage {
@@ -248,14 +260,22 @@ export const GoogleChatCompleteConfig: ProviderConfig = {
                 },
               },
             });
-          } else if (message.content && typeof message.content === 'object') {
-            message.content.forEach((c: ContentType) => {
+          } else if (getMessageContentBlocks(message)) {
+            getMessageContentBlocks(message)?.forEach((c: ContentType) => {
               if (c.type === 'text') {
                 parts.push({
                   text: c.text,
                 });
               } else if (c.type === 'input_audio') {
                 parts.push(transformInputAudioPart(c));
+              } else if (
+                c.type === 'file' ||
+                c.type === 'input_file' ||
+                c.type === 'input_video' ||
+                c.type === 'video_url'
+              ) {
+                const part = transformGeminiFilePart(c);
+                if (part) parts.push(part);
               } else if (c.type === 'image_url') {
                 const { url, mime_type: passedMimeType } = c.image_url || {};
                 if (!url) return;

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildProviderRequest, transformUsingProviderConfig, transformProviderResponse } from '../../src/core/providerRequest';
+import {
+  buildProviderRequest,
+  transformProviderResponse,
+  transformUsingProviderConfig,
+} from '../../src/core/providerRequest';
 import Providers from '../../src/providers';
 
 describe('Provider Registry', () => {
@@ -181,6 +185,299 @@ describe('buildProviderRequest', () => {
     ).rejects.toThrow('Provider "nonexistent-provider" not found in registry');
   });
 
+  it('should map Google input_file video URL to Gemini fileData', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+              { type: 'text', text: 'Summarize this video.' },
+            ],
+          },
+        ],
+      },
+      'google',
+      { provider: 'google', apiKey: 'gemini-test-key' },
+    );
+
+    expect(result.body.contents[0].parts).toEqual([
+      {
+        fileData: {
+          fileUri: 'https://example.com/test.mp4',
+          mimeType: 'video/mp4',
+        },
+      },
+      { text: 'Summarize this video.' },
+    ]);
+  });
+
+  it('should map Google content_blocks input_file video URL to Gemini fileData', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content_blocks: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+              { type: 'text', text: 'Summarize this video.' },
+            ],
+          },
+        ],
+      },
+      'google',
+      { provider: 'google', apiKey: 'gemini-test-key' },
+    );
+
+    expect(result.body.contents[0].parts).toEqual([
+      {
+        fileData: {
+          fileUri: 'https://example.com/test.mp4',
+          mimeType: 'video/mp4',
+        },
+      },
+      { text: 'Summarize this video.' },
+    ]);
+  });
+
+  it('should infer Google fileData MIME type from URL pathname when query string is present', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: {
+                  url: 'https://example.com/assets/image.png?token=abc',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'google',
+      { provider: 'google', apiKey: 'gemini-test-key' },
+    );
+
+    expect(result.body.contents[0].parts).toEqual([
+      {
+        fileData: {
+          fileUri: 'https://example.com/assets/image.png?token=abc',
+          mimeType: 'image/png',
+        },
+      },
+    ]);
+  });
+
+  it('should reject Bedrock HTTPS file URLs in the provider transform', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'anthropic.claude-3-5-sonnet',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_file',
+                  file: {
+                    url: 'https://example.com/test.pdf',
+                    mime_type: 'application/pdf',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        'bedrock',
+        { provider: 'bedrock', apiKey: 'test-key' },
+      ),
+    ).rejects.toThrow('Bedrock file inputs require base64 data or an s3:// URL.');
+  });
+
+  it('should map Google input_file audio data to Gemini inlineData', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  data: 'AAAA',
+                  mime_type: 'audio/mpeg',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'google',
+      { provider: 'google', apiKey: 'gemini-test-key' },
+    );
+
+    expect(result.body.contents[0].parts).toEqual([
+      {
+        inlineData: {
+          data: 'AAAA',
+          mimeType: 'audio/mpeg',
+        },
+      },
+    ]);
+  });
+
+  it('should normalize OpenAI input_file image URL to image_url content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/image.png',
+                  mime_type: 'image/png',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'image_url',
+        image_url: {
+          url: 'https://example.com/image.png',
+          mime_type: 'image/png',
+        },
+      },
+    ]);
+  });
+
+  it('should normalize OpenAI input_file file ID without MIME to file content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  file_id: 'file_123',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'file',
+        file: {
+          file_id: 'file_123',
+        },
+      },
+    ]);
+  });
+
+  it('should map Anthropic content_blocks input_file image URL to image content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'claude-sonnet-4-5-20250514',
+        messages: [
+          {
+            role: 'user',
+            content_blocks: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/image.png',
+                  mime_type: 'image/png',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'anthropic',
+      { provider: 'anthropic', apiKey: 'anthropic-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'image',
+        source: {
+          type: 'url',
+          url: 'https://example.com/image.png',
+        },
+      },
+    ]);
+  });
+
+  it('should normalize OpenRouter input_file video URL to input_video content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'google/gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openrouter',
+      { provider: 'openrouter', apiKey: 'or-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'input_video',
+        video_url: 'https://example.com/test.mp4',
+        mime_type: 'video/mp4',
+      },
+    ]);
+  });
+
   it('should build Mistral AI request correctly', async () => {
     const result = await buildProviderRequest(
       {
@@ -244,7 +541,14 @@ describe('transformProviderResponse', () => {
   // --- Case 3: unknown provider passthrough (branch 2) ---
   it('unknown provider passthrough', () => {
     const json = { id: 'x', choices: [] };
-    const result = transformProviderResponse(json, 'unknown-provider', 'chatComplete', 200, {}, undefined);
+    const result = transformProviderResponse(
+      json,
+      'unknown-provider',
+      'chatComplete',
+      200,
+      {},
+      undefined,
+    );
     // No provider config found → passthrough immediately
     expect(result).toEqual({ id: 'x', choices: [] });
   });
@@ -253,7 +557,14 @@ describe('transformProviderResponse', () => {
   it('Vertex AI with requestModel routing', () => {
     // requestModel 'gemini-2.5-pro' routes to google provider sub-config
     const json = { model: 'gemini-2.5-pro', choices: [] };
-    const result = transformProviderResponse(json, 'vertex-ai', 'chatComplete', 200, {}, 'gemini-2.5-pro');
+    const result = transformProviderResponse(
+      json,
+      'vertex-ai',
+      'chatComplete',
+      200,
+      {},
+      'gemini-2.5-pro',
+    );
     // Vertex AI getConfig returns a google sub-config whose chatComplete transform adds a `provider` field
     // We verify the function returned something different from raw responseBody
     expect(result).toHaveProperty('provider');

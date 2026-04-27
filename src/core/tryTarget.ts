@@ -4,6 +4,11 @@
  * Also responsible for config inheritance: overrideParams merging, retry/timeout child-priority
  */
 import type { Params } from '../types/requestBody';
+import {
+  formatMultimodalCapabilityReport,
+  getUnsupportedMultimodalRequirement,
+  targetSupportsMultimodalRequest,
+} from './multimodalCapabilities';
 import { buildProviderRequest } from './providerRequest';
 import { retryRequest, retryRequestForStream } from './RetryHandler';
 import { createAnthropicStream, isAnthropicProvider } from './transformAnthropicStream';
@@ -69,6 +74,11 @@ export async function tryLeafTarget(
   const mergedParams = { ...params, ...(inherited.overrideParams || {}) };
 
   const endpoint = inherited.endpoint || 'chatComplete';
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, mergedParams, endpoint);
+  if (unsupportedReason) {
+    throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
+  }
+
   const { body, headers, url } = await buildProviderRequest(
     mergedParams,
     provider,
@@ -107,6 +117,11 @@ export async function tryLeafTargetStream(
   };
 
   const endpoint = inherited.endpoint || 'chatComplete';
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, mergedParams, endpoint);
+  if (unsupportedReason) {
+    throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
+  }
+
   const { body, headers, url } = await buildProviderRequest(
     mergedParams,
     provider,
@@ -275,7 +290,22 @@ async function executeLoadBalance(
   params: Params,
   inherited: InheritedConfig,
 ): Promise<StrategyResult> {
-  const selected = selectByWeight(targets);
+  const endpoint = inherited.endpoint || 'chatComplete';
+  const baseParams = { ...params, ...(inherited.overrideParams || {}) } as Params;
+  const eligibleTargets = targets.filter((target) =>
+    targetSupportsMultimodalRequest(target, baseParams, endpoint),
+  );
+  if (eligibleTargets.length === 0) {
+    return {
+      success: false,
+      error: `No load balance targets support the requested multimodal input: ${formatMultimodalCapabilityReport(
+        targets,
+        baseParams,
+        endpoint,
+      )}`,
+    };
+  }
+  const selected = selectByWeight(eligibleTargets);
   return executeTarget(selected, params, inherited);
 }
 
@@ -284,6 +314,20 @@ async function executeLoadBalanceStream(
   params: Params,
   inherited: InheritedConfig,
 ): Promise<ReadableStream<ChatCompletionChunk>> {
-  const selected = selectByWeight(targets);
+  const endpoint = inherited.endpoint || 'chatComplete';
+  const baseParams = { ...params, ...(inherited.overrideParams || {}) } as Params;
+  const eligibleTargets = targets.filter((target) =>
+    targetSupportsMultimodalRequest(target, baseParams, endpoint),
+  );
+  if (eligibleTargets.length === 0) {
+    throw new Error(
+      `No load balance targets support the requested multimodal input: ${formatMultimodalCapabilityReport(
+        targets,
+        baseParams,
+        endpoint,
+      )}`,
+    );
+  }
+  const selected = selectByWeight(eligibleTargets);
   return executeTargetStream(selected, params, inherited);
 }

@@ -147,11 +147,25 @@ export interface ContentType {
   };
   data?: string;
   file?: {
+    url?: string;
+    data?: string;
     file_data?: string;
     file_id?: string;
     file_name?: string;
     file_url?: string;
+    filename?: string;
     mime_type?: string;
+  };
+  video_url?:
+    | string
+    | {
+        url: string;
+      };
+  mime_type?: string;
+  video_metadata?: {
+    start_offset?: string;
+    end_offset?: string;
+    fps?: number;
   };
   input_audio?: {
     data: string;
