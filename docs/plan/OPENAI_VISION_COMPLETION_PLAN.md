@@ -1,16 +1,19 @@
-Updated: 2026-04-29 01:15 EEST
+Updated: 2026-04-29 01:55:42 EEST
 
 # OpenAI Vision 完整补齐计划
 
 ## 背景
 
-当前 Priorai 对 OpenAI 的图片理解支持处于“部分可用且边界不干净”状态：
+该计划最初用于收口 OpenAI / Azure OpenAI 的图片输入能力。按当前仓库状态，主链路已经接通，本文档保留为 Phase A 子计划与验收记录。
+
+在当前代码中：
 
 - `chat.completions` 路径下，OpenAI 原生 `image_url` 已可工作。
-- 仓库里额外引入了 Priorai 自定义 `input_file` 归一化到 OpenAI Chat 的逻辑，这已经偏离了“对外提供 OpenAI 接口就应尽量严格对齐 OpenAI shape”的原则。
-- `responses.create()` 的图片输入链路没有被完整建模、校验与测试。
+- OpenAI / Azure OpenAI 对 Priorai 私有 `input_file(image/*)` 的隐式兼容已经移除。
+- `responses.create()` 的图片输入链路已经建模、校验并补上测试。
+- Azure OpenAI `responses.create()` 当前仅接受 `input_image.image_url`（HTTPS URL 或 data URL），不接受 `input_image.file_id`。
 
-这不是小修小补能彻底收口的问题。当前缺口同时存在于：
+原始实施期的难点集中在：
 
 - SDK 对外请求类型
 - 多模态能力判断
@@ -18,7 +21,7 @@ Updated: 2026-04-29 01:15 EEST
 - 测试覆盖
 - 对外文档契约
 
-## 本次目标
+## 当前验收目标
 
 本计划的“做完”定义如下：
 
@@ -26,9 +29,11 @@ Updated: 2026-04-29 01:15 EEST
    验证：仅原生 `image_url` 与官方 `file` shape 被承诺支持；不再把 Priorai 自定义 `input_file(image/*)` 当成 OpenAI provider 契约的一部分。
 2. OpenAI `responses.create()` 的图片理解路径按 OpenAI 官方 shape 完整接通。
    验证：`input[].content[].type = input_image` 的 URL、base64、`file_id` 场景有请求构建测试与路由测试。
-3. 多模态能力判断对 `chatComplete`、`createModelResponse`、`openai`、`azure-openai` 一致生效。
+3. Azure OpenAI `responses.create()` 的图片理解路径按当前适配器边界收紧。
+   验证：`input_image.image_url` 的 URL、base64 data URL 场景通过；`input_image.file_id` 明确拒绝。
+4. 多模态能力判断对 `chatComplete`、`createModelResponse`、`openai`、`azure-openai` 一致生效。
    验证：fallback 到不支持该 OpenAI 原生输入 shape 的 target 时明确抛错，不做隐式降级或个性化重写。
-4. 文档与代码行为一致，不再把“SDK 没类型”误写成根因。
+5. 文档与代码行为一致，不再把“SDK 没类型”误写成根因。
    验证：`README.md`、`docs/MULTIMODAL_INPUTS.md`、必要的计划文档说明同步更新。
 
 ## 非目标
@@ -69,7 +74,7 @@ Updated: 2026-04-29 01:15 EEST
 - Chat 仅暴露 `image_url` / `input_audio` / `file`
 - Responses 暴露 `input_image` / `input_file`
 
-### 2. 当前仓库的主要不完整点
+### 2. 实施期识别出的主要问题
 
 #### 2.1 `responses.create()` 输入类型建模错误
 
@@ -247,7 +252,7 @@ flowchart TD
 5. 回归现有 Chat vision 测试，并修正与新契约冲突的旧测试。
    验证：原生路径保留，私有兼容路径被删除或改为拒绝测试。
 
-最低测试矩阵：
+最低测试矩阵（当前已落实）：
 
 | 端点 | 输入 | 预期 |
 |------|------|------|
@@ -255,7 +260,8 @@ flowchart TD
 | chatComplete | `file.file_id` | 透传 |
 | chatComplete | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_image` URL | 透传 |
-| createModelResponse | `input_image` file_id | 透传 |
+| createModelResponse | `input_image` file_id | OpenAI 透传 |
+| createModelResponse | `input_image` file_id | Azure OpenAI 明确拒绝 |
 | createModelResponse | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_file(pdf + file_id/url/data)` | 保持 `input_file` |
 | createModelResponse | `input_audio` | OpenAI 明确拒绝 |

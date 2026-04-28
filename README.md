@@ -1,6 +1,6 @@
 # Priorai
 
-Updated: 2026-04-29 01:15:10 EEST
+Updated: 2026-04-29 01:55:42 EEST
 
 Embeddable TypeScript SDK for routing LLM requests across multiple providers through a mostly OpenAI-compatible interface.
 
@@ -126,6 +126,9 @@ The current public SDK includes these primary surfaces:
 - `priorai.messages.create()`
 - `priorai.messages.countTokens()`
 - `priorai.responses.create()`
+- `priorai.realtime.sessions.create()`
+- `priorai.realtime.clientSecrets.create()`
+- `priorai.realtime.transcriptionSessions.create()`
 
 It also exposes management-oriented helpers for `files`, `batches`, and `fineTuning`.
 
@@ -224,7 +227,7 @@ const priorai = new Priorai({
 });
 ```
 
-Provider-specific options such as `awsRegion`, `vertexProjectId`, `databricksWorkspace`, `azureResourceName`, and similar fields are passed through at the target level.
+Provider-specific options such as `awsRegion`, `vertexProjectId`, `databricksWorkspace`, `resourceName`, and similar fields are passed through at the target level.
 
 You can also split targets by capability when needed:
 
@@ -267,11 +270,13 @@ Examples:
 
 - A `vertex-ai` target can accept image, audio, video, and document inputs on chat completions through the Gemini content-part mapping.
 - Image, audio, and video inputs can be passed as HTTPS URLs, `gs://` URLs, or base64 data for `google` and `vertex-ai`, as long as `mime_type` is available for routed file inputs.
-- `openai` and `azure-openai` only accept native OpenAI multimodal shapes. Chat Completions must use `image_url` or `file`; Responses must use `input_image` or `input_file`.
+- `openai` and `azure-openai` only accept native OpenAI multimodal shapes. Chat Completions must use `image_url`, `input_audio`, or `file`; Responses must use `input_image` or `input_file`.
 - A `video/mp4` HTTPS URL can route to Gemini-compatible targets or compatible OpenRouter targets.
 - The same request will not silently fall back to OpenAI, Anthropic, or Bedrock if the provider cannot represent that media format.
 - If fallback or load balancing reaches a target that does not support the requested endpoint or native shape, Priorai throws a clear error instead of silently rewriting the payload.
 - OpenAI Responses audio input is not exposed here because the current official Responses API path does not support `input_audio`.
+- Priorai exposes OpenAI Realtime bootstrap HTTP endpoints for session creation, client-secret creation, and transcription-session creation, but does not wrap the WebSocket or WebRTC transport runtime.
+- Azure OpenAI follows the native OpenAI shapes for chat and responses, but its Responses adapter currently requires `apiVersion: 'v1'` and `input_image.image_url` as a URL or data URL. `input_image.file_id` is rejected on Azure.
 - Bedrock media routing is stricter and expects base64 bytes or `s3://` sources for supported cases.
 
 For the full input shape and compatibility rules, see [docs/MULTIMODAL_INPUTS.md](docs/MULTIMODAL_INPUTS.md).
@@ -307,9 +312,9 @@ const priorai = new Priorai({
     {
       provider: 'azure-openai',
       apiKey: process.env.AZURE_OPENAI_API_KEY,
-      azureResourceName: 'your-resource',
-      azureDeploymentId: 'gpt-4o',
-      azureApiVersion: '2024-06-01',
+      resourceName: 'your-resource',
+      deploymentId: 'gpt-4o',
+      apiVersion: '2024-06-01',
     },
   ],
 });

@@ -1,6 +1,6 @@
 # Priorai vs Portkey 差异报告
 
-**生成时间**: 2026-04-25 06:22 EEST（新增 messagesCountTokens 端点后更新）
+**生成时间**: 2026-04-29 01:55:42 EEST（同步 Realtime bootstrap HTTP surfaces 与 OpenAI multimodal 文档后更新）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
 **Priorai 版本**: All Phases Complete, 250 tests, main branch
@@ -183,7 +183,8 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 | createTranslation | ✅ | ✅ | ✅ |
 | rerank | ⚠️ 仅类型占位 | ❌ | ❌ Portkey 也未实现 |
 | moderate | ✅ | ❌ | 🔴 低 |
-| realtime (WebSocket) | ✅ | ❌ | 🟡 |
+| realtime bootstrap HTTP | ✅ | ✅ | ✅ |
+| realtime (WebSocket/WebRTC transport runtime) | ✅ | ❌ | 🟡 |
 | uploadFile / listFiles / deleteFile | ✅ | ✅ | ✅ |
 | createBatch / retrieveBatch / listBatches / cancelBatch | ✅ | ✅ | ✅ |
 | createFinetune / listFinetunes / cancelFinetune | ✅ | ✅ | ✅ |
@@ -200,7 +201,14 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 - 调用方直接 `fetch` OpenAI moderation 端点即可，不需要 SDK 包一层
 - 属于安全审核/Guardrails 范畴，Priorai 明确不做 Guardrails
 
-**realtime (WebSocket)**：OpenAI Realtime API，用于语音对话场景。不是 HTTP 请求-响应模式，而是建立持久 WebSocket 连接双向实时传输音频流。Priorai 不实现的理由：
+**realtime bootstrap HTTP**：Priorai 当前已经暴露三条 OpenAI Realtime 启动面：
+- `priorai.realtime.sessions.create()`
+- `priorai.realtime.clientSecrets.create()`
+- `priorai.realtime.transcriptionSessions.create()`
+
+这些入口用于创建 session 配置和临时凭证，属于对 OpenAI Realtime 的 HTTP bootstrap 封装，不等于完整 transport runtime。
+
+**realtime (WebSocket/WebRTC transport runtime)**：OpenAI Realtime API 的真正音频对话阶段依赖持久 WebSocket 或 WebRTC 连接。Priorai 仍不实现这部分，理由：
 - 架构不匹配 — Priorai 的策略系统（retry、fallback、loadbalance）基于 HTTP 请求-响应模型，WebSocket 长连接不适用
 - 目前仅 OpenAI 一家有 Realtime API，无多 provider 路由需求
 - 实现复杂度高，收益低
@@ -218,7 +226,7 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 | 日志中间件 | 请求/响应日志记录 | ❌ 不做 |
 | Virtual Key 管理 | API Key 抽象 + 预算控制 | ❌ 不做 |
 | 请求验证中间件 | 入站请求格式校验 | ❌ 不做 |
-| WebSocket Realtime | OpenAI Realtime API 代理 | ❌ 暂不做 |
+| WebSocket / WebRTC Realtime transport | OpenAI Realtime API 长连接代理 | ❌ 暂不做 |
 | 压缩中间件 | 响应压缩 | ❌ 不需要（SDK） |
 
 ---
@@ -233,7 +241,7 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 | 路由策略 | single、fallback、loadbalance、conditional + 嵌套递归 |
 | 重试机制 | 指数退避、retry-after header（60s 预算）、ConnectTimeout → 503 |
 | 流式处理 | SSE 解析、AWS EventStream 二进制帧、Azure 1ms chunk、首 chunk 延迟 |
-| 端点类型 | 16 种（chat、complete、embed、image、audio、speech、messages、responses、files、batch、finetune 等） |
+| 端点类型 | 已覆盖 chat、complete、embed、image、audio、speech、messages、responses、realtime bootstrap、files、batch、finetune 等核心 HTTP surfaces |
 | 请求转换 | 参数映射、min/max/default 钳位、transform 函数、嵌套路径、FormData |
 | 高级功能 | Tool/Function Calling、Provider 特定参数、Config 验证、Request Timeout |
 
@@ -253,7 +261,7 @@ Portkey 的 proxy 模式是一个"兜底透传"通道：当 provider 有 Portkey
 |------|------|
 | Circuit Breaker | Portkey 开源版也仅空壳，需从零实现 |
 | proxy 模式 | SDK 场景下调用方可直接 fetch |
-| realtime (WebSocket) | 仅 OpenAI 一家，架构不匹配 |
+| realtime transport runtime | 仅 OpenAI 一家，且长连接运行时与 SDK 路由模型不匹配 |
 | moderate | 仅 OpenAI 一家，属 Guardrails 范畴 |
 | rerank | Portkey 也仅类型占位，无实现 |
 

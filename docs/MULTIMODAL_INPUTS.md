@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:15:10 EEST
+Updated: 2026-04-29 01:55:42 EEST
 
 # Multimodal Inputs
 
@@ -56,12 +56,13 @@ The older `file.file_url`, `file.file_data`, and `file.file_name` fields remain 
 
 OpenAI-compatible providers are strict:
 
-- `chat.completions.create()` accepts native OpenAI `image_url` and `file` blocks only.
+- `chat.completions.create()` accepts native OpenAI `image_url`, `input_audio`, and `file` blocks.
 - `responses.create()` accepts native OpenAI `input_image` and `input_file` blocks.
 - Priorai does not rewrite `input_file` into OpenAI image or file blocks for `openai` or `azure-openai`.
 - `file_id` is treated as a provider file reference only. It is not used to guess image semantics.
 - OpenAI currently does not support audio input on the Responses API path, so `input_audio` is rejected on `responses.create()`.
 - Azure OpenAI `responses.create()` currently requires `apiVersion: 'v1'` because the standard `/openai/v1/responses` path is used.
+- Azure OpenAI `responses.create()` accepts `input_image.image_url` as an HTTPS URL or a base64 data URL, but rejects `input_image.file_id`.
 
 OpenAI chat example:
 
@@ -89,6 +90,28 @@ await priorai.chat.completions.create({
 });
 ```
 
+OpenAI chat audio example:
+
+```ts
+await priorai.chat.completions.create({
+  model: 'gpt-4o-audio-preview',
+  messages: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'input_audio',
+          input_audio: {
+            data: 'BASE64_AUDIO_BYTES',
+            format: 'wav',
+          },
+        },
+      ],
+    },
+  ],
+});
+```
+
 OpenAI Responses example:
 
 ```ts
@@ -106,6 +129,26 @@ await priorai.responses.create({
         {
           type: 'input_text',
           text: 'Describe this image.',
+        },
+      ],
+    },
+  ],
+});
+```
+
+Azure OpenAI Responses example:
+
+```ts
+await priorai.responses.create({
+  model: 'gpt-4o',
+  input: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'input_image',
+          image_url: 'data:image/png;base64,AAAA',
+          detail: 'high',
         },
       ],
     },
@@ -154,19 +197,34 @@ This is implemented in the Vertex chat transform layer and multimodal capability
 
 OpenAI:
 
-- Chat Completions must use native `image_url` and `file` blocks.
+- Chat Completions must use native `image_url`, `input_audio`, and `file` blocks.
 - Responses must use native `input_image` and `input_file` blocks.
 - Priorai `input_file` extension is rejected for OpenAI and Azure OpenAI instead of being rewritten.
 - Chat `file` content supports `file_data`, `file_id`, and `filename`.
 - Responses `input_file` content supports `detail`, `file_data`, `file_id`, `file_url`, and `filename`.
+- Chat `input_audio` content supports base64 audio with `wav` or `mp3` format.
 - Responses `input_audio` is rejected because OpenAI does not currently support audio input on this endpoint.
 - Video input is rejected before routing because OpenAI official SDK types do not expose a video input content block.
 
 Azure OpenAI:
 
-- Follows the same native content-shape rules as OpenAI.
+- Follows the same native content-shape rules as OpenAI for Chat Completions, including `input_audio`.
 - `responses.create()` uses `/openai/v1/responses` and requires `apiVersion: 'v1'`.
+- `responses.create()` image input must use `input_image.image_url` with an HTTPS URL or a base64 data URL.
+- Azure OpenAI `input_image.file_id` is not accepted in this adapter because the current Azure Responses guidance documents URL and data-URL image input, while file IDs are documented for `input_file` scenarios instead.
 - Non-`v1` Azure API versions do not expose the standard Responses path in this adapter and will fail fast.
+
+## Realtime Bootstrap
+
+Priorai also exposes the OpenAI Realtime bootstrap HTTP endpoints:
+
+- `priorai.realtime.sessions.create()`
+- `priorai.realtime.clientSecrets.create()`
+- `priorai.realtime.transcriptionSessions.create()`
+
+These endpoints help create session configuration and ephemeral credentials for OpenAI Realtime clients. Priorai does not wrap the WebSocket or WebRTC transport runtime itself.
+
+Azure OpenAI Realtime transport bootstrapping is not exposed through these surfaces in the current adapter.
 
 Anthropic:
 

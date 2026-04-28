@@ -1,6 +1,6 @@
 # Providers Registry
 
-Updated: 2026-04-27 13:26:19 EEST
+Updated: 2026-04-29 01:55:42 EEST
 
 This document is the current full provider inventory for Priorai, based on the live `src/providers/index.ts` registry and provider endpoint configs.
 
@@ -268,6 +268,9 @@ All providers below have explicit `chatComplete` routing in the current codebase
 | `github` | Implemented through the Azure AI Inference provider path, so its capability surface matches that integration in current code. |
 | Streaming column | Marks runtime streaming support in Priorai routing, not only explicit `stream-chatComplete` registry entries. Providers such as `azure-openai` stream through the OpenAI-compatible stream path. |
 | Chat multimodal columns | `Chat Image`, `Chat Audio`, `Chat Video`, and `Chat Docs` mean Priorai can route that input kind through `chat.completions.create()` for at least one supported source form. They are separate from dedicated APIs like `images.generate()` or `audio.transcribe()`. |
+| OpenAI Responses audio | `openai` and `azure-openai` support chat `input_audio`, but the current Responses adapter rejects `input_audio` on `responses.create()`. |
+| Azure Responses image shape | `azure-openai` `responses.create()` accepts `input_image.image_url` as URL or data URL and rejects `input_image.file_id`. |
+| Realtime scope | Priorai currently exposes OpenAI Realtime bootstrap HTTP surfaces in the SDK, but not a provider-agnostic transport runtime. |
 | Image generation count | Includes `segmind`, which uses model-path style routing instead of an explicit `imageGenerate` switch entry. |
 | 3D providers | `meshy` and `tripo3d` are dedicated 3D integrations rather than chat-style providers. |
 | Source of truth | This document reflects the repository state in `src/providers/` and should be preferred over older README counts or historical notes. |

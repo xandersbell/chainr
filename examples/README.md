@@ -1,6 +1,10 @@
+Updated: 2026-04-29 01:55:42 EEST
+
 # Examples
 
 Runnable examples demonstrating Priorai's core features.
+
+Current example coverage stays on the core routing surfaces. There is no bundled example yet for `responses.create()` multimodal input or Realtime transport, because the current Realtime support only exposes bootstrap HTTP surfaces and does not wrap the WebSocket or WebRTC runtime.
 
 ## Prerequisites
 
@@ -27,3 +31,4 @@ npx tsx examples/01-single-provider.ts
 | `05-bedrock-sigv4.ts` | AWS Bedrock with SigV4 signing | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
 | `06-streaming.ts` | Streaming chat completion | `OPENAI_API_KEY` |
 | `07-conditional-strategy.ts` | Conditional routing by request params | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` |
+| `08-structured-output.ts` | Structured JSON output across providers | `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY` |
