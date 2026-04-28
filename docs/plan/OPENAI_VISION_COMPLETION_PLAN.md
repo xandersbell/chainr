@@ -1,14 +1,14 @@
-Updated: 2026-04-29 00:25 EEST
+Updated: 2026-04-29 00:35 EEST
 
 # OpenAI Vision 完整补齐计划
 
 ## 背景
 
-当前 Priorai 对 OpenAI 的图片理解支持处于“部分可用”状态：
+当前 Priorai 对 OpenAI 的图片理解支持处于“部分可用且边界不干净”状态：
 
-- `chat.completions` 路径下，OpenAI 风格的 `image_url` 已可工作。
-- Priorai 自定义的 `input_file + image/*` 也能在 `chatComplete` 路径被归一化到 OpenAI 兼容 shape。
-- 但 `responses.create()` 的图片输入链路没有被完整建模、校验与测试。
+- `chat.completions` 路径下，OpenAI 原生 `image_url` 已可工作。
+- 仓库里额外引入了 Priorai 自定义 `input_file` 归一化到 OpenAI Chat 的逻辑，这已经偏离了“对外提供 OpenAI 接口就应尽量严格对齐 OpenAI shape”的原则。
+- `responses.create()` 的图片输入链路没有被完整建模、校验与测试。
 
 这不是小修小补能彻底收口的问题。当前缺口同时存在于：
 
@@ -22,12 +22,12 @@ Updated: 2026-04-29 00:25 EEST
 
 本计划的“做完”定义如下：
 
-1. OpenAI `chat.completions` 的图片理解路径在 Priorai 统一输入抽象下完整、明确、可测试。
-   验证：`input_file(image/*)`、原生 `image_url`、`file_id` 场景有单测与集成测试。
-2. OpenAI `responses.create()` 的图片理解路径按官方 shape 完整接通。
+1. OpenAI `chat.completions` 的图片理解路径严格按 OpenAI 官方 shape 工作。
+   验证：仅原生 `image_url` 与官方 `file` shape 被承诺支持；不再把 Priorai 自定义 `input_file(image/*)` 当成 OpenAI provider 契约的一部分。
+2. OpenAI `responses.create()` 的图片理解路径按 OpenAI 官方 shape 完整接通。
    验证：`input[].content[].type = input_image` 的 URL、base64、`file_id` 场景有请求构建测试与路由测试。
-3. 多模态能力判断对 `chatComplete` 与 `createModelResponse` 一致生效。
-   验证：错误 provider 不会被误路由，支持 provider 不会被误拒绝。
+3. 多模态能力判断对 `chatComplete`、`createModelResponse`、`openai`、`azure-openai` 一致生效。
+   验证：fallback 到不支持该 OpenAI 原生输入 shape 的 target 时明确抛错，不做隐式降级或个性化重写。
 4. 文档与代码行为一致，不再把“SDK 没类型”误写成根因。
    验证：`README.md`、`docs/MULTIMODAL_INPUTS.md`、必要的计划文档说明同步更新。
 
@@ -38,6 +38,8 @@ Updated: 2026-04-29 00:25 EEST
   原因：这会把范围从“补齐 OpenAI vision 功能”扩张到“全局 capability registry 重构”，风险不成比例。
 - 不补远程文件抓取代理层。
   原因：这会引入超时、大小限制、成本和安全语义变化，不是 vision 补齐的必要条件。
+- 不为 OpenAI provider 保留 Priorai 自定义多模态输入兼容层。
+  原因：这会让对外 OpenAI 接口变成“看起来像 OpenAI，实际不是 OpenAI”。
 
 ## 研究结论
 
@@ -90,7 +92,21 @@ Updated: 2026-04-29 00:25 EEST
 - `responses.create({ input: [...] })` 的图片输入不会被完整识别
 - `createModelResponse` 端点的 capability gate 与实际请求体脱节
 
-#### 2.3 归一化只覆盖 `chatComplete`
+#### 2.3 OpenAI provider 当前混入了非原生兼容层
+
+当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:192) 中，OpenAI Chat 会把 Priorai 自定义的 `input_file(image/*)` 改写成 `image_url`。
+
+这带来两个问题：
+
+- OpenAI provider 的对外契约被 Priorai 自定义输入污染
+- 用户以为自己在调用 OpenAI 接口，实际上调用的是一层 Priorai 私有方言
+
+本计划改为：
+
+- OpenAI / Azure OpenAI 仅承诺原生 OpenAI shape
+- 非原生输入在 OpenAI provider 上直接失败，而不是偷偷归一化
+
+#### 2.4 `Responses` 输入校验与能力判断仍不完整
 
 当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:282) 的 `normalizeMultimodalParamsForProvider()` 只在 `endpoint === 'chatComplete'` 时生效。
 
@@ -99,7 +115,7 @@ Updated: 2026-04-29 00:25 EEST
 - `Responses` 没有自己的多模态归一化入口
 - Chat 和 Responses 被错误地共享同一套输入假设
 
-#### 2.4 文档表述把症状写成原因
+#### 2.5 文档表述把症状写成原因
 
 当前 [docs/MULTIMODAL_INPUTS.md](/Users/ns/codebase/xab/priorai/docs/MULTIMODAL_INPUTS.md:63) 写的是：
 
@@ -109,7 +125,7 @@ Updated: 2026-04-29 00:25 EEST
 
 - OpenAI 官方 Chat / Responses 通用输入类型当前不定义视频理解输入
 
-#### 2.5 Chat 路径还有一个次级 shape 风险
+#### 2.6 Chat 路径还有一个次级 shape 风险
 
 当前 OpenAI Chat 的 `input_file(image/*)` 归一化会向 `image_url` 对象附带 `mime_type`：
 
@@ -124,24 +140,28 @@ Updated: 2026-04-29 00:25 EEST
 
 ## 设计原则
 
-1. Chat 和 Responses 分开建模，不复用错误 shape。
-2. Priorai 统一抽象保留，但只在 provider 出站前做端点定向归一化。
+1. OpenAI provider 对外接口严格对齐 OpenAI 官方 shape，不引入 Priorai 私有输入方言。
+2. Chat 和 Responses 分开建模，不复用错误 shape。
 3. 图片语义优先走官方图片输入块。
    Chat 用 `image_url`，Responses 用 `input_image`。
-4. `file_id` 视为 provider 侧资产引用，不做跨 provider 盲目 fallback。
-5. 文档、类型、归一化、测试必须同批完成，否则这次改动仍然是不完整的。
+4. `file_id` 视为 provider 侧资产引用，不做跨 provider 盲目 fallback，也不猜图片语义。
+5. fallback 到其它 provider 时，只要目标无法表示当前 OpenAI 原生多模态请求，就明确抛错。
+6. 文档、类型、能力判断、测试必须同批完成，否则这次改动仍然是不完整的。
 
 ## 目标结构
 
 ```mermaid
 flowchart TD
-    A[调用方统一输入] --> B{端点}
-    B -->|chatComplete| C[Chat 多模态归一化]
-    B -->|createModelResponse| D[Responses 多模态归一化]
+    A[调用方按 OpenAI 原生 shape 传参] --> B{端点}
+    B -->|chatComplete| C[验证 Chat 是否为原生 shape]
+    B -->|createModelResponse| D[验证 Responses 是否为原生 shape]
     C --> E[OpenAI Chat 官方 shape]
     D --> F[OpenAI Responses 官方 shape]
     E --> G[能力校验通过后发出请求]
     F --> G
+    G --> H{fallback target 能否表示该 shape}
+    H -->|能| I[继续路由]
+    H -->|不能| J[明确抛错]
 
     style A fill:#F5F1E8,stroke:#8B6F47,color:#2B2418
     style B fill:#E6F0FA,stroke:#5B7FA3,color:#1E2A36
@@ -160,89 +180,86 @@ flowchart TD
 
 1. 为 `Params.input` 引入面向 Responses 的请求类型，优先复用现有 `modelResponses` 中的 `ResponseInputItem` / `EasyInputMessage` / `ResponseInputMessageContentList`。
    验证：TypeScript 可以表达 `input_image`、`input_audio`、`input_file`、字符串输入以及 message item 数组。
-2. 为 Priorai 自定义统一输入补最小必要类型。
-   验证：`input_file` 可在 Chat 和 Responses 两条链路进入归一化层。
-3. 明确图片 detail 字段约束。
+2. 明确 OpenAI Chat 与 Responses 的原生图片字段约束。
    验证：Chat 支持 `auto|low|high`，Responses 支持 `auto|low|high|original`，类型不再混淆。
+3. 把 OpenAI provider 不承诺支持的 Priorai 私有多模态输入从类型和文档契约中剥离。
+   验证：OpenAI / Azure OpenAI 对外接口描述不再出现“`input_file(image/*)` 也可以”这类说法。
 
 注意：
 
 - 不要为了类型好看重做整个请求模型。
 - 只改与 OpenAI vision 补齐直接相关的部分。
+- 这里的目标不是“让更多 shape 能跑”，而是“让承诺的 shape 与 OpenAI 完全一致”。
 
-### 阶段 2：拆分 Chat / Responses 多模态归一化
+### 阶段 2：清理 OpenAI provider 的非原生兼容层
 
 步骤：
 
-1. 保留 `normalizeOpenAIChatContent()`，但仅用于 Chat。
-   验证：现有 Chat 图片归一化测试继续通过。
-2. 新增 `normalizeOpenAIResponsesInput()` 或等价函数，专门处理 `createModelResponse`。
-   验证：`input_file(image/*)` 被转成 `input_image`；文档文件仍转成 `input_file`。
-3. 新增 `normalizeResponsesMultimodalParams()`，与 Chat 归一化并列。
-   验证：`buildProviderRequest(..., 'createModelResponse')` 会走 Responses 归一化。
-4. 清理 Chat 出站 `image_url.mime_type`。
+1. 移除或停用 OpenAI Chat 对 Priorai 自定义 `input_file(image/*)` 的隐式归一化。
+   验证：OpenAI Chat 只接受原生 `image_url` / `file` shape。
+2. 不为 OpenAI Responses 新增“把 `input_file(image/*)` 改写成 `input_image`”的兼容入口。
+   验证：OpenAI Responses 只接受原生 `input_image` / `input_file` shape。
+3. 清理 Chat 出站 `image_url.mime_type`。
    验证：OpenAI Chat 请求体只保留官方字段；内部路由仍可在归一化前使用 MIME 信息。
 
-建议映射：
+接受的 OpenAI 原生路径：
 
 - Chat
   - 原生 `image_url` -> 透传
-  - `input_file` + `image/*` + `url|data` -> `image_url`
-  - `input_file` + `file_id` -> 视语义保留为 `file` 或在可确认图片语义时转为图片引用
+  - 原生 `file` -> 透传
 - Responses
   - 原生 `input_image` -> 透传
-  - `input_file` + `image/*` + `url|data` -> `input_image`
-  - `input_file` + `file_id` + 图片语义 -> 优先转 `input_image.file_id`
-  - `input_file` + 文档 MIME -> `input_file`
+  - 原生 `input_file` -> 透传
 
-这里有一个必须面对的现实：
+拒绝的路径：
 
-- `file_id` 本身不带稳定的跨 provider MIME 语义。
-- 如果调用方只给 `file_id`，没有任何图片语义线索，就不能臆断它是 vision 输入。
+- OpenAI Chat 上的 Priorai 私有 `input_file(image/*)` 自动改写
+- OpenAI Responses 上的 Priorai 私有 `input_file(image/*)` 自动改写
+- 仅凭 `file_id` 猜测图片语义并自动转 vision 输入
 
-因此实现上应允许两种安全路径：
-
-- 有图片 MIME / 来源上下文时，归一化为图片输入
-- 无图片语义时，保守保留为通用文件输入
-
-### 阶段 3：补齐 capability gate
+### 阶段 3：补齐 capability gate 与 fallback 抛错
 
 步骤：
 
-1. 扩展 `inferMultimodalRequirements()`，让它同时能从 `messages` 与 `input` 读取多模态需求。
-   验证：`responses.create()` 的图片请求能被识别出 `mediaKind=image`。
-2. 引入按端点解析内容的辅助函数，避免把 Chat / Responses item shape 混到一起。
+1. 扩展 `inferMultimodalRequirements()`，让它同时能从 `messages` 与 `input` 读取 OpenAI 原生多模态需求。
+   验证：`responses.create()` 的 `input_image` 请求能被识别出 `mediaKind=image`。
+2. 为 OpenAI / Azure OpenAI 增加原生 shape 校验。
+   验证：非原生 Priorai 私有输入在 OpenAI provider 上直接失败，而不是被偷偷接受。
+3. 引入按端点解析内容的辅助函数，避免把 Chat / Responses item shape 混到一起。
    验证：同一请求不会因为端点不同而被误判。
-3. 保持 OpenAI 视频拒绝逻辑，但更新错误信息来源。
+4. 保持 OpenAI 视频拒绝逻辑，但更新错误信息来源。
    验证：对 `input_video` 或 `video_url` 仍明确失败，且原因描述是 API 能力边界，不是 SDK 偶然缺字段。
+5. 在 fallback / load balance 中明确要求目标必须能表示当前 OpenAI 原生输入 shape。
+   验证：fallback 到不支持 `input_image` 或 `image_url` 的 provider 时抛出结构化错误，不做隐式降级。
 
 ### 阶段 4：补齐测试
 
 步骤：
 
 1. 为 `multimodalCapabilities` 增加 Responses 维度单测。
-   验证：`input_image`、`input_file(image/*)`、`input_file(document)` 在 `createModelResponse` 下被正确识别。
-2. 为 `buildProviderRequest` 增加 OpenAI Responses 图片归一化测试。
-   验证：输出体使用 `input_image` 官方 shape。
+   验证：`input_image`、`input_file(document)` 在 `createModelResponse` 下被正确识别，非原生私有输入在 OpenAI provider 上被拒绝。
+2. 为 `buildProviderRequest` 增加 OpenAI Responses 原生图片 shape 测试。
+   验证：原生 `input_image` 透传，`input_file(image/*)` 不再被 OpenAI provider 特判成图片输入。
 3. 为 `tryTarget` / 路由层补 capability 拒绝测试。
-   验证：不支持图片的 provider 不会吃到 Responses 图片请求。
+   验证：不支持图片的 provider 不会吃到 OpenAI 原生图片请求；fallback 时明确抛错。
 4. 为 `Router.responses.create()` 增加至少一条结构化图片输入集成测试。
    验证：端点名、归一化、策略分发和响应转换能串起来。
-5. 回归现有 Chat vision 测试。
-   验证：旧路径不回归。
+5. 回归现有 Chat vision 测试，并修正与新契约冲突的旧测试。
+   验证：原生路径保留，私有兼容路径被删除或改为拒绝测试。
 
 最低测试矩阵：
 
 | 端点 | 输入 | 预期 |
 |------|------|------|
 | chatComplete | `image_url` URL | 透传 |
-| chatComplete | `input_file(image/png + url)` | 转 `image_url` |
-| chatComplete | `input_file(image/png + data)` | 转 `image_url(data:)` |
+| chatComplete | `file.file_id` | 透传 |
+| chatComplete | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_image` URL | 透传 |
-| createModelResponse | `input_file(image/png + url)` | 转 `input_image` |
-| createModelResponse | `input_file(image/png + data)` | 转 `input_image` |
+| createModelResponse | `input_image` file_id | 透传 |
+| createModelResponse | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_file(pdf + file_id/url/data)` | 保持 `input_file` |
 | createModelResponse | `input_video(video/mp4)` | OpenAI 明确拒绝 |
+| fallback | OpenAI 原生图片请求 -> 不支持 provider | 明确抛错 |
 
 ### 阶段 5：更新文档
 
@@ -251,7 +268,7 @@ flowchart TD
 1. 更新 `docs/MULTIMODAL_INPUTS.md`。
    验证：OpenAI Chat 与 Responses 的图片输入 shape 被分开说明。
 2. 更新 `README.md` 多模态路由描述。
-   验证：不再暗示 Responses 已天然完整支持全部多模态归一化。
+   验证：明确说明 OpenAI / Azure OpenAI provider 只承诺 OpenAI 原生 shape，不接受 Priorai 私有多模态输入变体。
 3. 必要时补一小段 Responses 图片使用示例。
    验证：用户能直接照抄可工作的 shape。
 
@@ -266,8 +283,8 @@ flowchart TD
 处理：
 
 - 不做跨 provider 猜测。
-- 只在调用方明确给出图片语义时把 `file_id` 转成 vision 输入。
-- 对无法确认的 `file_id` 保守走 `file` / `input_file`。
+- 不自动把 `file_id` 解释成 vision 输入。
+- 只接受调用方显式使用 OpenAI 原生图片字段表达图片语义。
 
 ### 风险 2：Chat 与 Responses 的字段名差异导致隐藏回归
 
@@ -278,7 +295,7 @@ flowchart TD
 
 处理：
 
-- 归一化函数分离
+- 按端点分开做 shape 校验
 - 单测矩阵按端点拆开
 
 ### 风险 3：文档先前承诺过宽
@@ -294,29 +311,31 @@ flowchart TD
 
 ## 待确认事项
 
-以下事项不阻塞计划文档，但在实施前应明确：
+以下事项已在本计划中固定，不再作为开放决策：
 
-1. `input_file + file_id` 且未带 MIME 时，是否允许调用方显式声明这是图片资产。
-   建议：允许，但用单独字段或明确文档约定，不要隐式猜。
-2. 是否要在本批次顺手为 Azure OpenAI 同步相同的 Responses 图片归一化。
-   建议：一起做。当前 capability 逻辑把 `openai` 与 `azure-openai` 绑在一起，拆开做反而制造不一致。
-3. 是否把 OpenAI Chat 的 `image_url.detail` 透传能力写进文档示例。
-   建议：写，避免用户不知道 low/high fidelity 行为。
+1. OpenAI / Azure OpenAI 只接受 OpenAI 原生多模态 shape。
+2. `file_id` 不猜图片语义。
+3. Azure OpenAI 与 OpenAI 同批处理。
+
+仍需在实施时顺手完成的细节：
+
+1. 把 OpenAI Chat 的 `image_url.detail` 透传能力写进文档示例。
+2. 给 fallback 失败错误补一条足够清楚的用户可读信息。
 
 ## 实施顺序建议
 
 1. 类型
    验证：TS 类型编译通过
-2. Responses 归一化
-   验证：`buildProviderRequest` 单测通过
-3. capability gate
-   验证：`multimodalCapabilities` 单测通过
+2. 删除 OpenAI provider 的私有兼容层
+   验证：非原生输入被拒绝
+3. capability gate 与 fallback 抛错
+   验证：`multimodalCapabilities` 与路由测试通过
 4. Router / strategy 集成测试
-   验证：`responses.create()` 路径通过
+   验证：`responses.create()` 与 `chat.completions.create()` 原生 vision 路径通过
 5. 文档
    验证：示例与测试一致
 
-这个顺序不能反过来。先改文档或先补策略测试都不稳，因为请求类型和归一化层当前就是错位的。
+这个顺序不能反过来。先不把契约收紧，后面的 capability 和测试都会继续围绕错误接口打转。
 
 ## 参考证据
 
@@ -345,7 +364,8 @@ flowchart TD
 
 真实问题是：
 
-- Priorai 目前只把 OpenAI Chat 的图片输入接了半条链路
-- Responses 的图片输入在类型、能力判断、归一化、测试四层都没有闭环
+- Priorai 目前对 OpenAI provider 混入了不该有的私有输入兼容层
+- Responses 的图片输入在类型、能力判断、测试三层都没有闭环
+- fallback 到其它 provider 的失败语义还没有被明确写成对外契约
 
-按本计划实施后，才能把“OpenAI vision 支持已补齐”这句话说稳。
+按本计划实施后，才能把“OpenAI provider 的 vision 能力已按官方接口完整实现”这句话说稳。
