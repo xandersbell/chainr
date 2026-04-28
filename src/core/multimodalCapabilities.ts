@@ -214,6 +214,10 @@ function getOpenAIResponsesShapeError(provider: string, params: Params): string 
       return `${provider} createModelResponse does not support input_audio content`;
     }
 
+    if (provider === 'azure-openai' && isResponseInputImageContent(item) && item.file_id) {
+      return `${provider} createModelResponse input_image must use image_url with a URL or data URL`;
+    }
+
     if (item.type === 'input_image' && typeof item.image_url === 'object') {
       return `${provider} createModelResponse input_image.image_url must be a string`;
     }
@@ -346,11 +350,21 @@ function providerSupportsRequirement(
     return sourceIs(requirement, ['https-url', 'base64', 'file-id']);
   }
 
-  if (provider === 'openai' || provider === 'azure-openai') {
+  if (provider === 'openai') {
     if (requirement.mediaKind === 'video') return false;
     if (requirement.mediaKind === 'audio') return sourceIs(requirement, ['base64']);
     if (requirement.mediaKind === 'image')
       return sourceIs(requirement, ['https-url', 'base64', 'file-id']);
+    if (endpoint === 'createModelResponse') {
+      return sourceIs(requirement, ['https-url', 'base64', 'file-id']);
+    }
+    return sourceIs(requirement, ['base64', 'file-id']);
+  }
+
+  if (provider === 'azure-openai') {
+    if (requirement.mediaKind === 'video') return false;
+    if (requirement.mediaKind === 'audio') return sourceIs(requirement, ['base64']);
+    if (requirement.mediaKind === 'image') return sourceIs(requirement, ['https-url', 'base64']);
     if (endpoint === 'createModelResponse') {
       return sourceIs(requirement, ['https-url', 'base64', 'file-id']);
     }

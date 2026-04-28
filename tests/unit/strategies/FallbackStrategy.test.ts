@@ -168,6 +168,47 @@ describe('FallbackStrategy', () => {
       expect(buildProviderRequest).not.toHaveBeenCalled();
     });
 
+    it('falls back to OpenAI target for chat input_audio when earlier targets are unsupported', async () => {
+      vi.mocked(retryRequest).mockResolvedValue(
+        mockRetryResult({ success: true, response: { status: 200, data: { id: 'audio-ok' } } }),
+      );
+
+      const strategy = new FallbackStrategy();
+      const targets = [
+        { provider: 'anthropic', api_key: 'key-1' },
+        { provider: 'openai', api_key: 'key-2' },
+      ];
+      const params = {
+        model: 'gpt-4o-audio-preview',
+        messages: [
+          {
+            role: 'user' as const,
+            content: [
+              {
+                type: 'input_audio',
+                input_audio: {
+                  data: 'BASE64_AUDIO_BYTES',
+                  format: 'wav',
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = await strategy.execute(targets, params);
+
+      expect(result.success).toBe(true);
+      expect(result.provider).toBe('openai');
+      expect(buildProviderRequest).toHaveBeenCalledTimes(1);
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'openai',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
     it('throws error when targets array is empty', async () => {
       const strategy = new FallbackStrategy();
       const targets: Array<Record<string, unknown>> = [];

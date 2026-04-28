@@ -3,6 +3,9 @@ import type {
   EmbedParams,
   ImageGenerateParams,
   Params,
+  RealtimeClientSecretParams,
+  RealtimeSessionParams,
+  RealtimeTranscriptionSessionParams,
   SpeechParams,
   TranscriptionParams,
   TranslationParams,
@@ -219,6 +222,38 @@ export class Priorai {
         return this.executeResponsesStreaming(params);
       }
       return this.executeResponses(params);
+    },
+  };
+
+  realtime = {
+    sessions: {
+      create: async (params: RealtimeSessionParams): Promise<Record<string, unknown>> => {
+        return this.executeSimpleEndpoint(
+          this.config.targets,
+          params as unknown as Params,
+          'createRealtimeSession',
+        );
+      },
+    },
+    clientSecrets: {
+      create: async (params: RealtimeClientSecretParams): Promise<Record<string, unknown>> => {
+        return this.executeSimpleEndpoint(
+          this.config.targets,
+          params as unknown as Params,
+          'createRealtimeClientSecret',
+        );
+      },
+    },
+    transcriptionSessions: {
+      create: async (
+        params: RealtimeTranscriptionSessionParams,
+      ): Promise<Record<string, unknown>> => {
+        return this.executeSimpleEndpoint(
+          this.config.targets,
+          params as unknown as Params,
+          'createRealtimeTranscriptionSession',
+        );
+      },
     },
   };
 

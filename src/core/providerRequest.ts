@@ -118,9 +118,10 @@ export async function buildProviderRequest(
   }
 
   // Transform request body (some endpoints like createTranscription may lack ProviderConfig, pass through directly)
-  const body = endpointConfig
-    ? transformUsingProviderConfig(endpointConfig, normalizedParams, providerOptions)
-    : { ...normalizedParams };
+  const body =
+    endpointConfig && Object.keys(endpointConfig).length > 0
+      ? transformUsingProviderConfig(endpointConfig, normalizedParams, providerOptions)
+      : { ...normalizedParams };
 
   // Build URL
   const baseUrl = await apiConfig.getBaseURL({
@@ -134,7 +135,7 @@ export async function buildProviderRequest(
     providerOptions,
     fn: endpoint,
     gatewayRequestBodyJSON: normalizedParams,
-    gatewayRequestURL: '',
+    gatewayRequestURL: baseUrl,
   });
 
   const url = `${baseUrl}${endpointPath}`;

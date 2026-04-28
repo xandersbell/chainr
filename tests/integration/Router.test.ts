@@ -156,6 +156,55 @@ describe('Priorai (Router) integration tests', () => {
       expect(result).toEqual(mockChatCompletionResponse);
     });
 
+    it('passes native image_url chat params through strategy unchanged', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      const imageParams: Params = {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: {
+                  url: 'https://example.com/image.png',
+                  detail: 'high',
+                },
+              },
+              {
+                type: 'text',
+                text: 'Describe this image.',
+              },
+            ],
+          },
+        ],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: { status: 200, data: mockChatCompletionResponse },
+        provider: 'openai',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockChatCompletionResponse);
+
+      const priorai = new Priorai(config);
+      await priorai.chat.completions.create(imageParams);
+
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        config.targets,
+        imageParams,
+        undefined,
+        undefined,
+        'chatComplete',
+      );
+    });
+
     it('when strategy returns error response, still transforms via transformProviderResponse and returns', async () => {
       const config: PrioraiConfig = {
         strategy: 'fallback',
@@ -574,6 +623,53 @@ describe('Priorai (Router) integration tests', () => {
       expect(result).toEqual(mockResponsesResult);
     });
 
+    it('passes native input_image responses params through strategy unchanged', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      const imageResponsesParams: Params = {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_image',
+                image_url: 'https://example.com/image.png',
+                detail: 'high',
+              },
+              {
+                type: 'input_text',
+                text: 'Describe this image.',
+              },
+            ],
+          },
+        ],
+      };
+
+      const strategyResult: StrategyResult = {
+        success: true,
+        response: mockResponsesResult,
+        provider: 'openai',
+      };
+
+      mockFallbackExecute.mockResolvedValue(strategyResult);
+      mockTransformProviderResponse.mockReturnValue(mockResponsesResult);
+
+      const priorai = new Priorai(config);
+      await priorai.responses.create(imageResponsesParams);
+
+      expect(mockFallbackExecute).toHaveBeenCalledWith(
+        config.targets,
+        imageResponsesParams,
+        undefined,
+        undefined,
+        'createModelResponse',
+      );
+    });
+
     it('uses responsesTargets instead of default targets', async () => {
       const responsesTargets = [{ provider: 'openai', apiKey: 'responses-key' }];
       const config: PrioraiConfig = {
@@ -682,6 +778,92 @@ describe('Priorai (Router) integration tests', () => {
         'anthropic does not support createModelResponse',
       );
       expect(mockTransformProviderResponse).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('realtime bootstrap endpoints', () => {
+    const setupRealtimeMocks = async (url: string, body: Record<string, unknown>) => {
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        body,
+        headers: { Authorization: 'Bearer key-1', 'content-type': 'application/json' },
+        url,
+      });
+      mockFetchWithTimeout.mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'rt_123', object: 'realtime.session' }),
+      });
+    };
+
+    it('realtime.sessions.create calls createRealtimeSession endpoint', async () => {
+      await setupRealtimeMocks('https://api.openai.com/v1/realtime/sessions', {
+        type: 'realtime',
+        model: 'gpt-realtime',
+      });
+
+      const priorai = new Priorai({
+        strategy: 'single',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      });
+
+      await priorai.realtime.sessions.create({
+        type: 'realtime',
+        model: 'gpt-realtime',
+      });
+
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        { type: 'realtime', model: 'gpt-realtime' },
+        'openai',
+        { provider: 'openai', apiKey: 'key-1' },
+        'createRealtimeSession',
+      );
+    });
+
+    it('realtime.clientSecrets.create calls createRealtimeClientSecret endpoint', async () => {
+      await setupRealtimeMocks('https://api.openai.com/v1/realtime/client_secrets', {
+        session: { type: 'realtime', model: 'gpt-realtime-mini' },
+      });
+
+      const priorai = new Priorai({
+        strategy: 'single',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      });
+
+      await priorai.realtime.clientSecrets.create({
+        session: { type: 'realtime', model: 'gpt-realtime-mini' },
+      });
+
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        { session: { type: 'realtime', model: 'gpt-realtime-mini' } },
+        'openai',
+        { provider: 'openai', apiKey: 'key-1' },
+        'createRealtimeClientSecret',
+      );
+    });
+
+    it('realtime.transcriptionSessions.create calls createRealtimeTranscriptionSession endpoint', async () => {
+      await setupRealtimeMocks('https://api.openai.com/v1/realtime/transcription_sessions', {
+        input_audio_format: 'pcm16',
+      });
+
+      const priorai = new Priorai({
+        strategy: 'single',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      });
+
+      await priorai.realtime.transcriptionSessions.create({
+        input_audio_format: 'pcm16',
+      });
+
+      const { buildProviderRequest } = await import('../../src/core/providerRequest');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        { input_audio_format: 'pcm16' },
+        'openai',
+        { provider: 'openai', apiKey: 'key-1' },
+        'createRealtimeTranscriptionSession',
+      );
     });
   });
 

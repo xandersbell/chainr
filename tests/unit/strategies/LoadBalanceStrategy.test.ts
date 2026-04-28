@@ -189,6 +189,47 @@ describe('LoadBalanceStrategy', () => {
       );
     });
 
+    it('filters out unsupported chat-audio targets before weighted selection', async () => {
+      const targets = [{ provider: 'anthropic', weight: 1 }, { provider: 'openai', weight: 1 }];
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      (buildProviderRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        body: {},
+        headers: {},
+        url: 'https://api.openai.com/v1/chat/completions',
+      });
+      (retryRequest as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        response: { status: 200, data: {} },
+      });
+
+      const result = await strategy.execute(targets, {
+          model: 'gpt-4o-audio-preview',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_audio',
+                  input_audio: {
+                    data: 'BASE64_AUDIO_BYTES',
+                    format: 'mp3',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+      expect(result.provider).toBe('openai');
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'openai',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
     it('two equal-weight targets (50/50) - selects second when random=0.6', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },

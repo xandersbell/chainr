@@ -26,6 +26,13 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       headersObj['OpenAI-Beta'] = providerOptions.openaiBeta;
     }
 
+    if (
+      !headersObj['OpenAI-Beta'] &&
+      (fn === 'createRealtimeSession' || fn === 'createRealtimeTranscriptionSession')
+    ) {
+      headersObj['OpenAI-Beta'] = 'assistants=v2';
+    }
+
     return headersObj;
   },
   getEndpoint: ({ fn, gatewayRequestURL }) => {
@@ -49,6 +56,12 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
         return '/audio/translations';
       case 'realtime':
         return basePath;
+      case 'createRealtimeSession':
+        return '/realtime/sessions';
+      case 'createRealtimeClientSecret':
+        return '/realtime/client_secrets';
+      case 'createRealtimeTranscriptionSession':
+        return '/realtime/transcription_sessions';
       case 'uploadFile':
         return basePath;
       case 'retrieveFile':

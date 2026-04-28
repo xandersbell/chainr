@@ -177,6 +177,30 @@ describe('buildProviderRequest', () => {
     expect(result!.headers['Authorization']).toBe('Bearer ds-test-key');
   });
 
+  it('should pass through OpenAI transcription params for empty provider config endpoints', async () => {
+    const result = await buildProviderRequest(
+      {
+        file: 'BASE64_AUDIO_BYTES',
+        model: 'whisper-1',
+        language: 'en',
+        prompt: 'Expect short phrases.',
+      } as any,
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createTranscription',
+    );
+
+    expect(result.url).toBe('https://api.openai.com/v1/audio/transcriptions');
+    expect(result.headers['Authorization']).toBe('Bearer sk-test-key');
+    expect(result.headers['Content-Type']).toBe('multipart/form-data');
+    expect(result.body).toEqual({
+      file: 'BASE64_AUDIO_BYTES',
+      model: 'whisper-1',
+      language: 'en',
+      prompt: 'Expect short phrases.',
+    });
+  });
+
   it('should throw for unknown provider', async () => {
     await expect(
       buildProviderRequest({ model: 'test', messages: [] }, 'nonexistent-provider', {
@@ -445,6 +469,81 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
+  it('should keep OpenAI chat input_audio content in native shape', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_audio',
+                input_audio: {
+                  data: 'BASE64_AUDIO_BYTES',
+                  format: 'wav',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+    );
+
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'input_audio',
+        input_audio: {
+          data: 'BASE64_AUDIO_BYTES',
+          format: 'wav',
+        },
+      },
+    ]);
+  });
+
+  it('should keep Azure OpenAI chat input_audio content in native shape', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_audio',
+                input_audio: {
+                  data: 'BASE64_AUDIO_BYTES',
+                  format: 'mp3',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'azure-openai',
+      {
+        provider: 'azure-openai',
+        apiKey: 'azure-key',
+        resourceName: 'demo-resource',
+        deploymentId: 'gpt-4o-deployment',
+        apiVersion: '2024-10-21',
+      },
+    );
+
+    expect(result.url).toContain('/deployments/gpt-4o-deployment/chat/completions');
+    expect(result.body.messages[0].content).toEqual([
+      {
+        type: 'input_audio',
+        input_audio: {
+          data: 'BASE64_AUDIO_BYTES',
+          format: 'mp3',
+        },
+      },
+    ]);
+  });
+
   it('should pass through OpenAI responses input_image content', async () => {
     const result = await buildProviderRequest(
       {
@@ -480,6 +579,78 @@ describe('buildProviderRequest', () => {
       },
     ]);
     expect(result.url).toBe('https://api.openai.com/v1/responses');
+  });
+
+  it('should pass through OpenAI responses input_image data URL content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_image',
+                image_url: 'data:image/png;base64,AAAA',
+                detail: 'low',
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_image',
+            image_url: 'data:image/png;base64,AAAA',
+            detail: 'low',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should pass through OpenAI responses input_image file_id content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_image',
+                file_id: 'file_vision_123',
+                detail: 'high',
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_image',
+            file_id: 'file_vision_123',
+            detail: 'high',
+          },
+        ],
+      },
+    ]);
   });
 
   it('should pass through OpenAI responses input_file URL content', async () => {
@@ -569,7 +740,7 @@ describe('buildProviderRequest', () => {
                 format: 'wav',
               },
             },
-          ],
+          ] as any,
         },
         'openai',
         { provider: 'openai', apiKey: 'sk-test-key' },
@@ -653,6 +824,39 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
+  it('should reject Azure OpenAI responses input_image file_id content', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'gpt-4o',
+          input: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_image',
+                  file_id: 'file_vision_123',
+                  detail: 'high',
+                },
+              ],
+            },
+          ],
+        },
+        'azure-openai',
+        {
+          provider: 'azure-openai',
+          apiKey: 'azure-key',
+          resourceName: 'demo-resource',
+          deploymentId: 'gpt-4o-deployment',
+          apiVersion: 'v1',
+        },
+        'createModelResponse',
+      ),
+    ).rejects.toThrow(
+      'Unsupported multimodal input: azure-openai createModelResponse input_image must use image_url with a URL or data URL',
+    );
+  });
+
   it('should require apiVersion v1 for Azure OpenAI responses requests', async () => {
     await expect(
       buildProviderRequest(
@@ -671,6 +875,109 @@ describe('buildProviderRequest', () => {
         'createModelResponse',
       ),
     ).rejects.toThrow('Azure OpenAI createModelResponse requires apiVersion "v1"');
+  });
+
+  it('should build OpenAI realtime session request', async () => {
+    const result = await buildProviderRequest(
+      {
+        type: 'realtime',
+        model: 'gpt-realtime',
+        output_modalities: ['audio'],
+        instructions: 'Be concise.',
+      } as any,
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createRealtimeSession',
+    );
+
+    expect(result.url).toBe('https://api.openai.com/v1/realtime/sessions');
+    expect(result.headers['OpenAI-Beta']).toBe('assistants=v2');
+    expect(result.body).toEqual({
+      type: 'realtime',
+      model: 'gpt-realtime',
+      output_modalities: ['audio'],
+      instructions: 'Be concise.',
+    });
+  });
+
+  it('should build OpenAI realtime client secret request', async () => {
+    const result = await buildProviderRequest(
+      {
+        expires_after: {
+          anchor: 'created_at',
+          seconds: 60,
+        },
+        session: {
+          type: 'realtime',
+          model: 'gpt-realtime-mini',
+        },
+      } as any,
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createRealtimeClientSecret',
+    );
+
+    expect(result.url).toBe('https://api.openai.com/v1/realtime/client_secrets');
+    expect(result.headers['OpenAI-Beta']).toBeUndefined();
+    expect(result.body).toEqual({
+      expires_after: {
+        anchor: 'created_at',
+        seconds: 60,
+      },
+      session: {
+        type: 'realtime',
+        model: 'gpt-realtime-mini',
+      },
+    });
+  });
+
+  it('should build OpenAI realtime transcription session request', async () => {
+    const result = await buildProviderRequest(
+      {
+        input_audio_format: 'pcm16',
+        modalities: ['text'],
+        input_audio_transcription: {
+          model: 'gpt-4o-mini-transcribe',
+          language: 'en',
+        },
+      } as any,
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createRealtimeTranscriptionSession',
+    );
+
+    expect(result.url).toBe('https://api.openai.com/v1/realtime/transcription_sessions');
+    expect(result.headers['OpenAI-Beta']).toBe('assistants=v2');
+    expect(result.body).toEqual({
+      input_audio_format: 'pcm16',
+      modalities: ['text'],
+      input_audio_transcription: {
+        model: 'gpt-4o-mini-transcribe',
+        language: 'en',
+      },
+    });
+  });
+
+  it('should reject Azure OpenAI realtime session requests', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          type: 'realtime',
+          model: 'gpt-realtime',
+        } as any,
+        'azure-openai',
+        {
+          provider: 'azure-openai',
+          apiKey: 'azure-key',
+          resourceName: 'demo-resource',
+          deploymentId: 'gpt-4o-deployment',
+          apiVersion: '2024-10-21',
+        },
+        'createRealtimeSession',
+      ),
+    ).rejects.toThrow(
+      'Unsupported multimodal input: azure-openai does not support createRealtimeSession',
+    );
   });
 
   it('should map Anthropic content_blocks input_file image URL to image content', async () => {

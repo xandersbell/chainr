@@ -178,6 +178,32 @@ describe('multimodal capability checks', () => {
     );
   });
 
+  it('allows OpenAI and Azure OpenAI chat input_audio content', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_audio',
+              input_audio: {
+                data: 'BASE64_AUDIO_BYTES',
+                format: 'wav',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getUnsupportedMultimodalRequirement('openai', params)).toBeUndefined();
+    expect(getUnsupportedMultimodalRequirement('azure-openai', params)).toBeUndefined();
+    expect(getUnsupportedMultimodalRequirement('anthropic', params)).toContain(
+      'anthropic does not support audio input from base64',
+    );
+  });
+
   it('infers image requirements from OpenAI responses input_image content', () => {
     const params: Params = {
       model: 'gpt-4o',
@@ -203,6 +229,82 @@ describe('multimodal capability checks', () => {
         mimeType: 'image/*',
       },
     ]);
+  });
+
+  it('infers base64 image requirements from OpenAI responses input_image content', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_image',
+              image_url: 'data:image/png;base64,AAAA',
+              detail: 'low',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(inferMultimodalRequirements(params)).toEqual([
+      {
+        type: 'input_image',
+        mediaKind: 'image',
+        sourceKind: 'base64',
+        mimeType: 'image/png',
+      },
+    ]);
+  });
+
+  it('infers file-id image requirements from OpenAI responses input_image content', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_image',
+              file_id: 'file_vision_123',
+              detail: 'high',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(inferMultimodalRequirements(params)).toEqual([
+      {
+        type: 'input_image',
+        mediaKind: 'image',
+        sourceKind: 'file-id',
+        mimeType: 'image/*',
+      },
+    ]);
+  });
+
+  it('rejects Azure OpenAI responses input_image file_id content', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_image',
+              file_id: 'file_vision_123',
+              detail: 'high',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      getUnsupportedMultimodalRequirement('azure-openai', params, 'createModelResponse'),
+    ).toBe('azure-openai createModelResponse input_image must use image_url with a URL or data URL');
   });
 
   it('rejects Priorai input_file image content for OpenAI responses providers', () => {
@@ -245,7 +347,7 @@ describe('multimodal capability checks', () => {
             format: 'wav',
           },
         },
-      ],
+      ] as any,
     };
 
     expect(getUnsupportedMultimodalRequirement('openai', params, 'createModelResponse')).toBe(

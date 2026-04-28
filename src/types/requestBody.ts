@@ -206,6 +206,52 @@ export interface ResponseInputAudioContent {
   };
 }
 
+export interface RealtimeSessionParams {
+  type?: 'realtime';
+  model?: string;
+  audio?: Record<string, unknown>;
+  include?: Array<'item.input_audio_transcription.logprobs'>;
+  instructions?: string;
+  max_output_tokens?: number | 'inf';
+  output_modalities?: Array<'text' | 'audio'>;
+  prompt?: Record<string, unknown> | null;
+  tool_choice?: unknown;
+  tools?: unknown[];
+  tracing?: 'auto' | Record<string, unknown> | null;
+  truncation?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+
+export interface RealtimeClientSecretParams {
+  expires_after?: {
+    anchor?: 'created_at';
+    seconds?: number;
+  };
+  session?: RealtimeSessionParams | RealtimeTranscriptionSessionParams;
+  [key: string]: unknown;
+}
+
+export interface RealtimeTranscriptionSessionParams {
+  client_secret?: {
+    expires_at?: {
+      anchor?: 'created_at';
+      seconds?: number;
+    };
+  };
+  include?: string[];
+  input_audio_format?: 'pcm16' | 'g711_ulaw' | 'g711_alaw';
+  input_audio_noise_reduction?: Record<string, unknown> | null;
+  input_audio_transcription?: {
+    language?: string;
+    model?: string;
+    prompt?: string;
+    [key: string]: unknown;
+  };
+  modalities?: Array<'text' | 'audio'>;
+  turn_detection?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+
 export type ResponseInputContent =
   | ResponseInputTextContent
   | ResponseInputImageContent
@@ -217,10 +263,7 @@ export interface ResponseInputMessage {
   content: string | ResponseInputContent[];
 }
 
-export type ResponseInputItem =
-  | ResponseInputMessage
-  | ResponseInputContent
-  | ResponseInputAudioContent;
+export type ResponseInputItem = ResponseInputMessage | ResponseInputContent;
 export type ResponseInput = ResponseInputItem[];
 
 export interface CitationMetadata {
