@@ -1,6 +1,6 @@
 # Priorai
 
-Updated: 2026-04-27 13:06:32 EEST
+Updated: 2026-04-29 01:02:59 EEST
 
 Embeddable TypeScript SDK for routing LLM requests across multiple providers through a mostly OpenAI-compatible interface.
 
@@ -267,8 +267,10 @@ Examples:
 
 - A `vertex-ai` target can accept image, audio, video, and document inputs on chat completions through the Gemini content-part mapping.
 - Image, audio, and video inputs can be passed as HTTPS URLs, `gs://` URLs, or base64 data for `google` and `vertex-ai`, as long as `mime_type` is available for routed file inputs.
+- `openai` and `azure-openai` only accept native OpenAI multimodal shapes. Chat Completions must use `image_url` or `file`; Responses must use `input_image`, `input_file`, or `input_audio`.
 - A `video/mp4` HTTPS URL can route to Gemini-compatible targets or compatible OpenRouter targets.
 - The same request will not silently fall back to OpenAI, Anthropic, or Bedrock if the provider cannot represent that media format.
+- If fallback or load balancing reaches a target that does not support the requested endpoint or native shape, Priorai throws a clear error instead of silently rewriting the payload.
 - Bedrock media routing is stricter and expects base64 bytes or `s3://` sources for supported cases.
 
 For the full input shape and compatibility rules, see [docs/MULTIMODAL_INPUTS.md](docs/MULTIMODAL_INPUTS.md).

@@ -3,7 +3,10 @@
 import Providers from '../providers';
 import type { endpointStrings, ProviderConfig } from '../providers/types';
 import type { Options, Params } from '../types/requestBody';
-import { normalizeMultimodalParamsForProvider } from './multimodalCapabilities';
+import {
+  getUnsupportedMultimodalRequirement,
+  normalizeMultimodalParamsForProvider,
+} from './multimodalCapabilities';
 import type { TransformResult } from './types';
 
 function setNestedProperty(obj: any, path: string, value: any) {
@@ -112,6 +115,11 @@ export async function buildProviderRequest(
   }
 
   const providerOptions = buildProviderOptions(provider, target);
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, params, endpoint);
+  if (unsupportedReason) {
+    throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
+  }
+
   const normalizedParams = normalizeMultimodalParamsForProvider(params, provider, endpoint);
 
   // Get the parameter mapping config for the endpoint

@@ -297,6 +297,14 @@ export class Priorai {
     },
   };
 
+  private getStrategyResponseOrThrow(result: StrategyResult, endpoint: string): unknown {
+    if (result.response !== undefined) {
+      return result.response;
+    }
+
+    throw new Error(result.error || `All ${endpoint} targets exhausted`);
+  }
+
   private async executeChatCompletions(
     params: Params,
   ): Promise<ChatCompletionResponse | ErrorResponse> {
@@ -306,7 +314,7 @@ export class Priorai {
       'chatComplete',
     );
     const transformed = transformProviderResponse(
-      result.response,
+      this.getStrategyResponseOrThrow(result, 'chatComplete'),
       result.provider || 'openai',
       'chatComplete',
       200,
@@ -329,7 +337,7 @@ export class Priorai {
     const targets = this.config.messagesTargets || this.config.targets;
     const result: StrategyResult = await this.executeStrategy(targets, params, 'messages');
     const transformed = transformProviderResponse(
-      result.response,
+      this.getStrategyResponseOrThrow(result, 'messages'),
       result.provider || 'anthropic',
       'messages',
       200,
@@ -358,7 +366,7 @@ export class Priorai {
       'createModelResponse',
     );
     const transformed = transformProviderResponse(
-      result.response,
+      this.getStrategyResponseOrThrow(result, 'createModelResponse'),
       result.provider || 'openai',
       'createModelResponse',
       200,
@@ -441,7 +449,7 @@ export class Priorai {
       'complete',
     );
     const transformed = transformProviderResponse(
-      result.response,
+      this.getStrategyResponseOrThrow(result, 'complete'),
       result.provider || 'openai',
       'complete',
       200,

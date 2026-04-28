@@ -1,14 +1,16 @@
-Updated: 2026-04-27 13:13:49 EEST
+Updated: 2026-04-29 01:02:59 EEST
 
 # Multimodal Inputs
 
-Priorai keeps the OpenAI-compatible chat interface as the common entry point, but supports a small Priorai extension for provider-native multimodal files.
+Priorai keeps the OpenAI-compatible chat interface as the common entry point, but multimodal inputs are not normalized into one private shape for every provider.
+
+OpenAI and Azure OpenAI must receive native OpenAI content blocks. The Priorai `input_file` extension remains available for providers such as `google` and `vertex-ai` that need MIME-driven routing.
 
 `google` and `vertex-ai` now have full Gemini-style multimodal chat input coverage in Priorai for image, audio, video, and document file parts.
 
-## Recommended Input Shape
+## Priorai Extension Input Shape
 
-Use `input_file` when the input is a media or document file that should be routed by MIME type.
+Use `input_file` when the target provider family expects Priorai's MIME-driven routing layer, such as Gemini via `google` or `vertex-ai`.
 
 ```ts
 await priorai.chat.completions.create({
@@ -49,6 +51,66 @@ Base64 data is also supported:
 The older `file.file_url`, `file.file_data`, and `file.file_name` fields remain supported for compatibility. New code should prefer `url`, `data`, and `filename`.
 
 `mime_type` is required for `input_file` routing when the input contains URL or base64 bytes. Provider `file_id` references do not require MIME type because the file metadata is owned by that provider. Priorai may infer a MIME type for legacy `image_url` data from `data:` URLs or URL pathnames, but general file routing should not rely on filenames or signed URLs. File names are only metadata.
+
+## OpenAI And Azure OpenAI Native Shapes
+
+OpenAI-compatible providers are strict:
+
+- `chat.completions.create()` accepts native OpenAI `image_url` and `file` blocks only.
+- `responses.create()` accepts native OpenAI `input_image`, `input_file`, and `input_audio` blocks only.
+- Priorai does not rewrite `input_file` into OpenAI image or file blocks for `openai` or `azure-openai`.
+- `file_id` is treated as a provider file reference only. It is not used to guess image semantics.
+- Azure OpenAI `responses.create()` currently requires `apiVersion: 'v1'` because the standard `/openai/v1/responses` path is used.
+
+OpenAI chat example:
+
+```ts
+await priorai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'image_url',
+          image_url: {
+            url: 'https://example.com/image.png',
+            detail: 'high',
+          },
+        },
+        {
+          type: 'text',
+          text: 'Describe this image.',
+        },
+      ],
+    },
+  ],
+});
+```
+
+OpenAI Responses example:
+
+```ts
+await priorai.responses.create({
+  model: 'gpt-4o',
+  input: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'input_image',
+          image_url: 'https://example.com/image.png',
+          detail: 'high',
+        },
+        {
+          type: 'input_text',
+          text: 'Describe this image.',
+        },
+      ],
+    },
+  ],
+});
+```
 
 ## Compatibility Blocks
 
@@ -91,10 +153,18 @@ This is implemented in the Vertex chat transform layer and multimodal capability
 
 OpenAI:
 
-- Image URL and base64 inputs are supported through the OpenAI-compatible image blocks.
-- Chat Completions file input supports `file_data`, `file_id`, and `filename`.
-- Responses file input supports `file_url`, but that is only available through the Responses endpoint.
+- Chat Completions must use native `image_url` and `file` blocks.
+- Responses must use native `input_image`, `input_file`, and `input_audio` blocks.
+- Priorai `input_file` extension is rejected for OpenAI and Azure OpenAI instead of being rewritten.
+- Chat `file` content supports `file_data`, `file_id`, and `filename`.
+- Responses `input_file` content supports `file_data`, `file_id`, `file_url`, and `filename`.
 - Video input is rejected before routing because OpenAI official SDK types do not expose a video input content block.
+
+Azure OpenAI:
+
+- Follows the same native content-shape rules as OpenAI.
+- `responses.create()` uses `/openai/v1/responses` and requires `apiVersion: 'v1'`.
+- Non-`v1` Azure API versions do not expose the standard Responses path in this adapter and will fail fast.
 
 Anthropic:
 
@@ -122,4 +192,6 @@ Priorai performs a capability check before sending a request to a target. The ch
 - Source kind: HTTPS URL, GCS URL, S3 URL, base64, or file ID.
 - Endpoint: chat completions, responses, or provider-specific endpoint.
 
-Fallback and load balancing only use targets that can represent the requested input. For example, a `video/mp4` HTTPS URL can route to Gemini or OpenRouter, but will not fallback to OpenAI, Anthropic, or Bedrock.
+Fallback and load balancing only use targets that can represent the requested input and endpoint. For example, a `video/mp4` HTTPS URL can route to Gemini or OpenRouter, but will not fallback to OpenAI, Anthropic, or Bedrock.
+
+If a strategy reaches a target that cannot support the requested OpenAI-native shape or endpoint, Priorai throws an explicit error instead of silently transforming the request into a different contract.

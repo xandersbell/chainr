@@ -109,14 +109,21 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       }
     }
 
+    const isAzureV1API = apiVersion?.trim() === 'v1';
+    let prefix = `/deployments/${deploymentId}`;
+
+    if (mappedFn === 'createModelResponse') {
+      if (!isAzureV1API) {
+        throw new Error('Azure OpenAI createModelResponse requires apiVersion "v1"');
+      }
+      return '/v1/responses';
+    }
+
     const urlObj = new URL(gatewayRequestURL);
     const searchParams = urlObj.searchParams;
     if (apiVersion) {
       searchParams.set('api-version', apiVersion);
     }
-
-    let prefix = `/deployments/${deploymentId}`;
-    const isAzureV1API = apiVersion?.trim() === 'v1';
 
     const pathname = !isAzureV1API ? urlObj.pathname.replace('/v1', '') : urlObj.pathname;
 
@@ -153,9 +160,6 @@ const AzureOpenAIAPIConfig: ProviderAPIConfig = {
       case 'realtime': {
         searchParams.set('deployment', deploymentId || '');
         return `${isAzureV1API ? prefix : ''}/realtime?${searchParams.toString()}`;
-      }
-      case 'createModelResponse': {
-        return `${pathname}?${searchParams.toString()}`;
       }
       case 'getModelResponse': {
         return `${pathname}?${searchParams.toString()}`;

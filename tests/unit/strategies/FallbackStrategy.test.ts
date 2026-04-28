@@ -132,6 +132,42 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledTimes(2);
     });
 
+    it('returns unsupported endpoint error when no fallback target can handle OpenAI responses vision input', async () => {
+      const strategy = new FallbackStrategy();
+      const targets = [
+        { provider: 'anthropic', api_key: 'key-1' },
+        { provider: 'vertex-ai', api_key: 'key-2' },
+      ];
+      const params = {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user' as const,
+            content: [
+              {
+                type: 'input_image',
+                image_url: 'https://example.com/image.png',
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = await strategy.execute(
+        targets,
+        params,
+        undefined,
+        undefined,
+        'createModelResponse',
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(
+        'Unsupported multimodal input: vertex-ai does not support createModelResponse',
+      );
+      expect(buildProviderRequest).not.toHaveBeenCalled();
+    });
+
     it('throws error when targets array is empty', async () => {
       const strategy = new FallbackStrategy();
       const targets: Array<Record<string, unknown>> = [];

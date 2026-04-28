@@ -174,6 +174,51 @@ export interface ContentType {
   cache_control?: { type: 'ephemeral' };
 }
 
+export type ResponseInputImageDetail = 'auto' | 'low' | 'high' | 'original';
+
+export interface ResponseInputTextContent {
+  type: 'input_text';
+  text: string;
+}
+
+export interface ResponseInputImageContent {
+  type: 'input_image';
+  image_url?: string;
+  file_id?: string;
+  detail?: ResponseInputImageDetail;
+}
+
+export interface ResponseInputFileContent {
+  type: 'input_file';
+  file_data?: string;
+  file_id?: string;
+  file_url?: string;
+  filename?: string;
+}
+
+export interface ResponseInputAudioContent {
+  type: 'input_audio';
+  input_audio: {
+    data: string;
+    format: 'mp3' | 'wav' | string;
+  };
+}
+
+export type ResponseInputContent =
+  | ResponseInputTextContent
+  | ResponseInputImageContent
+  | ResponseInputFileContent
+  | ResponseInputAudioContent;
+
+export interface ResponseInputMessage {
+  type?: 'message';
+  role: 'user' | 'assistant' | 'system' | 'developer';
+  content: string | ResponseInputContent[];
+}
+
+export type ResponseInputItem = ResponseInputMessage | ResponseInputContent;
+export type ResponseInput = ResponseInputItem[];
+
 export interface CitationMetadata {
   citationSources?: CitationSource[];
 }
@@ -232,7 +277,7 @@ export interface Tool {
 export interface Params {
   model?: string;
   prompt?: string | string[];
-  input?: string | string[] | EmbedInput[];
+  input?: string | string[] | EmbedInput[] | ResponseInput;
   messages?: Message[];
   functions?: Function[];
   function_call?: 'none' | 'auto' | { name: string };

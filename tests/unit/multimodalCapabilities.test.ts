@@ -45,7 +45,7 @@ describe('multimodal capability checks', () => {
 
   it('rejects OpenAI, Anthropic, and Bedrock for video HTTPS input', () => {
     expect(getUnsupportedMultimodalRequirement('openai', videoUrlParams)).toContain(
-      'openai does not support video input from https-url',
+      'openai chatComplete does not accept Priorai input_file content; use image_url or file',
     );
     expect(getUnsupportedMultimodalRequirement('anthropic', videoUrlParams)).toContain(
       'anthropic does not support video input from https-url',
@@ -112,7 +112,7 @@ describe('multimodal capability checks', () => {
           role: 'user',
           content: [
             {
-              type: 'input_file',
+              type: 'file',
               file: {
                 file_id: 'file_123',
               },
@@ -123,8 +123,36 @@ describe('multimodal capability checks', () => {
     };
 
     expect(getUnsupportedMultimodalRequirement('openai', params)).toBeUndefined();
+    expect(getUnsupportedMultimodalRequirement('azure-openai', params)).toBeUndefined();
     expect(getUnsupportedMultimodalRequirement('anthropic', params)).toContain(
       'anthropic does not support unknown input from file-id',
+    );
+  });
+
+  it('rejects Priorai input_file image content for OpenAI chat providers', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_file',
+              file: {
+                url: 'https://example.com/image.png',
+                mime_type: 'image/png',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getUnsupportedMultimodalRequirement('openai', params)).toBe(
+      'openai chatComplete does not accept Priorai input_file content; use image_url or file',
+    );
+    expect(getUnsupportedMultimodalRequirement('azure-openai', params)).toBe(
+      'azure-openai chatComplete does not accept Priorai input_file content; use image_url or file',
     );
   });
 
@@ -147,6 +175,62 @@ describe('multimodal capability checks', () => {
 
     expect(getUnsupportedMultimodalRequirement('openai', params)).toContain(
       'openai does not support video input from https-url',
+    );
+  });
+
+  it('infers image requirements from OpenAI responses input_image content', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_image',
+              image_url: 'https://example.com/image.png',
+              detail: 'high',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(inferMultimodalRequirements(params)).toEqual([
+      {
+        type: 'input_image',
+        mediaKind: 'image',
+        sourceKind: 'https-url',
+        mimeType: 'image/*',
+      },
+    ]);
+  });
+
+  it('rejects Priorai input_file image content for OpenAI responses providers', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_file',
+              file: {
+                url: 'https://example.com/image.png',
+                mime_type: 'image/png',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getUnsupportedMultimodalRequirement('openai', params, 'createModelResponse')).toBe(
+      'openai createModelResponse input_file must use file_data, file_id, file_url, and filename',
+    );
+    expect(
+      getUnsupportedMultimodalRequirement('azure-openai', params, 'createModelResponse'),
+    ).toBe(
+      'azure-openai createModelResponse input_file must use file_data, file_id, file_url, and filename',
     );
   });
 

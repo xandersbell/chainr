@@ -160,6 +160,35 @@ describe('LoadBalanceStrategy', () => {
       expect(result.provider).toBe('vertex-ai');
     });
 
+    it('throws when no target supports OpenAI responses vision input or endpoint', async () => {
+      const targets = [{ provider: 'anthropic', weight: 1 }, { provider: 'vertex-ai', weight: 1 }];
+
+      await expect(
+        strategy.execute(
+          targets,
+          {
+            model: 'gpt-4o',
+            input: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'input_image',
+                    image_url: 'https://example.com/image.png',
+                  },
+                ],
+              },
+            ],
+          },
+          undefined,
+          undefined,
+          'createModelResponse',
+        ),
+      ).rejects.toThrow(
+        'No load balance targets support the requested multimodal input',
+      );
+    });
+
     it('two equal-weight targets (50/50) - selects second when random=0.6', async () => {
       const targets = [
         { provider: 'openai', weight: 1 },

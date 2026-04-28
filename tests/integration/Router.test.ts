@@ -664,6 +664,25 @@ describe('Priorai (Router) integration tests', () => {
         'createModelResponse',
       );
     });
+
+    it('throws when strategy exhausts responses targets without a response payload', async () => {
+      const config: PrioraiConfig = {
+        strategy: 'fallback',
+        targets: [{ provider: 'openai', apiKey: 'key-1' }],
+      };
+
+      mockFallbackExecute.mockResolvedValue({
+        success: false,
+        error: 'anthropic does not support createModelResponse',
+      });
+
+      const priorai = new Priorai(config);
+
+      await expect(priorai.responses.create(responsesParams)).rejects.toThrow(
+        'anthropic does not support createModelResponse',
+      );
+      expect(mockTransformProviderResponse).not.toHaveBeenCalled();
+    });
   });
 
   describe('messages.countTokens() — Anthropic Token Counting', () => {

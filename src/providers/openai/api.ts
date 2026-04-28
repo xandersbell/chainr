@@ -76,7 +76,7 @@ const OpenAIAPIConfig: ProviderAPIConfig = {
       case 'listBatches':
         return basePath;
       case 'createModelResponse':
-        return basePath;
+        return '/responses';
       case 'getModelResponse':
         return basePath;
       case 'deleteModelResponse':

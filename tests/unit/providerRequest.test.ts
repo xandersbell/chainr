@@ -310,7 +310,9 @@ describe('buildProviderRequest', () => {
         'bedrock',
         { provider: 'bedrock', apiKey: 'test-key' },
       ),
-    ).rejects.toThrow('Bedrock file inputs require base64 data or an s3:// URL.');
+    ).rejects.toThrow(
+      'Unsupported multimodal input: bedrock does not support document input from https-url (application/pdf) on chatComplete',
+    );
   });
 
   it('should map Google input_file audio data to Gemini inlineData', async () => {
@@ -346,7 +348,35 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
-  it('should normalize OpenAI input_file image URL to image_url content', async () => {
+  it('should reject Priorai input_file image content for OpenAI chat', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_file',
+                  file: {
+                    url: 'https://example.com/image.png',
+                    mime_type: 'image/png',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        'openai',
+        { provider: 'openai', apiKey: 'sk-test-key' },
+      ),
+    ).rejects.toThrow(
+      'Unsupported multimodal input: openai chatComplete does not accept Priorai input_file content; use image_url or file',
+    );
+  });
+
+  it('should keep OpenAI chat image_url content in native shape', async () => {
     const result = await buildProviderRequest(
       {
         model: 'gpt-4o',
@@ -355,9 +385,10 @@ describe('buildProviderRequest', () => {
             role: 'user',
             content: [
               {
-                type: 'input_file',
-                file: {
+                type: 'image_url',
+                image_url: {
                   url: 'https://example.com/image.png',
+                  detail: 'high',
                   mime_type: 'image/png',
                 },
               },
@@ -374,13 +405,13 @@ describe('buildProviderRequest', () => {
         type: 'image_url',
         image_url: {
           url: 'https://example.com/image.png',
-          mime_type: 'image/png',
+          detail: 'high',
         },
       },
     ]);
   });
 
-  it('should normalize OpenAI input_file file ID without MIME to file content', async () => {
+  it('should keep OpenAI chat file content in native shape', async () => {
     const result = await buildProviderRequest(
       {
         model: 'gpt-4o',
@@ -389,9 +420,10 @@ describe('buildProviderRequest', () => {
             role: 'user',
             content: [
               {
-                type: 'input_file',
+                type: 'file',
                 file: {
                   file_id: 'file_123',
+                  filename: 'doc.pdf',
                 },
               },
             ],
@@ -407,9 +439,252 @@ describe('buildProviderRequest', () => {
         type: 'file',
         file: {
           file_id: 'file_123',
+          filename: 'doc.pdf',
         },
       },
     ]);
+  });
+
+  it('should pass through OpenAI responses input_image content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_image',
+                image_url: 'https://example.com/image.png',
+                detail: 'high',
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_image',
+            image_url: 'https://example.com/image.png',
+            detail: 'high',
+          },
+        ],
+      },
+    ]);
+    expect(result.url).toBe('https://api.openai.com/v1/responses');
+  });
+
+  it('should pass through OpenAI responses input_file URL content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file_url: 'https://example.com/report.pdf',
+                filename: 'report.pdf',
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_file',
+            file_url: 'https://example.com/report.pdf',
+            filename: 'report.pdf',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should pass through OpenAI responses input_file data content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_file',
+                file_data: 'BASE64_FILE_BYTES',
+                filename: 'report.pdf',
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_file',
+            file_data: 'BASE64_FILE_BYTES',
+            filename: 'report.pdf',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should pass through OpenAI responses input_audio content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_audio',
+                input_audio: {
+                  data: 'BASE64_AUDIO_BYTES',
+                  format: 'wav',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'openai',
+      { provider: 'openai', apiKey: 'sk-test-key' },
+      'createModelResponse',
+    );
+
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_audio',
+            input_audio: {
+              data: 'BASE64_AUDIO_BYTES',
+              format: 'wav',
+            },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should reject Priorai input_file image content for OpenAI responses', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'gpt-4o',
+          input: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_file',
+                  file: {
+                    url: 'https://example.com/image.png',
+                    mime_type: 'image/png',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        'openai',
+        { provider: 'openai', apiKey: 'sk-test-key' },
+        'createModelResponse',
+      ),
+    ).rejects.toThrow(
+      'Unsupported multimodal input: openai createModelResponse input_file must use file_data, file_id, file_url, and filename',
+    );
+  });
+
+  it('should build Azure OpenAI responses request with native input_image content', async () => {
+    const result = await buildProviderRequest(
+      {
+        model: 'gpt-4o',
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_image',
+                image_url: 'https://example.com/image.png',
+                detail: 'high',
+              },
+            ],
+          },
+        ],
+      },
+      'azure-openai',
+      {
+        provider: 'azure-openai',
+        apiKey: 'azure-key',
+        resourceName: 'demo-resource',
+        deploymentId: 'gpt-4o-deployment',
+        apiVersion: 'v1',
+      },
+      'createModelResponse',
+    );
+
+    expect(result.url).toBe('https://demo-resource.openai.azure.com/openai/v1/responses');
+    expect(result.body.model).toBe('gpt-4o-deployment');
+    expect(result.body.input).toEqual([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'input_image',
+            image_url: 'https://example.com/image.png',
+            detail: 'high',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should require apiVersion v1 for Azure OpenAI responses requests', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'gpt-4o',
+          input: 'Hello',
+        },
+        'azure-openai',
+        {
+          provider: 'azure-openai',
+          apiKey: 'azure-key',
+          resourceName: 'demo-resource',
+          deploymentId: 'gpt-4o-deployment',
+          apiVersion: '2024-10-21',
+        },
+        'createModelResponse',
+      ),
+    ).rejects.toThrow('Azure OpenAI createModelResponse requires apiVersion "v1"');
   });
 
   it('should map Anthropic content_blocks input_file image URL to image content', async () => {

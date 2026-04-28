@@ -1,5 +1,16 @@
+import Providers from '../providers';
 import type { endpointStrings } from '../providers/types';
-import type { ContentType, Message, Params } from '../types/requestBody';
+import type {
+  ContentType,
+  Message,
+  Params,
+  ResponseInput,
+  ResponseInputContent,
+  ResponseInputFileContent,
+  ResponseInputImageContent,
+  ResponseInputItem,
+  ResponseInputMessage,
+} from '../types/requestBody';
 import { getMessageContentBlocks } from './messageContent';
 import type { TargetConfig } from './types';
 
@@ -13,6 +24,8 @@ interface MultimodalRequirement {
   mimeType?: string;
   needsExplicitMimeType?: boolean;
 }
+
+type ResponseLikeContent = ResponseInputContent | ContentType | Record<string, unknown>;
 
 const getFileUrl = (item: ContentType): string | undefined => item.file?.url ?? item.file?.file_url;
 
@@ -68,6 +81,159 @@ const getAudioFormat = (mimeType?: string): string => {
   return 'mp3';
 };
 
+const isOpenAIProvider = (provider: string): boolean =>
+  provider === 'openai' || provider === 'azure-openai';
+
+const supportsEndpoint = (
+  provider: string,
+  endpoint: endpointStrings,
+  params: Params,
+): boolean => {
+  const providerConfig = Providers[provider];
+  if (!providerConfig) return false;
+
+  if (providerConfig.getConfig) {
+    const dynamicConfig = providerConfig.getConfig({
+      params,
+      providerOptions: { provider } as never,
+    });
+    return endpoint in dynamicConfig;
+  }
+
+  return endpoint in providerConfig;
+};
+
+const hasLegacyFileFields = (item: ContentType): boolean =>
+  Boolean(
+    item.file?.url ??
+      item.file?.data ??
+      item.file?.file_url ??
+      item.file?.file_name ??
+      item.file?.mime_type,
+  );
+
+const getResponseInputFileUrl = (item: ResponseInputFileContent): string | undefined => item.file_url;
+
+const getResponseInputFileData = (item: ResponseInputFileContent): string | undefined => item.file_data;
+
+const getResponseInputImageUrl = (item: ResponseInputImageContent): string | undefined =>
+  item.image_url;
+
+const isResponseInputMessage = (item: ResponseInputItem | Record<string, unknown>): item is ResponseInputMessage =>
+  typeof item === 'object' &&
+  item !== null &&
+  'role' in item &&
+  'content' in item &&
+  (!('type' in item) || item.type === 'message');
+
+const isResponseInputImageContent = (item: ResponseLikeContent): item is ResponseInputImageContent =>
+  typeof item === 'object' &&
+  item !== null &&
+  'type' in item &&
+  item.type === 'input_image' &&
+  !('file' in item);
+
+const isResponseInputAudioContent = (
+  item: ResponseLikeContent,
+): item is Extract<ResponseInputContent, { type: 'input_audio' }> =>
+  typeof item === 'object' &&
+  item !== null &&
+  'type' in item &&
+  item.type === 'input_audio' &&
+  'input_audio' in item;
+
+const isResponseInputFileContent = (item: ResponseLikeContent): item is ResponseInputFileContent =>
+  typeof item === 'object' &&
+  item !== null &&
+  'type' in item &&
+  item.type === 'input_file' &&
+  !('file' in item);
+
+const getResponseInputContents = (input?: Params['input']): ResponseLikeContent[] => {
+  if (!Array.isArray(input)) return [];
+
+  const contents: ResponseLikeContent[] = [];
+
+  for (const item of input as ResponseInput) {
+    if (typeof item !== 'object' || item === null) continue;
+
+    if (isResponseInputMessage(item)) {
+      if (Array.isArray(item.content)) {
+        contents.push(...item.content);
+      }
+      continue;
+    }
+
+    contents.push(item as ResponseLikeContent);
+  }
+
+  return contents;
+};
+
+function getOpenAIChatShapeError(provider: string, params: Params): string | undefined {
+  for (const message of params.messages ?? []) {
+    const content = getMessageContentBlocks(message);
+    if (!content) continue;
+
+    for (const item of content) {
+      if (item.type === 'input_file') {
+        return `${provider} chatComplete does not accept Priorai input_file content; use image_url or file`;
+      }
+
+      if (item.type === 'file' && hasLegacyFileFields(item)) {
+        return `${provider} chatComplete file content must use file_data, file_id, and filename only`;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function getOpenAIResponsesShapeError(provider: string, params: Params): string | undefined {
+  for (const item of getResponseInputContents(params.input)) {
+    if (item.type === 'image_url') {
+      return `${provider} createModelResponse does not accept image_url content; use input_image`;
+    }
+
+    if (item.type === 'file') {
+      return `${provider} createModelResponse does not accept file content; use input_file`;
+    }
+
+    if (item.type === 'input_file' && 'file' in item) {
+      return `${provider} createModelResponse input_file must use file_data, file_id, file_url, and filename`;
+    }
+
+    if (item.type === 'input_image' && typeof item.image_url === 'object') {
+      return `${provider} createModelResponse input_image.image_url must be a string`;
+    }
+  }
+
+  return undefined;
+}
+
+function getNativeShapeError(
+  provider: string,
+  params: Params,
+  endpoint: endpointStrings,
+): string | undefined {
+  if (!isOpenAIProvider(provider)) return undefined;
+  if (endpoint === 'chatComplete') return getOpenAIChatShapeError(provider, params);
+  if (endpoint === 'createModelResponse') return getOpenAIResponsesShapeError(provider, params);
+  return undefined;
+}
+
+function getEndpointSupportError(
+  provider: string,
+  params: Params,
+  endpoint: endpointStrings,
+): string | undefined {
+  if (!supportsEndpoint(provider, endpoint, params)) {
+    return `${provider} does not support ${endpoint}`;
+  }
+
+  return undefined;
+}
+
 export function inferMultimodalRequirements(params: Params): MultimodalRequirement[] {
   const requirements: MultimodalRequirement[] = [];
 
@@ -116,6 +282,33 @@ export function inferMultimodalRequirements(params: Params): MultimodalRequireme
           needsExplicitMimeType: !item.mime_type && !getMimeFromDataUrl(url),
         });
       }
+    }
+  }
+
+  for (const item of getResponseInputContents(params.input)) {
+    if (isResponseInputImageContent(item)) {
+      const url = getResponseInputImageUrl(item);
+      requirements.push({
+        type: item.type,
+        mediaKind: 'image',
+        sourceKind: getSourceKind(url, undefined, item.file_id ?? undefined),
+        mimeType: getMimeFromDataUrl(url) ?? 'image/*',
+      });
+    } else if (isResponseInputAudioContent(item)) {
+      requirements.push({
+        type: item.type,
+        mediaKind: 'audio',
+        sourceKind: 'base64',
+        mimeType: `audio/${item.input_audio?.format ?? 'unknown'}`,
+      });
+    } else if (isResponseInputFileContent(item)) {
+      const url = getResponseInputFileUrl(item);
+      const data = getResponseInputFileData(item);
+      requirements.push({
+        type: item.type,
+        mediaKind: 'unknown',
+        sourceKind: getSourceKind(url, data, item.file_id),
+      });
     }
   }
 
@@ -173,6 +366,12 @@ export function getUnsupportedMultimodalRequirement(
   params: Params,
   endpoint: endpointStrings = 'chatComplete',
 ): string | undefined {
+  const endpointError = getEndpointSupportError(provider, params, endpoint);
+  if (endpointError) return endpointError;
+
+  const shapeError = getNativeShapeError(provider, params, endpoint);
+  if (shapeError) return shapeError;
+
   for (const requirement of inferMultimodalRequirements(params)) {
     if (requirement.needsExplicitMimeType) {
       return `${requirement.type} requires an explicit MIME type for reliable multimodal routing`;
@@ -189,43 +388,12 @@ export function getUnsupportedMultimodalRequirement(
 }
 
 function normalizeOpenAIChatContent(item: ContentType): ContentType {
-  if (item.type !== 'input_file') return item;
-
-  const url = getFileUrl(item);
-  const data = getFileData(item);
-  const mimeType = item.file?.mime_type;
-  const mediaKind = getMediaKind(mimeType);
-
-  if (mediaKind === 'image' && (url || data)) {
+  if (item.type === 'image_url' && item.image_url) {
     return {
-      type: 'image_url',
+      ...item,
       image_url: {
-        url: url ?? toDataUrl(data ?? '', mimeType),
-        ...(mimeType && { mime_type: mimeType }),
-      },
-    };
-  }
-
-  if (mediaKind === 'audio' && data) {
-    return {
-      type: 'input_audio',
-      input_audio: {
-        data,
-        format: getAudioFormat(mimeType),
-      },
-    };
-  }
-
-  if ((mediaKind === 'document' || item.file?.file_id) && (data || item.file?.file_id)) {
-    return {
-      type: 'file',
-      file: {
-        ...(data && { file_data: data }),
-        ...(item.file?.file_id && { file_id: item.file.file_id }),
-        ...((item.file?.filename ?? item.file?.file_name) && {
-          filename: item.file?.filename ?? item.file?.file_name,
-        }),
-        ...(mimeType && { mime_type: mimeType }),
+        url: item.image_url.url,
+        ...(item.image_url.detail && { detail: item.image_url.detail }),
       },
     };
   }
