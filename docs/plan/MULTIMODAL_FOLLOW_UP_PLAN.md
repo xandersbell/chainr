@@ -1,6 +1,6 @@
 # 多模态后续计划
 
-Updated: 2026-04-27 12:44:12 EEST
+Updated: 2026-04-29 02:10:01 EEST
 
 本文记录第一轮 capability-aware 多模态路由之后仍需处理的风险与演进方向。
 
@@ -21,13 +21,13 @@ Updated: 2026-04-27 12:44:12 EEST
 
 ### Responses API 多模态归一化
 
-Chat Completions 和 Responses 的输入结构不同。当前多模态归一化明确只覆盖 `chatComplete`。
+OpenAI / Azure OpenAI 的原生 Responses 多模态输入链路已经接入，`inferMultimodalRequirements()` 也会同时扫描 `messages` 与 `input`。
 
 后续方向：
 
-- 在启用 Responses 多模态路由前新增 `normalizeResponsesMultimodalParams`。
-- Chat 的 `messages` 归一化和 Responses 的 `input` item 归一化必须分开实现。
+- 如果后续要把更多非 OpenAI provider 扩展到 Responses 多模态路径，仍应保持 Chat 的 `messages` 归一化和 Responses 的 `input` item 归一化分开实现。
 - 如果某个 provider 只在 Responses endpoint 支持某种 source kind，错误 endpoint 应明确失败，不能隐式透传。
+- `responses.create()` 的音频输入目前仍由 Priorai adapter 明确拒绝；若未来放开，必须连同公开类型、能力判断、文档和测试一起补齐。
 
 ### Provider 侧文件引用
 

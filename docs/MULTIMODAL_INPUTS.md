@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:55:42 EEST
+Updated: 2026-04-29 02:10:01 EEST
 
 # Multimodal Inputs
 
@@ -60,7 +60,7 @@ OpenAI-compatible providers are strict:
 - `responses.create()` accepts native OpenAI `input_image` and `input_file` blocks.
 - Priorai does not rewrite `input_file` into OpenAI image or file blocks for `openai` or `azure-openai`.
 - `file_id` is treated as a provider file reference only. It is not used to guess image semantics.
-- OpenAI currently does not support audio input on the Responses API path, so `input_audio` is rejected on `responses.create()`.
+- Priorai currently rejects `input_audio` on `responses.create()` and keeps it out of the public `ResponseInputItem` union.
 - Azure OpenAI `responses.create()` currently requires `apiVersion: 'v1'` because the standard `/openai/v1/responses` path is used.
 - Azure OpenAI `responses.create()` accepts `input_image.image_url` as an HTTPS URL or a base64 data URL, but rejects `input_image.file_id`.
 
@@ -203,7 +203,7 @@ OpenAI:
 - Chat `file` content supports `file_data`, `file_id`, and `filename`.
 - Responses `input_file` content supports `detail`, `file_data`, `file_id`, `file_url`, and `filename`.
 - Chat `input_audio` content supports base64 audio with `wav` or `mp3` format.
-- Responses `input_audio` is rejected because OpenAI does not currently support audio input on this endpoint.
+- Responses `input_audio` is currently rejected by the Priorai adapter and is not part of the public `ResponseInputItem` union.
 - Video input is rejected before routing because OpenAI official SDK types do not expose a video input content block.
 
 Azure OpenAI:
@@ -223,6 +223,11 @@ Priorai also exposes the OpenAI Realtime bootstrap HTTP endpoints:
 - `priorai.realtime.transcriptionSessions.create()`
 
 These endpoints help create session configuration and ephemeral credentials for OpenAI Realtime clients. Priorai does not wrap the WebSocket or WebRTC transport runtime itself.
+
+Current request-shape note:
+
+- `priorai.realtime.sessions.create()` and `priorai.realtime.transcriptionSessions.create()` follow the current `/realtime/sessions` and `/realtime/transcription_sessions` bootstrap paths and send `OpenAI-Beta: assistants=v2`.
+- `priorai.realtime.clientSecrets.create()` uses `/realtime/client_secrets` without that beta header in the current adapter.
 
 Azure OpenAI Realtime transport bootstrapping is not exposed through these surfaces in the current adapter.
 

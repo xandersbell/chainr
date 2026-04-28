@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:55:42 EEST
+Updated: 2026-04-29 02:10:01 EEST
 
 # OpenAI Vision 完整补齐计划
 
@@ -74,74 +74,31 @@ Updated: 2026-04-29 01:55:42 EEST
 - Chat 仅暴露 `image_url` / `input_audio` / `file`
 - Responses 暴露 `input_image` / `input_file`
 
-### 2. 实施期识别出的主要问题
+### 2. 实施期识别出的主要问题（现已收口）
 
-#### 2.1 `responses.create()` 输入类型建模错误
+#### 2.1 `responses.create()` 输入类型曾经过窄
 
-当前 [src/types/requestBody.ts](/Users/ns/codebase/xab/priorai/src/types/requestBody.ts:232) 中：
+当前 [src/types/requestBody.ts](/Users/ns/codebase/xab/priorai/src/types/requestBody.ts:324) 已把 `Params.input` 扩展为 `string | string[] | EmbedInput[] | ResponseInput`，并将公开 `ResponseInputItem` 收紧为只承诺 `message`、`input_text`、`input_image`、`input_file` 这几类当前 adapter 真正支持的 shape。
 
-- `Params.input` 仍是 `string | string[] | EmbedInput[]`
+#### 2.2 多模态能力判断曾经只扫描 `messages`
 
-这不符合 OpenAI Responses 的真实输入结构。仓库内其实已经有更接近官方的类型：
+当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:253) 已同时扫描 `params.messages` 与 `params.input`，因此 `responses.create({ input: [...] })` 的图片输入会进入 capability gate。
 
-- [src/types/modelResponses.ts](/Users/ns/codebase/xab/priorai/src/types/modelResponses.ts:1423)
+#### 2.3 OpenAI provider 曾混入非原生兼容层
 
-但它没有被用于 `Params.input` 的请求建模。
+当前 OpenAI / Azure OpenAI 已不再把 Priorai 私有 `input_file(image/*)` 偷偷改写成原生图片输入；非原生 shape 会直接失败。这样对外契约才与 OpenAI 风格接口保持一致。
 
-#### 2.2 多模态能力判断只扫描 `messages`
+#### 2.4 Responses 输入校验现在是独立路径
 
-当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:71) 的 `inferMultimodalRequirements()` 只遍历 `params.messages`。
+当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:304) 会单独处理 Responses `input` 内容，OpenAI 与 Azure OpenAI 的 shape 校验也已分开。
 
-结果：
+#### 2.5 文档原因说明已经改回 API 边界
 
-- `responses.create({ input: [...] })` 的图片输入不会被完整识别
-- `createModelResponse` 端点的 capability gate 与实际请求体脱节
+当前文档不再把“SDK type 没暴露某字段”误写成根因，而是按当前 adapter 边界和官方输入 shape 分别说明。
 
-#### 2.3 OpenAI provider 当前混入了非原生兼容层
+#### 2.6 Chat 图片出站 shape 已收紧
 
-当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:192) 中，OpenAI Chat 会把 Priorai 自定义的 `input_file(image/*)` 改写成 `image_url`。
-
-这带来两个问题：
-
-- OpenAI provider 的对外契约被 Priorai 自定义输入污染
-- 用户以为自己在调用 OpenAI 接口，实际上调用的是一层 Priorai 私有方言
-
-本计划改为：
-
-- OpenAI / Azure OpenAI 仅承诺原生 OpenAI shape
-- 非原生输入在 OpenAI provider 上直接失败，而不是偷偷归一化
-
-#### 2.4 `Responses` 输入校验与能力判断仍不完整
-
-当前 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:282) 的 `normalizeMultimodalParamsForProvider()` 只在 `endpoint === 'chatComplete'` 时生效。
-
-结果：
-
-- `Responses` 没有自己的多模态归一化入口
-- Chat 和 Responses 被错误地共享同一套输入假设
-
-#### 2.5 文档表述把症状写成原因
-
-当前 [docs/MULTIMODAL_INPUTS.md](/Users/ns/codebase/xab/priorai/docs/MULTIMODAL_INPUTS.md:63) 写的是：
-
-- OpenAI 不支持视频，因为 SDK types 没暴露 `input_video`
-
-这不准确。更准确的根因是：
-
-- OpenAI 官方 Chat / Responses 通用输入类型当前不定义视频理解输入
-
-#### 2.6 Chat 路径还有一个次级 shape 风险
-
-当前 OpenAI Chat 的 `input_file(image/*)` 归一化会向 `image_url` 对象附带 `mime_type`：
-
-- 见 [src/core/multimodalCapabilities.ts](/Users/ns/codebase/xab/priorai/src/core/multimodalCapabilities.ts:201)
-
-但本地 `openai-sdk` 的 Chat `image_url` 类型只明确包含：
-
-- `url`
-- `detail`
-
-`mime_type` 更像内部路由辅助字段，不应继续作为 OpenAI Chat 出站 payload 的正式一部分。
+当前 OpenAI Chat 不再通过 Priorai 私有兼容层往 `image_url` 附加额外 MIME 语义；出站 payload 只承诺官方字段。
 
 ## 设计原则
 
@@ -264,7 +221,7 @@ flowchart TD
 | createModelResponse | `input_image` file_id | Azure OpenAI 明确拒绝 |
 | createModelResponse | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_file(pdf + file_id/url/data)` | 保持 `input_file` |
-| createModelResponse | `input_audio` | OpenAI 明确拒绝 |
+| createModelResponse | `input_audio` | 当前 Priorai adapter 明确拒绝 |
 | createModelResponse | `input_video(video/mp4)` | OpenAI 明确拒绝 |
 | fallback | OpenAI 原生图片请求 -> 不支持 provider | 明确抛错 |
 

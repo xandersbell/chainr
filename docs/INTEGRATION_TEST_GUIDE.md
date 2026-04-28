@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:55:42 EEST
+Updated: 2026-04-29 02:10:01 EEST
 
 # Integration Test Guide
 
@@ -62,13 +62,14 @@ export OPENROUTER_API_KEY="sk-or-..."
   - `priorai.realtime.sessions.create()`
   - `priorai.realtime.clientSecrets.create()`
   - `priorai.realtime.transcriptionSessions.create()`
-- 这些测试验证 endpoint 名称、URL、headers、body 是否正确。
+- `tests/integration/Router.test.ts` 这一层主要验证公开 SDK surface、endpoint 选择和参数透传。
+- Realtime 的 URL、header、body 构造细节由 `tests/unit/providerRequest.test.ts` 覆盖；其中 `sessions` / `transcriptionSessions` 的 `OpenAI-Beta: assistants=v2` header 也在单测里断言。
 - 当前不测试也不承诺 WebSocket / WebRTC transport runtime，因为 SDK 没有封装这一层。
 
 ### 4.3 Multimodal 边界
 
 - Chat Completions 支持 OpenAI / Azure OpenAI 原生 `input_audio`。
-- Responses API 当前不支持 `input_audio`，测试会明确断言拒绝。
+- Responses API 当前在 Priorai adapter 中拒绝 `input_audio`，测试会明确断言拒绝。
 - Azure OpenAI `responses.create()` 当前要求 `apiVersion: 'v1'`。
 - Azure OpenAI `input_image` 只接受 `image_url`（HTTPS URL 或 data URL），不接受 `file_id`。
 

@@ -2,9 +2,9 @@
 
 > A TypeScript/Node.js SDK for routing LLM requests across multiple providers with priority-based fallback and load balancing.
 
-**Status**: 🟢 All Phases Complete — **370+ tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-25)
+**Status**: 🟢 All Phases Complete — **506 tests passing**, 0 TS errors, 所有功能已与 Portkey 对齐 (2026-04-29)
 
-**Last Updated**: 2026-04-25 — Portkey 2.0 同步完成，370+ tests，npm v0.2.1 已发布
+**Last Updated**: 2026-04-29 02:10 EEST — OpenAI multimodal / Realtime bootstrap 文档与测试状态已同步，506 tests
 
 ---
 
@@ -473,7 +473,7 @@ Uses a single provider without fallback.
 
 ## 6. Testing Strategy
 
-### Current Test Coverage (370+ tests ✅)
+### Current Test Coverage (506 tests ✅)
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|

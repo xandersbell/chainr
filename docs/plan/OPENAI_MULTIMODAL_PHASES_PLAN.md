@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:55:42 EEST
+Updated: 2026-04-29 02:10:01 EEST
 
 # OpenAI Multimodal Phase A/B Plan
 
@@ -51,13 +51,13 @@ Updated: 2026-04-29 01:55:42 EEST
 
 - telephony / SIP calls 系列接口
 - `responses.create()` 音频输入
-  - 当前官方文档仍明确不支持
+  - 当前 Priorai adapter 仍明确拒绝
 - transcription / translation / speech
   - 这些属于独立 API，不是“把音频作为同一模型输入”的能力
 
-## 官方能力矩阵
+## 当前对齐矩阵
 
-| Phase | Endpoint | 官方输入 | Priorai 目标 |
+| Phase | Endpoint | 输入 shape | Priorai 目标 |
 |------|------|------|------|
 | A | Chat Completions | `image_url` | 完整支持 |
 | A | Responses | `input_image` | 完整支持 |
@@ -81,7 +81,7 @@ Updated: 2026-04-29 01:55:42 EEST
 
 1. OpenAI / Azure OpenAI `Chat input_audio` 原生 shape 完整支持。
    验证：请求构造测试、能力判断测试、策略测试通过。
-2. `Responses input_audio` 继续按官方边界明确拒绝。
+2. `Responses input_audio` 继续按当前 adapter 边界明确拒绝。
    验证：构造测试和文档同时说明拒绝原因。
 3. Priorai 暴露可用的 `Realtime` SDK 入口。
    验证：至少能创建 session / client secret / transcription session，请求 URL、headers、body 正确；当前仅封装 bootstrap HTTP surfaces，不封装 WebSocket / WebRTC transport runtime。

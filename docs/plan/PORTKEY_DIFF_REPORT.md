@@ -1,9 +1,9 @@
 # Priorai vs Portkey 差异报告
 
-**生成时间**: 2026-04-29 01:55:42 EEST（同步 Realtime bootstrap HTTP surfaces 与 OpenAI multimodal 文档后更新）
+**生成时间**: 2026-04-29 02:10:01 EEST（同步当前实现后的 multimodal / Realtime 文档边界）
 
 **Portkey 版本**: portkey-ai-gateway (本地 clone)
-**Priorai 版本**: All Phases Complete, 250 tests, main branch
+**Priorai 版本**: All Phases Complete, 506 tests, develop branch
 
 ---
 
