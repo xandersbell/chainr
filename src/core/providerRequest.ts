@@ -3,6 +3,7 @@
 import Providers from '../providers';
 import type { endpointStrings, ProviderConfig } from '../providers/types';
 import type { Options, Params } from '../types/requestBody';
+import { normalizeMultimodalParamsForProvider } from './multimodalCapabilities';
 import type { TransformResult } from './types';
 
 function setNestedProperty(obj: any, path: string, value: any) {
@@ -111,11 +112,12 @@ export async function buildProviderRequest(
   }
 
   const providerOptions = buildProviderOptions(provider, target);
+  const normalizedParams = normalizeMultimodalParamsForProvider(params, provider, endpoint);
 
   // Get the parameter mapping config for the endpoint
   let endpointConfig: ProviderConfig | undefined;
   if (providerConfigs.getConfig) {
-    const dynamicConfig = providerConfigs.getConfig({ params, providerOptions });
+    const dynamicConfig = providerConfigs.getConfig({ params: normalizedParams, providerOptions });
     endpointConfig = dynamicConfig?.[endpoint];
   } else {
     endpointConfig = providerConfigs[endpoint];
@@ -123,21 +125,21 @@ export async function buildProviderRequest(
 
   // Transform request body (some endpoints like createTranscription may lack ProviderConfig, pass through directly)
   const body = endpointConfig
-    ? transformUsingProviderConfig(endpointConfig, params, providerOptions)
-    : { ...params };
+    ? transformUsingProviderConfig(endpointConfig, normalizedParams, providerOptions)
+    : { ...normalizedParams };
 
   // Build URL
   const baseUrl = await apiConfig.getBaseURL({
     providerOptions,
     fn: endpoint,
     gatewayRequestURL: '',
-    params,
+    params: normalizedParams,
   });
 
   const endpointPath = apiConfig.getEndpoint({
     providerOptions,
     fn: endpoint,
-    gatewayRequestBodyJSON: params,
+    gatewayRequestBodyJSON: normalizedParams,
     gatewayRequestURL: '',
   });
 
@@ -149,7 +151,7 @@ export async function buildProviderRequest(
     fn: endpoint,
     transformedRequestBody: body,
     transformedRequestUrl: url,
-    gatewayRequestBody: params,
+    gatewayRequestBody: normalizedParams,
   });
 
   return { body, headers, url };

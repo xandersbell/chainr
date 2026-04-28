@@ -72,6 +72,47 @@ describe('FallbackStrategy', () => {
       expect(retryRequest).toHaveBeenCalledTimes(2);
     });
 
+    it('skips targets that cannot support the requested multimodal input', async () => {
+      vi.mocked(retryRequest).mockResolvedValue(
+        mockRetryResult({ success: true, response: { status: 200, data: { id: 'gemini' } } }),
+      );
+
+      const strategy = new FallbackStrategy();
+      const targets = [
+        { provider: 'openai', api_key: 'key-1' },
+        { provider: 'vertex-ai', api_key: 'key-2' },
+      ];
+      const params = {
+        model: 'gemini-2.5-pro',
+        messages: [
+          {
+            role: 'user' as const,
+            content: [
+              {
+                type: 'input_file',
+                file: {
+                  url: 'https://example.com/test.mp4',
+                  mime_type: 'video/mp4',
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = await strategy.execute(targets, params);
+
+      expect(result.success).toBe(true);
+      expect(result.provider).toBe('vertex-ai');
+      expect(buildProviderRequest).toHaveBeenCalledTimes(1);
+      expect(buildProviderRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        'vertex-ai',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
     it('returns failure when all targets fail', async () => {
       vi.mocked(retryRequest)
         .mockResolvedValueOnce(mockRetryResult({ success: false, error: 'HTTP 500' }))

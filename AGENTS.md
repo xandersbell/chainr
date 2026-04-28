@@ -1,5 +1,7 @@
 # Priorai Project Rules
 
+Updated: 2026-04-27 11:50:39 EEST
+
 Unified LLM gateway SDK — route requests across providers through a single interface with priority-based fallback and weighted load balancing.
 
 ## Language Rules
@@ -16,10 +18,21 @@ All code in this project must be written in English, including:
 
 ## Reference: Portkey
 
-- Portkey source is at `./portkey` for reference
+- Portkey source is at `~/codebase/repos/portkey-ai-gateway` for reference
 - Strip all dashboard, admin, and management features — keep only the core LLM routing and proxying layer
 - Priority-based fallback and weighted load balancing are the two key capabilities to preserve
 - When Portkey already has a working implementation, copy and adapt rather than rewrite
+
+## Reference: Provider SDK Repos
+
+- The OpenAI TypeScript SDK is expected at `~/codebase/repos/openai-sdk`, with upstream `https://github.com/openai/openai-node.git`
+- The Google Vertex AI TypeScript SDK is expected at `~/codebase/repos/google-genai-sdk`, with upstream `https://github.com/googleapis/js-genai.git`
+- The Anthropic TypeScript SDK is expected at `~/codebase/repos/anthropic-sdk`, with upstream `https://github.com/anthropics/anthropic-sdk-typescript.git`
+- The OpenRouter TypeScript SDK is expected at `~/codebase/repos/openrouter-sdk`, with upstream `https://github.com/OpenRouterTeam/typescript-sdk.git`
+- The AWS Bedrock Runtime TypeScript SDK is expected at `~/codebase/repos/bedrock-sdk`, with upstream `https://github.com/aws/aws-sdk-js-v3.git`
+- If one of these directories is missing when you need to inspect it, clone the verified upstream repo into the exact local path above before proceeding
+- Treat these SDKs as the primary code reference for provider-specific request and response formats; verify implementation details directly in code when needed
+- If the SDK code is not sufficient, use the `context7` MCP to retrieve the relevant official documentation
 
 ## Dependency Strategy
 

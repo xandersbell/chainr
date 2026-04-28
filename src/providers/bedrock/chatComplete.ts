@@ -131,6 +131,19 @@ const transformAndAppendThinkingMessageItem = (item: ContentType, out: any[]) =>
   }
 };
 
+const getBedrockFileSource = (data?: string, url?: string) => {
+  if (data) return { bytes: data };
+  if (url?.startsWith('s3://')) {
+    return {
+      s3Location: {
+        uri: url,
+      },
+    };
+  }
+
+  throw new Error('Bedrock file inputs require base64 data or an s3:// URL.');
+};
+
 const getMessageContent = (message: Message) => {
   if (!message.content && !message.tool_calls && !message.tool_call_id) return [];
   if (message.role === 'tool') {
@@ -200,20 +213,15 @@ const getMessageContent = (message: Message) => {
             },
           });
         }
-      } else if (item.type === 'file') {
+      } else if (item.type === 'file' || item.type === 'input_file') {
         const mimeType = item.file?.mime_type || fileExtensionMimeTypeMap.pdf;
         const fileFormat = mimeType.split('/')[1];
+        const fileData = item.file?.data ?? item.file?.file_data;
+        const fileUrl = item.file?.url ?? item.file?.file_url;
         if (imagesMimeTypes.includes(mimeType)) {
           out.push({
             image: {
-              source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
-                ...(item.file?.file_url && {
-                  s3Location: {
-                    uri: item.file.file_url,
-                  },
-                }),
-              },
+              source: getBedrockFileSource(fileData, fileUrl),
               format: fileFormat,
             },
           });
@@ -221,14 +229,7 @@ const getMessageContent = (message: Message) => {
           out.push({
             video: {
               format: fileFormat,
-              source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
-                ...(item.file?.file_url && {
-                  s3Location: {
-                    uri: item.file.file_url,
-                  },
-                }),
-              },
+              source: getBedrockFileSource(fileData, fileUrl),
             },
           });
         } else {
@@ -236,18 +237,23 @@ const getMessageContent = (message: Message) => {
           out.push({
             document: {
               format: fileFormat,
-              name: item.file?.file_name || crypto.randomUUID(),
-              source: {
-                ...(item.file?.file_data && { bytes: item.file.file_data }),
-                ...(item.file?.file_url && {
-                  s3Location: {
-                    uri: item.file.file_url,
-                  },
-                }),
-              },
+              name: item.file?.file_name || item.file?.filename || crypto.randomUUID(),
+              source: getBedrockFileSource(fileData, fileUrl),
             },
           });
         }
+      } else if (item.type === 'input_video' || item.type === 'video_url') {
+        const videoUrl = typeof item.video_url === 'string' ? item.video_url : item.video_url?.url;
+        const dataUrlParts = videoUrl?.startsWith('data:') ? videoUrl.split(';base64,') : undefined;
+        const mimeType = item.mime_type ?? dataUrlParts?.[0]?.replace('data:', '') ?? 'video/mp4';
+        const fileFormat = mimeType.split('/')[1];
+        const source = getBedrockFileSource(dataUrlParts?.[1], videoUrl);
+        out.push({
+          video: {
+            format: fileFormat,
+            source,
+          },
+        });
       }
 
       if (item.cache_control) {
