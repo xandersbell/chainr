@@ -175,6 +175,7 @@ export interface ContentType {
 }
 
 export type ResponseInputImageDetail = 'auto' | 'low' | 'high' | 'original';
+export type ResponseInputFileDetail = 'low' | 'high';
 
 export interface ResponseInputTextContent {
   type: 'input_text';
@@ -190,6 +191,7 @@ export interface ResponseInputImageContent {
 
 export interface ResponseInputFileContent {
   type: 'input_file';
+  detail?: ResponseInputFileDetail;
   file_data?: string;
   file_id?: string;
   file_url?: string;
@@ -207,8 +209,7 @@ export interface ResponseInputAudioContent {
 export type ResponseInputContent =
   | ResponseInputTextContent
   | ResponseInputImageContent
-  | ResponseInputFileContent
-  | ResponseInputAudioContent;
+  | ResponseInputFileContent;
 
 export interface ResponseInputMessage {
   type?: 'message';
@@ -216,7 +217,10 @@ export interface ResponseInputMessage {
   content: string | ResponseInputContent[];
 }
 
-export type ResponseInputItem = ResponseInputMessage | ResponseInputContent;
+export type ResponseInputItem =
+  | ResponseInputMessage
+  | ResponseInputContent
+  | ResponseInputAudioContent;
 export type ResponseInput = ResponseInputItem[];
 
 export interface CitationMetadata {

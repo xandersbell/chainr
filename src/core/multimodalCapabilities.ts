@@ -4,6 +4,7 @@ import type {
   ContentType,
   Message,
   Params,
+  ResponseInputAudioContent,
   ResponseInput,
   ResponseInputContent,
   ResponseInputFileContent,
@@ -12,6 +13,7 @@ import type {
   ResponseInputMessage,
 } from '../types/requestBody';
 import { getMessageContentBlocks } from './messageContent';
+import { buildProviderOptions } from './providerOptions';
 import type { TargetConfig } from './types';
 
 type MediaKind = 'image' | 'audio' | 'video' | 'document' | 'unknown';
@@ -25,7 +27,11 @@ interface MultimodalRequirement {
   needsExplicitMimeType?: boolean;
 }
 
-type ResponseLikeContent = ResponseInputContent | ContentType | Record<string, unknown>;
+type ResponseLikeContent =
+  | ResponseInputContent
+  | ResponseInputAudioContent
+  | ContentType
+  | Record<string, unknown>;
 
 const getFileUrl = (item: ContentType): string | undefined => item.file?.url ?? item.file?.file_url;
 
@@ -88,6 +94,7 @@ const supportsEndpoint = (
   provider: string,
   endpoint: endpointStrings,
   params: Params,
+  target?: Record<string, unknown>,
 ): boolean => {
   const providerConfig = Providers[provider];
   if (!providerConfig) return false;
@@ -95,7 +102,7 @@ const supportsEndpoint = (
   if (providerConfig.getConfig) {
     const dynamicConfig = providerConfig.getConfig({
       params,
-      providerOptions: { provider } as never,
+      providerOptions: buildProviderOptions(provider, target),
     });
     return endpoint in dynamicConfig;
   }
@@ -135,7 +142,7 @@ const isResponseInputImageContent = (item: ResponseLikeContent): item is Respons
 
 const isResponseInputAudioContent = (
   item: ResponseLikeContent,
-): item is Extract<ResponseInputContent, { type: 'input_audio' }> =>
+): item is ResponseInputAudioContent =>
   typeof item === 'object' &&
   item !== null &&
   'type' in item &&
@@ -177,7 +184,7 @@ function getOpenAIChatShapeError(provider: string, params: Params): string | und
 
     for (const item of content) {
       if (item.type === 'input_file') {
-        return `${provider} chatComplete does not accept Priorai input_file content; use image_url or file`;
+        return `${provider} chatComplete does not accept provider-specific input_file content; use image_url or file`;
       }
 
       if (item.type === 'file' && hasLegacyFileFields(item)) {
@@ -203,6 +210,10 @@ function getOpenAIResponsesShapeError(provider: string, params: Params): string 
       return `${provider} createModelResponse input_file must use file_data, file_id, file_url, and filename`;
     }
 
+    if (item.type === 'input_audio') {
+      return `${provider} createModelResponse does not support input_audio content`;
+    }
+
     if (item.type === 'input_image' && typeof item.image_url === 'object') {
       return `${provider} createModelResponse input_image.image_url must be a string`;
     }
@@ -226,8 +237,9 @@ function getEndpointSupportError(
   provider: string,
   params: Params,
   endpoint: endpointStrings,
+  target?: Record<string, unknown>,
 ): string | undefined {
-  if (!supportsEndpoint(provider, endpoint, params)) {
+  if (!supportsEndpoint(provider, endpoint, params, target)) {
     return `${provider} does not support ${endpoint}`;
   }
 
@@ -365,8 +377,9 @@ export function getUnsupportedMultimodalRequirement(
   provider: string,
   params: Params,
   endpoint: endpointStrings = 'chatComplete',
+  target?: Record<string, unknown>,
 ): string | undefined {
-  const endpointError = getEndpointSupportError(provider, params, endpoint);
+  const endpointError = getEndpointSupportError(provider, params, endpoint, target);
   if (endpointError) return endpointError;
 
   const shapeError = getNativeShapeError(provider, params, endpoint);
@@ -512,7 +525,7 @@ export function targetSupportsMultimodalRequest(
   }
 
   const provider = (target.provider as string) || 'openai';
-  return !getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint);
+  return !getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint, target);
 }
 
 export function getTargetMultimodalUnsupportedReason(
@@ -530,7 +543,7 @@ export function getTargetMultimodalUnsupportedReason(
   }
 
   const provider = (target.provider as string) || 'openai';
-  return getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint);
+  return getUnsupportedMultimodalRequirement(provider, effectiveParams, endpoint, target);
 }
 
 export function formatMultimodalCapabilityReport(

@@ -1,4 +1,4 @@
-Updated: 2026-04-29 00:35 EEST
+Updated: 2026-04-29 01:15 EEST
 
 # OpenAI Vision 完整补齐计划
 
@@ -48,7 +48,7 @@ Updated: 2026-04-29 00:35 EEST
 官方可确认的通用输入类型是：
 
 - Chat Completions：`text`、`image_url`、`input_audio`、`file`
-- Responses：`input_text`、`input_image`、`input_audio`、`input_file`
+- Responses：`input_text`、`input_image`、`input_file`
 
 未发现官方通用推理输入支持：
 
@@ -67,7 +67,7 @@ Updated: 2026-04-29 00:35 EEST
 本地 `openai-sdk` 也印证这一点：
 
 - Chat 仅暴露 `image_url` / `input_audio` / `file`
-- Responses 暴露 `input_image` / `input_audio` / `input_file`
+- Responses 暴露 `input_image` / `input_file`
 
 ### 2. 当前仓库的主要不完整点
 
@@ -179,7 +179,7 @@ flowchart TD
 步骤：
 
 1. 为 `Params.input` 引入面向 Responses 的请求类型，优先复用现有 `modelResponses` 中的 `ResponseInputItem` / `EasyInputMessage` / `ResponseInputMessageContentList`。
-   验证：TypeScript 可以表达 `input_image`、`input_audio`、`input_file`、字符串输入以及 message item 数组。
+   验证：TypeScript 可以表达 `input_image`、`input_file`、字符串输入以及 message item 数组。
 2. 明确 OpenAI Chat 与 Responses 的原生图片字段约束。
    验证：Chat 支持 `auto|low|high`，Responses 支持 `auto|low|high|original`，类型不再混淆。
 3. 把 OpenAI provider 不承诺支持的 Priorai 私有多模态输入从类型和文档契约中剥离。
@@ -258,6 +258,7 @@ flowchart TD
 | createModelResponse | `input_image` file_id | 透传 |
 | createModelResponse | `input_file(image/png + url)` | OpenAI provider 明确拒绝 |
 | createModelResponse | `input_file(pdf + file_id/url/data)` | 保持 `input_file` |
+| createModelResponse | `input_audio` | OpenAI 明确拒绝 |
 | createModelResponse | `input_video(video/mp4)` | OpenAI 明确拒绝 |
 | fallback | OpenAI 原生图片请求 -> 不支持 provider | 明确抛错 |
 

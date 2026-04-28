@@ -45,7 +45,7 @@ describe('multimodal capability checks', () => {
 
   it('rejects OpenAI, Anthropic, and Bedrock for video HTTPS input', () => {
     expect(getUnsupportedMultimodalRequirement('openai', videoUrlParams)).toContain(
-      'openai chatComplete does not accept Priorai input_file content; use image_url or file',
+      'openai chatComplete does not accept provider-specific input_file content; use image_url or file',
     );
     expect(getUnsupportedMultimodalRequirement('anthropic', videoUrlParams)).toContain(
       'anthropic does not support video input from https-url',
@@ -129,7 +129,7 @@ describe('multimodal capability checks', () => {
     );
   });
 
-  it('rejects Priorai input_file image content for OpenAI chat providers', () => {
+  it('rejects provider-specific input_file image content for OpenAI chat providers', () => {
     const params: Params = {
       model: 'gpt-4o',
       messages: [
@@ -149,10 +149,10 @@ describe('multimodal capability checks', () => {
     };
 
     expect(getUnsupportedMultimodalRequirement('openai', params)).toBe(
-      'openai chatComplete does not accept Priorai input_file content; use image_url or file',
+      'openai chatComplete does not accept provider-specific input_file content; use image_url or file',
     );
     expect(getUnsupportedMultimodalRequirement('azure-openai', params)).toBe(
-      'azure-openai chatComplete does not accept Priorai input_file content; use image_url or file',
+      'azure-openai chatComplete does not accept provider-specific input_file content; use image_url or file',
     );
   });
 
@@ -232,6 +232,28 @@ describe('multimodal capability checks', () => {
     ).toBe(
       'azure-openai createModelResponse input_file must use file_data, file_id, file_url, and filename',
     );
+  });
+
+  it('rejects input_audio content for OpenAI responses providers', () => {
+    const params: Params = {
+      model: 'gpt-4o',
+      input: [
+        {
+          type: 'input_audio',
+          input_audio: {
+            data: 'BASE64_AUDIO_BYTES',
+            format: 'wav',
+          },
+        },
+      ],
+    };
+
+    expect(getUnsupportedMultimodalRequirement('openai', params, 'createModelResponse')).toBe(
+      'openai createModelResponse does not support input_audio content',
+    );
+    expect(
+      getUnsupportedMultimodalRequirement('azure-openai', params, 'createModelResponse'),
+    ).toBe('azure-openai createModelResponse does not support input_audio content');
   });
 
   it('allows Bedrock video input from S3', () => {

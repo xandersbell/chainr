@@ -7,6 +7,7 @@ import {
   getUnsupportedMultimodalRequirement,
   normalizeMultimodalParamsForProvider,
 } from './multimodalCapabilities';
+import { buildProviderOptions } from './providerOptions';
 import type { TransformResult } from './types';
 
 function setNestedProperty(obj: any, path: string, value: any) {
@@ -79,21 +80,6 @@ export const transformUsingProviderConfig = (
   return transformedRequest;
 };
 
-// Build providerOptions (aligned with Portkey's Options structure)
-// Users can pass provider-specific fields via the nested providerOptions object in target,
-// which is flattened to the top level here to align with the Options interface
-function buildProviderOptions(provider: string, target: Record<string, unknown>): Options {
-  const { providerOptions, ...rest } = target;
-  return {
-    provider,
-    apiKey: (target['apiKey'] ?? target['api_key']) as string,
-    ...rest,
-    ...(providerOptions && typeof providerOptions === 'object'
-      ? (providerOptions as Record<string, unknown>)
-      : {}),
-  };
-}
-
 /**
  * Build a complete request (URL + headers + body) using the provider registry
  * Aligned with Portkey's tryPost flow: transformToProviderRequest → getBaseURL + getEndpoint → headers
@@ -115,7 +101,7 @@ export async function buildProviderRequest(
   }
 
   const providerOptions = buildProviderOptions(provider, target);
-  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, params, endpoint);
+  const unsupportedReason = getUnsupportedMultimodalRequirement(provider, params, endpoint, target);
   if (unsupportedReason) {
     throw new Error(`Unsupported multimodal input: ${unsupportedReason}`);
   }

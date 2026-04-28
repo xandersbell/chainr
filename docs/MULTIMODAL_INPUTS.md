@@ -1,4 +1,4 @@
-Updated: 2026-04-29 01:02:59 EEST
+Updated: 2026-04-29 01:15:10 EEST
 
 # Multimodal Inputs
 
@@ -57,9 +57,10 @@ The older `file.file_url`, `file.file_data`, and `file.file_name` fields remain 
 OpenAI-compatible providers are strict:
 
 - `chat.completions.create()` accepts native OpenAI `image_url` and `file` blocks only.
-- `responses.create()` accepts native OpenAI `input_image`, `input_file`, and `input_audio` blocks only.
+- `responses.create()` accepts native OpenAI `input_image` and `input_file` blocks.
 - Priorai does not rewrite `input_file` into OpenAI image or file blocks for `openai` or `azure-openai`.
 - `file_id` is treated as a provider file reference only. It is not used to guess image semantics.
+- OpenAI currently does not support audio input on the Responses API path, so `input_audio` is rejected on `responses.create()`.
 - Azure OpenAI `responses.create()` currently requires `apiVersion: 'v1'` because the standard `/openai/v1/responses` path is used.
 
 OpenAI chat example:
@@ -154,10 +155,11 @@ This is implemented in the Vertex chat transform layer and multimodal capability
 OpenAI:
 
 - Chat Completions must use native `image_url` and `file` blocks.
-- Responses must use native `input_image`, `input_file`, and `input_audio` blocks.
+- Responses must use native `input_image` and `input_file` blocks.
 - Priorai `input_file` extension is rejected for OpenAI and Azure OpenAI instead of being rewritten.
 - Chat `file` content supports `file_data`, `file_id`, and `filename`.
-- Responses `input_file` content supports `file_data`, `file_id`, `file_url`, and `filename`.
+- Responses `input_file` content supports `detail`, `file_data`, `file_id`, `file_url`, and `filename`.
+- Responses `input_audio` is rejected because OpenAI does not currently support audio input on this endpoint.
 - Video input is rejected before routing because OpenAI official SDK types do not expose a video input content block.
 
 Azure OpenAI:

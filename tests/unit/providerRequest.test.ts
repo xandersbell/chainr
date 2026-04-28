@@ -348,7 +348,7 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
-  it('should reject Priorai input_file image content for OpenAI chat', async () => {
+  it('should reject provider-specific input_file image content for OpenAI chat', async () => {
     await expect(
       buildProviderRequest(
         {
@@ -372,7 +372,7 @@ describe('buildProviderRequest', () => {
         { provider: 'openai', apiKey: 'sk-test-key' },
       ),
     ).rejects.toThrow(
-      'Unsupported multimodal input: openai chatComplete does not accept Priorai input_file content; use image_url or file',
+      'Unsupported multimodal input: openai chatComplete does not accept provider-specific input_file content; use image_url or file',
     );
   });
 
@@ -492,6 +492,7 @@ describe('buildProviderRequest', () => {
             content: [
               {
                 type: 'input_file',
+                detail: 'high',
                 file_url: 'https://example.com/report.pdf',
                 filename: 'report.pdf',
               },
@@ -510,6 +511,7 @@ describe('buildProviderRequest', () => {
         content: [
           {
             type: 'input_file',
+            detail: 'high',
             file_url: 'https://example.com/report.pdf',
             filename: 'report.pdf',
           },
@@ -554,44 +556,28 @@ describe('buildProviderRequest', () => {
     ]);
   });
 
-  it('should pass through OpenAI responses input_audio content', async () => {
-    const result = await buildProviderRequest(
-      {
-        model: 'gpt-4o',
-        input: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'input_audio',
-                input_audio: {
-                  data: 'BASE64_AUDIO_BYTES',
-                  format: 'wav',
-                },
+  it('should reject OpenAI responses input_audio content', async () => {
+    await expect(
+      buildProviderRequest(
+        {
+          model: 'gpt-4o',
+          input: [
+            {
+              type: 'input_audio',
+              input_audio: {
+                data: 'BASE64_AUDIO_BYTES',
+                format: 'wav',
               },
-            ],
-          },
-        ],
-      },
-      'openai',
-      { provider: 'openai', apiKey: 'sk-test-key' },
-      'createModelResponse',
-    );
-
-    expect(result.body.input).toEqual([
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'input_audio',
-            input_audio: {
-              data: 'BASE64_AUDIO_BYTES',
-              format: 'wav',
             },
-          },
-        ],
-      },
-    ]);
+          ],
+        },
+        'openai',
+        { provider: 'openai', apiKey: 'sk-test-key' },
+        'createModelResponse',
+      ),
+    ).rejects.toThrow(
+      'Unsupported multimodal input: openai createModelResponse does not support input_audio content',
+    );
   });
 
   it('should reject Priorai input_file image content for OpenAI responses', async () => {
